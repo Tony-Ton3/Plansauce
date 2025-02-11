@@ -7,6 +7,7 @@ import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Home from "./pages/Home";
 import ProjectInput from "./components/ProjectInput";
+import ExploreStack from "./pages/ExploreStack";
 
 export default function App() {
   const { currentUser } = useSelector((state) => state.user);
@@ -22,6 +23,7 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="projectinput" element={<ProjectInput />} />
             <Route path="dashboard" element={<Dashboard />} />
+            <Route path="explorestack" element={<ExploreStack />} />
           </Route>
         </Route>
       )}

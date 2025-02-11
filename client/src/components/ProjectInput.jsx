@@ -1,8 +1,13 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
+import { setStackSuccess, setStackFailure } from "../redux/techstackSlice";
+import ExploreStack from "../pages/ExploreStack";
+import ProgressBar from "./ProgressBar";
+import { getClaudeRecommendation } from "../utils/api";
 import { projectQuestions } from "../constants/questions";
 import { IoIosArrowDropdown, IoMdAdd, IoMdCheckmark } from "react-icons/io";
+import BarLoader from "./BarLoader";
 
 function ProjectInput() {
   const [form, setForm] = useState(() => {
@@ -35,13 +40,15 @@ function ProjectInput() {
     setForm(emptyForm);
     localStorage.removeItem("projectForm");
   };
-
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [showTechStack, setShowTechStack] = useState(false);
+  const [isSelectOpen, setIsSelectOpen] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
+  const { currentStack } = useSelector((state) => state.stack);
 
   useEffect(() => {
     localStorage.setItem("projectForm", JSON.stringify(form));
@@ -85,6 +92,47 @@ function ProjectInput() {
     }
   };
 
+  async function handleRecommendation() {
+    try {
+      setIsLoading(true);
+      const recommendationStack = await getClaudeRecommendation(
+        currentUser._id,
+        form
+      );
+      resetForm(); //clears local storage
+      dispatch(setStackSuccess(recommendationStack));
+      setShowTechStack(true); // Set this to true after getting the recommendation
+    } catch (error) {
+      console.error("Error getting recommendation:", error);
+      dispatch(setStackFailure(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
+        <div className="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-8 text-center">
+          <BarLoader />
+          <h2 className="text-2xl font-bold text-background mb-2">
+            Creating your stack...
+          </h2>
+        </div>
+      </div>
+    );
+  }
+
+  if (showTechStack && currentStack) {
+    return (
+      <ExploreStack
+        currentStack={currentStack}
+        isNewSubmission={true}
+        onBackToSaved={() => navigate("/createdstacks")}
+      />
+    );
+  }
+
   const renderQuestion = (question) => {
     switch (question.type) {
       case "text":
@@ -104,9 +152,10 @@ function ProjectInput() {
               id={question.id}
               value={form[question.id] || ""}
               onChange={(e) => handleInputChange(question.id, e.target.value)}
+              onFocus={() => setIsSelectOpen(true)}
+              onBlur={() => setIsSelectOpen(false)}
               className="block appearance-none w-full bg-gray-100 py-2 px-3 pr-8 rounded border-2 border-gray-500 leading-tight focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
             >
-
               <option value="" disabled>
                 Select an option
               </option>
@@ -116,6 +165,13 @@ function ProjectInput() {
                 </option>
               ))}
             </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+              <IoIosArrowDropdown
+                className={`size-4 transition-transform duration-300 ${
+                  isSelectOpen ? "" : "rotate-180"
+                }`}
+              />
+            </div>
           </div>
         );
       case "multiselect":
@@ -162,6 +218,7 @@ function ProjectInput() {
           <h2 className="font-nerko text-3xl font-bold text-gray-600 mb-4 text-center">
             {currentPageQuestions.title}
           </h2>
+          <ProgressBar currentPage={currentPage} />
           <div className="mt-4 space-y-4">
             {currentPageQuestions.questions.map((question) => (
               <div key={question.id}>

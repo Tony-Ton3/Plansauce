@@ -8,7 +8,6 @@ import { FaRocket, FaLightbulb, FaBook } from "react-icons/fa";
 export default function Home() {
   const navigate = useNavigate();
   const { currentUser } = useSelector((state) => state.user);
-  const [checked, setChecked] = useState("");
 
   const handleNavigate = () => {
     if (currentUser) {
@@ -39,8 +38,6 @@ export default function Home() {
           <p className="text-xl mb-12">
             Tailored recommendations for your project, powered by AI
           </p>
-
-          <input type="checkbox" class="toggle toggle-lg" checked={checked} onClick={toggleChecked} />
 
         </motion.div>
 

@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Stack from "../models/stack.model.js";
 import bcryptjs from "bcryptjs";
 import { errorHandler } from "../utils/error.js";
 import jwt from "jsonwebtoken";
@@ -64,7 +65,7 @@ export const signin = async (req, res, next) => {
 
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
 
-    const userStack = await Stack.findOne({ userId: validUser._id });
+    const userStack = await Stack.findOne({ userId: validUser._id }); //finds last stack created by user`
 
     //extract password from valid user
     const { password: pass, ...userData } = validUser._doc;

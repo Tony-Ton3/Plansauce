@@ -33,7 +33,7 @@ export default function Header() {
       } else {
         //clear current user and thier saved stacks
         dispatch(signoutSuccess());
-        dispatch(clearSavedStacks());
+        // dispatch(clearSavedStacks());
         navigate("/sign-in");
       }
     } catch (error) {
@@ -73,7 +73,7 @@ export default function Header() {
       <div className="flex justify-between items-center">
         <div className="flex justify-center items-center space-x-2">
           <TbStack3Filled className="size-10 bg-secondary text-background rounded-lg p-1 border-2 border-dashed" />
-          <h1 className="font-nerko text-4xl text-gray-700 font-bold">LearnStack</h1>
+          <h1 className="font-nerko text-4xl text-white font-bold">LearnStack</h1>
         </div>
 
         <div className="font-bold flex items-center gap-2">
