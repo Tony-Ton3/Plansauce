@@ -2,14 +2,14 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setStackSuccess, setStackFailure } from "../redux/techstackSlice";
-import ExploreStack from "../pages/ExploreStack";
+import CreatedStacks from "../pages/CreatedStacks";
 import ProgressBar from "./ProgressBar";
 import { getClaudeRecommendation } from "../utils/api";
 import { projectQuestions } from "../constants/questions";
 import { IoIosArrowDropdown, IoMdAdd, IoMdCheckmark } from "react-icons/io";
 import BarLoader from "./BarLoader";
 
-function ProjectInput() {
+const ProjectInput = () => {
   const [form, setForm] = useState(() => {
     const savedForm = localStorage.getItem("projectForm");
 
@@ -125,7 +125,7 @@ function ProjectInput() {
 
   if (showTechStack && currentStack) {
     return (
-      <ExploreStack
+      <CreatedStacks
         currentStack={currentStack}
         isNewSubmission={true}
         onBackToSaved={() => navigate("/createdstacks")}
@@ -257,4 +257,5 @@ function ProjectInput() {
     </div>
   );
 }
+
 export default ProjectInput;

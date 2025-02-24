@@ -65,7 +65,7 @@ export const signin = async (req, res, next) => {
 
     const token = jwt.sign({ id: validUser._id }, process.env.JWT_SECRET);
 
-    const userStack = await Stack.findOne({ userId: validUser._id }); //finds last stack created by user`
+    const userStack = await Stack.findOne({ userId: validUser._id });
 
     //extract password from valid user
     const { password: pass, ...userData } = validUser._doc;

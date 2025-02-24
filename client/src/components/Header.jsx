@@ -69,7 +69,7 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md text-white px-8 py-4 mx-8 my-2 rounded-3xl border-2">
+    <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md text-white px-8 py-4">
       <div className="flex justify-between items-center">
         <div className="flex justify-center items-center space-x-2">
           <TbStack3Filled className="size-10 bg-secondary text-background rounded-lg p-1 border-2 border-dashed" />

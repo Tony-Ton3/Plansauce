@@ -106,7 +106,7 @@ export default function SignUp() {
       <div className="flex justify-center w-full max-w-xl">
         <div className="bg-background p-8 rounded-2xl shadow-md w-3/4">
           <h2 className="font-nerko text-2xl font-bold mb-6 text-center text-gray-800">
-            Sign up to LearnStack :)
+            Sign up to StackFlow :)
           </h2>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">

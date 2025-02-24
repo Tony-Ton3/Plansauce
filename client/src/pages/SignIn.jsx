@@ -59,7 +59,7 @@ export default function SignIn() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black">
       <div className="bg-background p-8 rounded-2xl shadow-md w-full max-w-md">
         <h2 className="font-nerko text-2xl font-bold mb-6 text-center text-gray-800">
-          Welcome to LearnStack
+          Welcome to StackFlow
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -4,10 +4,9 @@ import PrivateRoute from "./components/PrivateRoute";
 import Layout from "./components/Layout";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
-import Dashboard from "./pages/Dashboard";
+import CreatedStacks from "./pages/CreatedStacks";
 import Home from "./pages/Home";
 import ProjectInput from "./components/ProjectInput";
-import ExploreStack from "./pages/ExploreStack";
 
 export default function App() {
   const { currentUser } = useSelector((state) => state.user);
@@ -22,8 +21,7 @@ export default function App() {
         <Route element={<PrivateRoute />}>
           <Route element={<Layout />}>
             <Route path="projectinput" element={<ProjectInput />} />
-            <Route path="dashboard" element={<Dashboard />} />
-            <Route path="explorestack" element={<ExploreStack />} />
+            <Route path="createdstacks" element={<CreatedStacks />} />
           </Route>
         </Route>
       )}

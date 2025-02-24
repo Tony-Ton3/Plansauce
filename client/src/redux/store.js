@@ -8,7 +8,7 @@ import storage from "redux-persist/lib/storage";
 const rootReducer = combineReducers({
   user: userReducer,
   stack: techstackReducer,
-  savedStack: savedstackReducer
+  savedStack: savedstackReducer,
 });
 
 const persistConfig = {
