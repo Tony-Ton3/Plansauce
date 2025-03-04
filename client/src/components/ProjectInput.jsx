@@ -4,10 +4,11 @@ import { useNavigate } from "react-router-dom";
 import { setStackSuccess, setStackFailure } from "../redux/techstackSlice";
 import CreatedStacks from "../pages/CreatedStacks";
 import ProgressBar from "./ProgressBar";
-import { getClaudeRecommendation } from "../utils/api";
-import { projectQuestions } from "../constants/questions";
+import { getClaudeRecommendation } from "../utils/api.jsx";
+import { projectQuestions } from "../constants/projectQuestions";
 import { IoIosArrowDropdown, IoMdAdd, IoMdCheckmark } from "react-icons/io";
 import BarLoader from "./BarLoader";
+import { motion } from "framer-motion";
 
 const ProjectInput = () => {
   const [form, setForm] = useState(() => {
@@ -16,14 +17,14 @@ const ProjectInput = () => {
     return savedForm
       ? JSON.parse(savedForm)
       : {
-          description: "", //an descrioption of what the user wants to build
-          projectType: "", //web, mobile, etc
-          scale: "", //personal, startup, enterprise
-          features: [], //an array of must have features for the project
-          timeline: "", //development timeline
-          experience: "", //expereince level of the user
-          knownTechnologies: [], //getting more info about user experinece for more catered recommendation
-        };
+        description: "", //an descrioption of what the user wants to build
+        projectType: "", //web, mobile, etc
+        scale: "", //personal, startup, enterprise
+        features: [], //an array of must have features for the project
+        timeline: "", //development timeline
+        experience: "", //expereince level of the user
+        knownTechnologies: [], //getting more info about user experinece for more catered recommendation
+      };
   });
 
   const resetForm = () => {
@@ -110,13 +111,60 @@ const ProjectInput = () => {
     }
   }
 
+  // Animation variants for the ellipsis
+  const ellipsisVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1 }
+  };
+
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
         <div className="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-8 text-center">
-          <BarLoader />
-          <h2 className="text-2xl font-bold text-background mb-2">
-            Creating your stack...
+          {/* <BarLoader /> */}
+          <h2 className="px-4 py-2 text-2xl font-bold text-background flex">
+            Thinking
+            <div className="flex overflow-hidden">
+              <motion.span
+                variants={ellipsisVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{
+                  duration: 0.3,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  delay: 0
+                }}
+              >
+                .
+              </motion.span>
+              <motion.span
+                variants={ellipsisVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{
+                  duration: 0.3,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  delay: 0.3
+                }}
+              >
+                .
+              </motion.span>
+              <motion.span
+                variants={ellipsisVariants}
+                initial="hidden"
+                animate="visible"
+                transition={{
+                  duration: 0.3,
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  delay: 0.6
+                }}
+              >
+                .
+              </motion.span>
+            </div>
           </h2>
         </div>
       </div>
@@ -167,9 +215,8 @@ const ProjectInput = () => {
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
               <IoIosArrowDropdown
-                className={`size-4 transition-transform duration-300 ${
-                  isSelectOpen ? "" : "rotate-180"
-                }`}
+                className={`size-4 transition-transform duration-300 ${isSelectOpen ? "" : "rotate-180"
+                  }`}
               />
             </div>
           </div>
@@ -185,11 +232,10 @@ const ProjectInput = () => {
                   onClick={() =>
                     handleMultiSelectChange(question.id, option, !isChecked)
                   }
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-md font-medium transition-colors duration-200 ${
-                    isChecked
-                      ? "bg-accent text-background"
-                      : "text-accent border-2 border-accent"
-                  }`}
+                  className={`inline-flex items-center px-3 py-1 rounded-full text-md font-medium transition-colors duration-200 ${isChecked
+                    ? "bg-accent text-background"
+                    : "text-accent border-2 border-accent"
+                    }`}
                 >
                   {option}
                   <span className="ml-1">
@@ -231,9 +277,8 @@ const ProjectInput = () => {
           </div>
 
           <div
-            className={`flex ${
-              !currentPage ? "justify-end" : "justify-between"
-            } mt-6 gap-2`}
+            className={`flex ${!currentPage ? "justify-end" : "justify-between"
+              } mt-6 gap-2`}
           >
             {currentPage > 0 && (
               <button

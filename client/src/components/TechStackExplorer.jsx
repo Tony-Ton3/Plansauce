@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   fetchTutorialsForTechnology,
   fetchTutorialsForStack,
-} from "../utils/api";
+} from "../utils/api.jsx";
 // import { TechIcons } from "../assets/index";
 import {
   IoIosArrowBack,
@@ -28,8 +28,8 @@ import { FaChevronDown } from "react-icons/fa";
 //     ([key, _]) => normalizeTechName(key) === normalizedName
 //   );
 
-  // If a matching icon is found, return an img element with the icon's properties
-  // If no match is found, return null (no icon will be displayed)
+// If a matching icon is found, return an img element with the icon's properties
+// If no match is found, return null (no icon will be displayed)
 //   return icon ? (
 //     <img src={icon[1].src} alt={icon[1].alt} className="w-8 h-8 " />
 //   ) : (
@@ -228,17 +228,15 @@ const TutorialCard = ({ video }) => (
 const TechButton = ({ tech, expanded, onExpand }) => (
   <button
     onClick={onExpand}
-    className={`w-full h-16 flex items-center justify-between px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-secondary to-accent text-background transition-all hover:shadow-none ${
-      expanded ? "shadow-none translate-x-[3px]" : "shadow-[3px_3px_0px_black]"
-    } hover:translate-x-[3px] hover:translate-y-[3px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
+    className={`w-full h-16 flex items-center justify-between px-6 py-2 rounded-lg font-medium bg-gradient-to-r from-secondary to-accent text-background transition-all hover:shadow-none ${expanded ? "shadow-none translate-x-[3px]" : "shadow-[3px_3px_0px_black]"
+      } hover:translate-x-[3px] hover:translate-y-[3px] focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed`}
   >
     <div className="flex items-center">
       <span className="font-semibold ml-3">{tech.name}</span>
     </div>
     <FaChevronDown
-      className={`transition-transform duration-300 ${
-        expanded ? "rotate-180" : ""
-      }`}
+      className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""
+        }`}
       size={24}
     />
   </button>

@@ -1,5 +1,6 @@
 import Stack from "../models/stack.model.js";
 import UserTutorials from "../models/tutorial.model.js";
+import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
 
 export const signout = (req, res, next) => {
@@ -83,3 +84,23 @@ export const deletesavedstack = async (req, res, next) => {
     next(errorHandler(500, "Error deleting stack"));
   }
 };
+
+export const updateUserQuizAnswers = async (req, res, next) => {
+  const userId = req.user.id;
+
+  const { quizAnswers } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.quizAnswers = quizAnswers;
+    await user.save();
+
+    return res.status(200).json(user);
+  } catch (error) {
+    next(errorHandler(500, "Error updating quiz answers"));
+  }
+}
