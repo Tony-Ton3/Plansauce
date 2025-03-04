@@ -103,3 +103,54 @@ export const projectQuestions = [
       ],
     },
   ];
+
+//   export const projectQuestions = [
+//     {
+//         id: "project_type",
+//         title: "Project Scope",
+//         questions: [
+//             {
+//                 id: "description",
+//                 question: "Describe your project in 1-2 sentences:",
+//                 type: "text",
+//                 placeholder: "e.g., 'A TikTok-style app for pet training videos'"
+//             },
+//             {
+//                 id: "project_scale",
+//                 question: "Target user base:",
+//                 type: "select",
+//                 options: [
+//                     "1-100 users (Personal)",
+//                     "100-10k users (Startup)",
+//                     "10k+ users (Enterprise)"
+//                 ]
+//             }
+//         ]
+//     },
+//     {
+//         id: "tech_constraints",
+//         title: "Technical Needs",
+//         questions: [
+//             {
+//                 id: "must_have",
+//                 question: "Essential technical requirements:",
+//                 type: "multiselect",
+//                 // Dynamically show/hide based on user's known_tech
+//                 options: [
+//                     "User Authentication",
+//                     "Real-time Features",
+//                     "Payment Processing",
+//                     "AI/ML Integration",
+//                     "Mobile App Stores"
+//                 ]
+//             },
+//             {
+//                 id: "avoid_tech",
+//                 question: "Any technologies to avoid?",
+//                 type: "multiselect",
+//                 // Pre-populate with user's weak areas from registration
+//                 options: ["PHP", "Java", "AWS", "Docker"]
+//             }
+//         ]
+//     }
+// ];

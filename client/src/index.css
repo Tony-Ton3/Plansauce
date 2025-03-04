@@ -2,3 +2,35 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Simple loading dots animation */
+.dots-loading {
+    position: relative;
+    width: 24px;
+    display: inline-block;
+}
+
+.dots-loading::after {
+    content: '...';
+    display: inline-block;
+    animation: dots 1.5s infinite;
+    overflow: hidden;
+    width: 24px;
+}
+
+@keyframes dots {
+    0% {
+        width: 0;
+    }
+
+    33% {
+        width: 8px;
+    }
+
+    66% {
+        width: 16px;
+    }
+
+    100% {
+        width: 24px;
+    }
+}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
-import { FaArrowLeft, FaArrowRight, FaCheck } from "react-icons/fa";
+import { FaCheck, FaPlus } from "react-icons/fa";
 import { quizQuestions } from "../constants/quizQuestions.jsx";
 import { updateUserQuizAnswers } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
@@ -11,17 +11,17 @@ export default function Quiz() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { currentUser } = useSelector((state) => state.user);
-    const [currentQuestion, setCurrentQuestion] = useState(0);
     const [answers, setAnswers] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
+    const [customTech, setCustomTech] = useState("");
 
     const questions = quizQuestions;
 
     const handleOptionSelect = (questionId, optionValue) => {
-        const question = questions[currentQuestion];
+        const question = questions.find(q => q.id === questionId);
 
-        if (question.multiSelect) {
+        if (question.type === "multiselect") {
             const currentSelections = answers[questionId] || [];
             if (currentSelections.includes(optionValue)) {
                 setAnswers({
@@ -42,18 +42,24 @@ export default function Quiz() {
         }
     };
 
-    const handleNext = () => {
-        if (currentQuestion < questions.length - 1) {
-            setCurrentQuestion(currentQuestion + 1);
-        } else {
-            handleSubmit();
+    const handleAddCustomTech = (questionId) => {
+        if (customTech.trim() === "") return;
+
+        const currentSelections = answers[questionId] || [];
+        if (!currentSelections.includes(customTech)) {
+            setAnswers({
+                ...answers,
+                [questionId]: [...currentSelections, customTech]
+            });
         }
+        setCustomTech("");
     };
 
-    const handlePrevious = () => {
-        if (currentQuestion > 0) {
-            setCurrentQuestion(currentQuestion - 1);
-        }
+    const handleSliderChange = (questionId, value) => {
+        setAnswers({
+            ...answers,
+            [questionId]: value
+        });
     };
 
     const handleSubmit = async () => {
@@ -88,8 +94,6 @@ export default function Quiz() {
         navigate("/projectinput");
     };
 
-    const currentQuestionData = questions[currentQuestion];
-    const isLastQuestion = currentQuestion === questions.length - 1;
     const isOptionSelected = (questionId, optionValue) => {
         const answer = answers[questionId];
         if (Array.isArray(answer)) {
@@ -98,108 +102,180 @@ export default function Quiz() {
         return answer === optionValue;
     };
 
-    const isCurrentQuestionAnswered = () => {
-        const questionId = currentQuestionData.id;
-        const answer = answers[questionId];
+    const isAllQuestionsAnswered = () => {
+        return questions.every(question => {
+            const answer = answers[question.id];
 
-        if (currentQuestionData.multiSelect) {
-            return Array.isArray(answer) && answer.length > 0;
-        }
+            if (question.type === "multiselect") {
+                return Array.isArray(answer) && answer.length > 0;
+            }
 
-        return answer !== undefined;
+            return answer !== undefined;
+        });
     };
 
-    return (
-        <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')" }}>
-            <div className="absolute inset-0 backdrop-blur-md bg-black/30"></div>
-
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-                className="w-full max-w-2xl bg-white rounded-xl overflow-hidden shadow-2xl relative z-10"
-            >
-                <div className="p-8">
-                    {/* Progress bar */}
-                    <div className="mb-6">
-                        <div className="flex justify-between text-sm text-gray-600 mb-2">
-                            <span>Question {currentQuestion + 1} of {questions.length}</span>
-                            <button
-                                onClick={handleSkip}
-                                className="text-blue-600 hover:underline"
-                            >
-                                Skip Quiz
-                            </button>
+    // Function to render a single question
+    const renderQuestion = (questionData) => {
+        switch (questionData.type) {
+            case "slider":
+                return (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-medium text-white mb-4">
+                            {questionData.question}
+                        </h3>
+                        <div className="flex justify-between text-sm text-gray-200 mb-1">
+                            {Object.entries(questionData.labels).map(([value, label]) => (
+                                <span key={value}>{label}</span>
+                            ))}
                         </div>
-                        <div className="h-2 bg-gray-200 rounded-full">
-                            <div
-                                className="h-full bg-blue-600 rounded-full transition-all duration-300"
-                                style={{ width: `${((currentQuestion + 1) / questions.length) * 100}%` }}
-                            ></div>
+                        <input
+                            type="range"
+                            min={questionData.min}
+                            max={questionData.max}
+                            step={questionData.step}
+                            value={answers[questionData.id] || questionData.min}
+                            onChange={(e) => handleSliderChange(questionData.id, parseInt(e.target.value))}
+                            className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-400"
+                        />
+                        <div className="text-center text-lg font-medium text-blue-300">
+                            {answers[questionData.id] || questionData.min} hours per week
                         </div>
                     </div>
-
-                    {error && (
-                        <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg">
-                            <p>{error}</p>
-                            <p className="text-sm mt-1">Don't worry, we'll continue with your answers.</p>
-                        </div>
-                    )}
-
-                    <div className="mb-8">
-                        <h2 className="text-2xl font-semibold text-gray-800 mb-6">
-                            {currentQuestionData.question}
-                        </h2>
-
-                        <div className="space-y-3">
-                            {currentQuestionData.options.map((option) => (
+                );
+            case "multiselect":
+                return (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-medium text-white mb-4">
+                            {questionData.question}
+                        </h3>
+                        <div className="flex flex-wrap gap-2">
+                            {questionData.options.map((option) => (
                                 <button
-                                    key={option.value}
-                                    onClick={() => handleOptionSelect(currentQuestionData.id, option.value)}
-                                    className={`w-full p-4 text-left rounded-lg border-2 transition duration-200 flex items-center justify-between ${isOptionSelected(currentQuestionData.id, option.value)
-                                        ? "border-blue-600 bg-blue-50"
-                                        : "border-gray-300 hover:border-blue-400"
+                                    key={option}
+                                    onClick={() => handleOptionSelect(questionData.id, option)}
+                                    className={`px-4 py-2 rounded-md border transition-colors ${isOptionSelected(questionData.id, option)
+                                        ? "bg-blue-900 border-blue-400 text-blue-200"
+                                        : "border-gray-600 text-gray-300 hover:border-blue-400"
                                         }`}
                                 >
-                                    <span>{option.label}</span>
-                                    {isOptionSelected(currentQuestionData.id, option.value) && (
-                                        <FaCheck className="text-blue-600" />
-                                    )}
+                                    {option}
+                                </button>
+                            ))}
+                        </div>
+
+                        {questionData.allowCustomInput && (
+                            <div className="mt-4">
+                                <div className="flex">
+                                    <input
+                                        type="text"
+                                        value={customTech}
+                                        onChange={(e) => setCustomTech(e.target.value)}
+                                        placeholder="Add custom technology..."
+                                        className="flex-grow px-4 py-2 bg-gray-800 border border-gray-600 text-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                    <button
+                                        onClick={() => handleAddCustomTech(questionData.id)}
+                                        className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <FaPlus />
+                                    </button>
+                                </div>
+
+                                {Array.isArray(answers[questionData.id]) && answers[questionData.id].length > 0 && (
+                                    <div className="mt-3">
+                                        <p className="text-sm text-gray-300 mb-2">Selected technologies:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {answers[questionData.id].map(tech => (
+                                                <span
+                                                    key={tech}
+                                                    className="px-3 py-1 bg-blue-900 text-blue-200 rounded-full text-sm flex items-center"
+                                                >
+                                                    {tech}
+                                                    <button
+                                                        className="ml-2 text-blue-300 hover:text-blue-100"
+                                                        onClick={() => handleOptionSelect(questionData.id, tech)}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                );
+            case "select":
+            default:
+                return (
+                    <div className="space-y-4">
+                        <h3 className="text-xl font-medium text-white mb-4">
+                            {questionData.question}
+                        </h3>
+                        <div className="space-y-2">
+                            {questionData.options.map((option) => (
+                                <button
+                                    key={option}
+                                    onClick={() => handleOptionSelect(questionData.id, option)}
+                                    className={`w-full p-4 text-left rounded-md border transition-colors ${isOptionSelected(questionData.id, option)
+                                        ? "bg-blue-900 border-blue-400 text-blue-200"
+                                        : "border-gray-600 text-gray-300 hover:border-blue-400"
+                                        }`}
+                                >
+                                    {option}
                                 </button>
                             ))}
                         </div>
                     </div>
+                );
+        }
+    };
 
-                    <div className="flex justify-between">
-                        <button
-                            onClick={handlePrevious}
-                            disabled={currentQuestion === 0}
-                            className={`px-6 py-2 rounded-md flex items-center ${currentQuestion === 0
-                                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                                : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                                }`}
-                        >
-                            <FaArrowLeft className="mr-2" /> Previous
-                        </button>
+    return (
+        <div className="min-h-screen bg-cover bg-center relative py-10"
+            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')" }}>
+            <div className="absolute inset-0 backdrop-blur-md bg-black/70"></div>
 
-                        <button
-                            onClick={handleNext}
-                            disabled={!isCurrentQuestionAnswered() || isSubmitting}
-                            className={`px-6 py-2 rounded-md flex items-center ${!isCurrentQuestionAnswered() || isSubmitting
-                                ? "bg-blue-400 text-white cursor-not-allowed"
-                                : "bg-blue-600 text-white hover:bg-blue-700"
-                                }`}
-                        >
-                            {isLastQuestion ? (
-                                isSubmitting ? "Submitting..." : "Submit"
-                            ) : (
-                                <>Next <FaArrowRight className="ml-2" /></>
-                            )}
-                        </button>
-                    </div>
+            <div className="container mx-auto max-w-3xl relative z-10 p-8">
+                <div className="flex justify-between items-center mb-8">
+                    <h1 className="text-3xl font-bold text-white">Learning Preferences</h1>
+                    <button
+                        onClick={handleSkip}
+                        className="text-blue-300 hover:underline"
+                    >
+                        Skip Quiz
+                    </button>
                 </div>
-            </motion.div>
+
+                {error && (
+                    <div className="mb-6 p-3 bg-red-900/50 border border-red-500 text-red-200 rounded-lg">
+                        <p>{error}</p>
+                        <p className="text-sm mt-1">Don't worry, we'll continue with your answers.</p>
+                    </div>
+                )}
+
+                <div className="space-y-10">
+                    {questions.map((question) => (
+                        <div key={question.id} className="py-6 border-b border-gray-600 last:border-0">
+                            {renderQuestion(question)}
+                        </div>
+                    ))}
+                </div>
+
+                <div className="mt-10 flex justify-end">
+                    <button
+                        onClick={handleSubmit}
+                        disabled={!isAllQuestionsAnswered() || isSubmitting}
+                        className={`px-8 py-3 rounded-md text-lg font-medium ${!isAllQuestionsAnswered() || isSubmitting
+                            ? "bg-blue-500/50 text-white cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700"
+                            }`}
+                    >
+                        {isSubmitting ? "Submitting..." : "Submit Preferences"}
+                    </button>
+                </div>
+            </div>
         </div>
     );
-} 
+}

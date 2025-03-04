@@ -3,12 +3,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setStackSuccess, setStackFailure } from "../redux/techstackSlice";
 import CreatedStacks from "../pages/CreatedStacks";
-import ProgressBar from "./ProgressBar";
 import { getClaudeRecommendation } from "../utils/api.jsx";
 import { projectQuestions } from "../constants/projectQuestions";
 import { IoIosArrowDropdown, IoMdAdd, IoMdCheckmark } from "react-icons/io";
-import BarLoader from "./BarLoader";
-import { motion } from "framer-motion";
+import { FaInfoCircle, FaLightbulb } from "react-icons/fa";
 
 const ProjectInput = () => {
   const [form, setForm] = useState(() => {
@@ -17,13 +15,13 @@ const ProjectInput = () => {
     return savedForm
       ? JSON.parse(savedForm)
       : {
-        description: "", //an descrioption of what the user wants to build
+        description: "", //a description of what the user wants to build
         projectType: "", //web, mobile, etc
         scale: "", //personal, startup, enterprise
         features: [], //an array of must have features for the project
         timeline: "", //development timeline
-        experience: "", //expereince level of the user
-        knownTechnologies: [], //getting more info about user experinece for more catered recommendation
+        experience: "", //experience level of the user
+        knownTechnologies: [], //getting more info about user experience for more catered recommendation
       };
   });
 
@@ -41,10 +39,11 @@ const ProjectInput = () => {
     setForm(emptyForm);
     localStorage.removeItem("projectForm");
   };
-  const [currentPage, setCurrentPage] = useState(0);
+
   const [isLoading, setIsLoading] = useState(false);
   const [showTechStack, setShowTechStack] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -62,6 +61,10 @@ const ProjectInput = () => {
       localStorage.setItem("projectForm", JSON.stringify(newForm));
       return newForm;
     });
+    // Clear error for this field when user types
+    if (formErrors[id]) {
+      setFormErrors(prev => ({ ...prev, [id]: null }));
+    }
   };
 
   //handles check box changes
@@ -74,26 +77,44 @@ const ProjectInput = () => {
       localStorage.setItem("projectForm", JSON.stringify(newForm));
       return newForm;
     });
-  };
-
-  //navigates to the next page of the form
-  const handleNext = () => {
-    if (currentPage < projectQuestions.length - 1) {
-      setCurrentPage((prev) => prev + 1);
-    } else {
-      //sends userinput to server to get recommendations
-      handleRecommendation();
+    // Clear error for this field when user selects
+    if (formErrors[id]) {
+      setFormErrors(prev => ({ ...prev, [id]: null }));
     }
   };
 
-  //navigate to the previosu page of the form
-  const handlePrevious = () => {
-    if (currentPage > 0) {
-      setCurrentPage((prev) => prev - 1);
+  const validateForm = () => {
+    const errors = {};
+
+    // Check required fields
+    if (!form.description.trim()) {
+      errors.description = "Project description is required";
     }
+
+    if (!form.projectType) {
+      errors.projectType = "Project type is required";
+    }
+
+    if (!form.scale) {
+      errors.scale = "Project scale is required";
+    }
+
+    return errors;
   };
 
-  async function handleRecommendation() {
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    // Validate form before submission
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // Scroll to the first error
+      const firstErrorId = Object.keys(errors)[0];
+      document.getElementById(firstErrorId)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
     try {
       setIsLoading(true);
       const recommendationStack = await getClaudeRecommendation(
@@ -111,60 +132,12 @@ const ProjectInput = () => {
     }
   }
 
-  // Animation variants for the ellipsis
-  const ellipsisVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 }
-  };
-
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
         <div className="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-8 text-center">
-          {/* <BarLoader /> */}
           <h2 className="px-4 py-2 text-2xl font-bold text-background flex">
-            Thinking
-            <div className="flex overflow-hidden">
-              <motion.span
-                variants={ellipsisVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{
-                  duration: 0.3,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: 0
-                }}
-              >
-                .
-              </motion.span>
-              <motion.span
-                variants={ellipsisVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{
-                  duration: 0.3,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: 0.3
-                }}
-              >
-                .
-              </motion.span>
-              <motion.span
-                variants={ellipsisVariants}
-                initial="hidden"
-                animate="visible"
-                transition={{
-                  duration: 0.3,
-                  repeat: Infinity,
-                  repeatType: "reverse",
-                  delay: 0.6
-                }}
-              >
-                .
-              </motion.span>
-            </div>
+            Thinking<span className="dots-loading">...</span>
           </h2>
         </div>
       </div>
@@ -182,19 +155,31 @@ const ProjectInput = () => {
   }
 
   const renderQuestion = (question) => {
-    switch (question.type) {
-      case "text":
-        return (
+    const isRequired = ["description", "projectType", "scale"].includes(question.id);
+    const hasError = formErrors[question.id];
+
+    return (
+      <div className={`mb-6 ${hasError ? 'animate-pulse' : ''}`}>
+        <div className="flex items-baseline mb-2">
+          <label htmlFor={question.id} className="text-white font-medium">
+            {question.question}
+            {isRequired && <span className="text-red-400 ml-1">*</span>}
+          </label>
+          {hasError && (
+            <span className="ml-2 text-sm text-red-400">{hasError}</span>
+          )}
+        </div>
+
+        {question.type === "text" ? (
           <textarea
             id={question.id}
             value={form[question.id] || ""}
             onChange={(e) => handleInputChange(question.id, e.target.value)}
-            className="border-2 border-gray-500 rounded w-full h-24 py-2 px-3 bg-gray-100 leading-tight focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent "
-            placeholder="Describe your project idea here..."
+            className={`w-full px-4 py-3 border ${hasError ? 'border-red-400' : 'border-gray-600'} rounded-lg bg-gray-800 focus:outline-none focus:ring-2 focus:ring-accent text-white min-h-24`}
+            placeholder={question.placeholder || "Describe your project..."}
+            aria-invalid={hasError ? "true" : "false"}
           />
-        );
-      case "select":
-        return (
+        ) : question.type === "select" ? (
           <div className="relative">
             <select
               id={question.id}
@@ -202,7 +187,8 @@ const ProjectInput = () => {
               onChange={(e) => handleInputChange(question.id, e.target.value)}
               onFocus={() => setIsSelectOpen(true)}
               onBlur={() => setIsSelectOpen(false)}
-              className="block appearance-none w-full bg-gray-100 py-2 px-3 pr-8 rounded border-2 border-gray-500 leading-tight focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent"
+              className={`block w-full px-4 py-3 ${hasError ? 'border-red-400' : 'border-gray-600'} border rounded-lg bg-gray-800 focus:outline-none focus:ring-2 focus:ring-accent appearance-none text-white`}
+              aria-invalid={hasError ? "true" : "false"}
             >
               <option value="" disabled>
                 Select an option
@@ -213,94 +199,133 @@ const ProjectInput = () => {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
               <IoIosArrowDropdown
-                className={`size-4 transition-transform duration-300 ${isSelectOpen ? "" : "rotate-180"
-                  }`}
+                className={`size-5 transition-transform duration-300 ${isSelectOpen ? "" : "rotate-180"}`}
               />
             </div>
           </div>
-        );
-      case "multiselect":
-        return (
-          <div className="flex flex-wrap gap-1 justify-start">
+        ) : (
+          <div className="flex flex-wrap gap-2 mt-2">
             {question.options.map((option, index) => {
               const isChecked = form[question.id]?.includes(option) || false;
               return (
                 <button
                   key={index}
+                  type="button"
                   onClick={() =>
                     handleMultiSelectChange(question.id, option, !isChecked)
                   }
-                  className={`inline-flex items-center px-3 py-1 rounded-full text-md font-medium transition-colors duration-200 ${isChecked
-                    ? "bg-accent text-background"
-                    : "text-accent border-2 border-accent"
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isChecked
+                    ? "bg-accent text-white"
+                    : "bg-gray-800 text-white border border-gray-600 hover:border-accent"
                     }`}
                 >
                   {option}
                   <span className="ml-1">
                     {isChecked ? (
-                      <IoMdCheckmark className="h-5 w-5" />
+                      <IoMdCheckmark className="h-4 w-4 inline" />
                     ) : (
-                      <IoMdAdd className="h-5 w-5" />
+                      <IoMdAdd className="h-4 w-4 inline" />
                     )}
                   </span>
                 </button>
               );
             })}
           </div>
-        );
-      default:
-        return null;
-    }
+        )}
+      </div>
+    );
   };
 
-  const currentPageQuestions = projectQuestions[currentPage];
+  // Extract and organize questions
+  const allQuestions = projectQuestions.flatMap(page => page.questions);
+
+  const mandatoryQuestions = allQuestions.filter(q => ["description", "projectType", "scale"].includes(q.id));
+  const detailQuestions = allQuestions.filter(q => ["features", "timeline"].includes(q.id));
+  const experienceQuestions = allQuestions.filter(q => ["experience", "knownTechnologies"].includes(q.id));
 
   return (
-    <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen flex flex-col justify-center items-center pt-20">
-      <div className="w-full max-w-3xl mx-auto px-4">
-        <div className="bg-background rounded-lg shadow-lg p-6">
-          <h2 className="font-nerko text-3xl font-bold text-gray-600 mb-4 text-center">
-            {currentPageQuestions.title}
-          </h2>
-          <ProgressBar currentPage={currentPage} />
-          <div className="mt-4 space-y-4">
-            {currentPageQuestions.questions.map((question) => (
-              <div key={question.id}>
-                <label className="block text-sm font-medium mb-1">
-                  {question.question}
-                </label>
-                {renderQuestion(question)}
+    <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen py-20">
+      <div className="max-w-3xl mx-auto px-6">
+        {/* Page Header */}
+        <div className="mb-10 text-center">
+          <h1 className="text-3xl font-bold text-white mb-3">Create Your Tech Stack</h1>
+          <p className="text-gray-300 max-w-2xl mx-auto">
+            Tell us about your project to get a personalized technology recommendation that matches your needs.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          {/* Required information section */}
+          <div className="mb-12">
+            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
+              <h2 className="text-xl font-medium text-white">Required Information</h2>
+              <div className="ml-3 text-sm text-gray-400 flex items-center">
+                <span className="text-red-400 mr-1">*</span> Required fields
               </div>
-            ))}
+            </div>
+
+            <div className="space-y-4">
+              {mandatoryQuestions.map(question => renderQuestion(question))}
+            </div>
           </div>
 
-          <div
-            className={`flex ${!currentPage ? "justify-end" : "justify-between"
-              } mt-6 gap-2`}
-          >
-            {currentPage > 0 && (
-              <button
-                onClick={handlePrevious}
-                className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-secondary to-accent text-background transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] focus:outline-none"
-              >
-                Previous
-              </button>
-            )}
+          {/* Project details section */}
+          <div className="mb-12">
+            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
+              <h2 className="text-xl font-medium text-white">Project Details</h2>
+              <div className="ml-3 text-sm text-gray-400 flex items-center">
+                <FaInfoCircle className="mr-1" /> Optional but recommended
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {detailQuestions.map(question => renderQuestion(question))}
+            </div>
+          </div>
+
+          {/* Experience section */}
+          <div className="mb-12">
+            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
+              <h2 className="text-xl font-medium text-white">Your Experience</h2>
+              <div className="ml-3 text-sm text-gray-400 flex items-center">
+                <FaLightbulb className="mr-1" /> Helps tailor recommendations
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              {experienceQuestions.map(question => renderQuestion(question))}
+            </div>
+          </div>
+
+          {/* Tip box */}
+          <div className="bg-gray-800 border-l-4 border-accent p-4 mb-8 rounded-r-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                <FaInfoCircle className="h-5 w-5 text-accent" />
+              </div>
+              <div className="ml-3">
+                <p className="text-gray-300">
+                  The more details you provide, the more tailored your tech stack recommendation will be.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Submit button */}
+          <div className="flex justify-center">
             <button
-              onClick={handleNext}
-              className="px-4 py-2 rounded-lg text-sm font-medium bg-gradient-to-r from-secondary to-accent text-background transition-all shadow-[2px_2px_0px_black] hover:shadow-none hover:translate-x-[2px] hover:translate-y-[2px] focus:outline-none"
+              type="submit"
+              className="px-8 py-4 bg-accent hover:bg-opacity-90 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
             >
-              {currentPage === projectQuestions.length - 1
-                ? "Create Stack"
-                : "Next"}
+              Generate My Tech Stack
             </button>
           </div>
-        </div>
+        </form>
       </div>
     </div>
   );
-}
+};
 
 export default ProjectInput;
