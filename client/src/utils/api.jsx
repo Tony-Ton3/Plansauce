@@ -82,12 +82,12 @@ export const fetchTutorialsForStack = async (stackName, stackId) => {
     }
 };
 
-export const updateUserQuizAnswers = async (quizAnswers) => {
+export const updateUserBackground = async (background) => {
     try {
         const response = await fetch(`http://localhost:3000/api/user/update`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ quizAnswers }),
+            body: JSON.stringify({ background }),
             credentials: 'include',
         });
 

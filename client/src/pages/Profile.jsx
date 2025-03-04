@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateStart, updateSuccess, updateFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure } from "../redux/userSlice";
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaEdit, FaTrash, FaCheck, FaPlus } from "react-icons/fa";
-import { quizQuestions } from "../constants/quizQuestions.jsx";
-import { updateUserQuizAnswers } from "../utils/api.jsx";
+import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
+import { updateUserBackground } from "../utils/api.jsx";
 
 export default function Profile() {
     const { currentUser, loading, error } = useSelector((state) => state.user);
@@ -14,7 +14,13 @@ export default function Profile() {
         password: "",
         newPassword: "",
     });
-    const [quizAnswers, setQuizAnswers] = useState({});
+    const [background, setBackground] = useState({
+        experience: "",
+        known_tech: [],
+        time_commitment: 2,
+        risk_tolerance: "",
+        collaboration: ""
+    });
     const [updateMode, setUpdateMode] = useState(false);
     const [quizEditMode, setQuizEditMode] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -35,13 +41,25 @@ export default function Profile() {
                 newPassword: "",
             });
 
-            // Initialize quiz answers from user data if available
-            if (currentUser.quizAnswers) {
-                console.log("Quiz answers from user:", currentUser.quizAnswers);
-                setQuizAnswers(currentUser.quizAnswers);
+            // Initialize background data from user data if available
+            if (currentUser.background) {
+                console.log("Background data from user:", currentUser.background);
+                setBackground({
+                    experience: currentUser.background.experience || "",
+                    known_tech: currentUser.background.known_tech || [],
+                    time_commitment: currentUser.background.time_commitment || 2,
+                    risk_tolerance: currentUser.background.risk_tolerance || "",
+                    collaboration: currentUser.background.collaboration || ""
+                });
             } else {
-                // Initialize with empty object if no quiz answers
-                setQuizAnswers({});
+                // Initialize with default values if no background data
+                setBackground({
+                    experience: "",
+                    known_tech: [],
+                    time_commitment: 2,
+                    risk_tolerance: "",
+                    collaboration: ""
+                });
             }
         }
     }, [currentUser]);
@@ -122,8 +140,8 @@ export default function Profile() {
         try {
             dispatch(updateStart());
 
-            // Use the utility function to update quiz answers
-            const updatedUser = await updateUserQuizAnswers(quizAnswers);
+            // Use the utility function to update background data
+            const updatedUser = await updateUserBackground(background);
 
             dispatch(updateSuccess(updatedUser));
             setSuccessMessage("Preferences updated successfully!");
@@ -156,35 +174,48 @@ export default function Profile() {
     };
 
     const handleOptionSelect = (questionId, optionValue) => {
-        const question = quizQuestions.find(q => q.id === questionId);
+        const question = backgroundQuestions.find(q => q.id === questionId);
 
-        if (question.multiSelect) {
+        if (question.type === "multiselect") {
             // For multi-select questions
-            const currentSelections = quizAnswers[questionId] || [];
+            const currentSelections = background[questionId] || [];
             if (currentSelections.includes(optionValue)) {
                 // Remove if already selected
-                setQuizAnswers({
-                    ...quizAnswers,
+                setBackground({
+                    ...background,
                     [questionId]: currentSelections.filter(value => value !== optionValue)
                 });
             } else {
                 // Add to selections
-                setQuizAnswers({
-                    ...quizAnswers,
+                setBackground({
+                    ...background,
                     [questionId]: [...currentSelections, optionValue]
                 });
             }
+        } else if (question.type === "slider") {
+            // For slider questions
+            setBackground({
+                ...background,
+                [questionId]: parseInt(optionValue)
+            });
         } else {
             // For single-select questions
-            setQuizAnswers({
-                ...quizAnswers,
+            setBackground({
+                ...background,
                 [questionId]: optionValue
             });
         }
     };
 
+    const handleSliderChange = (questionId, value) => {
+        setBackground({
+            ...background,
+            [questionId]: parseInt(value)
+        });
+    };
+
     const isOptionSelected = (questionId, optionValue) => {
-        const answer = quizAnswers[questionId];
+        const answer = background[questionId];
         console.log(`Checking if ${optionValue} is selected for ${questionId}, answer:`, answer);
 
         if (Array.isArray(answer)) {
@@ -192,24 +223,6 @@ export default function Profile() {
         }
 
         return answer === optionValue;
-    };
-
-    const getOptionLabel = (questionId, optionValue) => {
-        // First find the question with matching ID
-        const question = quizQuestions.find(q => q.id === questionId);
-        if (!question) {
-            console.log(`Question not found for ID: ${questionId}`);
-            return optionValue; // Return the raw value if question not found
-        }
-
-        // Then find the option with matching value
-        const option = question.options.find(opt => opt.value === optionValue);
-        if (!option) {
-            console.log(`Option not found for value: ${optionValue} in question: ${questionId}`);
-            return optionValue; // Return the raw value if option not found
-        }
-
-        return option.label;
     };
 
     const renderProfileTab = () => (
@@ -332,15 +345,16 @@ export default function Profile() {
     );
 
     const renderPreferencesTab = () => {
-        console.log("Current quiz answers:", quizAnswers);
-        console.log("Quiz questions:", quizQuestions);
+        console.log("Current background data:", background);
+        console.log("Background questions:", backgroundQuestions);
 
         return (
             <form onSubmit={handleQuizSubmit} className="space-y-6">
-                {quizQuestions.map((question) => {
-                    console.log(`Checking question ${question.id}, answer:`, quizAnswers[question.id]);
-                    const isMultiSelect = question.multiSelect;
-                    const answer = quizAnswers[question.id];
+                {backgroundQuestions.map((question) => {
+                    console.log(`Checking question ${question.id}, answer:`, background[question.id]);
+                    const isMultiSelect = question.type === "multiselect";
+                    const isSlider = question.type === "slider";
+                    const answer = background[question.id];
                     const hasAnswer = isMultiSelect
                         ? Array.isArray(answer) && answer.length > 0
                         : answer !== undefined && answer !== null && answer !== "";
@@ -351,24 +365,46 @@ export default function Profile() {
 
                             {quizEditMode ? (
                                 <div className="space-y-2">
-                                    {question.options.map((option) => (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            onClick={() => handleOptionSelect(question.id, option.value)}
-                                            className={`w-full p-3 text-left rounded-lg border transition duration-200 flex items-center justify-between ${isOptionSelected(question.id, option.value)
-                                                ? "border-[#8e5fe7] bg-[#1a1f29]"
-                                                : "border-gray-700 hover:border-[#8e5fe7]"
-                                                }`}
-                                        >
-                                            <span className="text-white">{option.label}</span>
-                                            {isOptionSelected(question.id, option.value) ? (
-                                                <FaCheck className="text-[#8e5fe7]" />
-                                            ) : (
-                                                question.multiSelect && <FaPlus className="text-gray-400" />
-                                            )}
-                                        </button>
-                                    ))}
+                                    {isSlider ? (
+                                        <div className="space-y-4">
+                                            <div className="flex justify-between text-sm text-gray-400 mb-1">
+                                                {Object.entries(question.labels).map(([value, label]) => (
+                                                    <span key={value}>{label}</span>
+                                                ))}
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min={question.min}
+                                                max={question.max}
+                                                step={question.step}
+                                                value={background[question.id] || question.min}
+                                                onChange={(e) => handleSliderChange(question.id, e.target.value)}
+                                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#8e5fe7]"
+                                            />
+                                            <div className="text-center text-lg font-medium text-[#8e5fe7]">
+                                                {background[question.id] || question.min} hours per week
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        question.options.map((option) => (
+                                            <button
+                                                key={option}
+                                                type="button"
+                                                onClick={() => handleOptionSelect(question.id, option)}
+                                                className={`w-full p-3 text-left rounded-lg border transition duration-200 flex items-center justify-between ${isOptionSelected(question.id, option)
+                                                    ? "border-[#8e5fe7] bg-[#1a1f29]"
+                                                    : "border-gray-700 hover:border-[#8e5fe7]"
+                                                    }`}
+                                            >
+                                                <span className="text-white">{option}</span>
+                                                {isOptionSelected(question.id, option) ? (
+                                                    <FaCheck className="text-[#8e5fe7]" />
+                                                ) : (
+                                                    isMultiSelect && <FaPlus className="text-gray-400" />
+                                                )}
+                                            </button>
+                                        ))
+                                    )}
                                 </div>
                             ) : (
                                 <div className="text-gray-300">
@@ -377,13 +413,17 @@ export default function Profile() {
                                             <div className="flex flex-wrap gap-2">
                                                 {answer.map(value => (
                                                     <span key={value} className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm">
-                                                        {getOptionLabel(question.id, value)}
+                                                        {value}
                                                     </span>
                                                 ))}
                                             </div>
+                                        ) : isSlider ? (
+                                            <span className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm inline-block">
+                                                {answer} hours per week
+                                            </span>
                                         ) : (
                                             <span className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm inline-block">
-                                                {getOptionLabel(question.id, answer)}
+                                                {answer}
                                             </span>
                                         )
                                     ) : (

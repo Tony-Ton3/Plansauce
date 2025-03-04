@@ -85,10 +85,10 @@ export const deletesavedstack = async (req, res, next) => {
   }
 };
 
-export const updateUserQuizAnswers = async (req, res, next) => {
+export const updateUserBackground = async (req, res, next) => {
   const userId = req.user.id;
 
-  const { quizAnswers } = req.body;
+  const { background } = req.body;
 
   try {
     const user = await User.findById(userId);
@@ -96,7 +96,7 @@ export const updateUserQuizAnswers = async (req, res, next) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    user.quizAnswers = quizAnswers;
+    user.background = background;
     await user.save();
 
     return res.status(200).json(user);

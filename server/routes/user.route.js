@@ -4,7 +4,7 @@ import {
   getstack,
   getallsavedstacks,
   deletesavedstack,
-  updateUserQuizAnswers,
+  updateUserBackground,
 } from "../controllers/user.controller.js";
 import { verifyToken } from "../utils/verifyUser.js";
 
@@ -14,6 +14,6 @@ router.post("/signout", signout);
 router.get("/getstack", verifyToken, getstack);
 router.get("/getallsavedstacks", verifyToken, getallsavedstacks);
 router.delete("/deletesavedstack/:stackId", verifyToken, deletesavedstack);
-router.put("/update", verifyToken, updateUserQuizAnswers);
+router.put("/update", verifyToken, updateUserBackground);
 
 export default router;

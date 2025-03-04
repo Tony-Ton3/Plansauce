@@ -3,32 +3,38 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import { FaCheck, FaPlus } from "react-icons/fa";
-import { quizQuestions } from "../constants/quizQuestions.jsx";
-import { updateUserQuizAnswers } from "../utils/api.jsx";
+import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
+import { updateUserBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
 
 export default function Quiz() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const { currentUser } = useSelector((state) => state.user);
-    const [answers, setAnswers] = useState({});
+    const [answers, setAnswers] = useState({
+        experience: "",
+        known_tech: [],
+        time_commitment: 0,
+        risk_tolerance: "",
+        collaboration: ""
+    })
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [customTech, setCustomTech] = useState("");
 
-    const questions = quizQuestions;
+    const questions = backgroundQuestions;
 
     const handleOptionSelect = (questionId, optionValue) => {
         const question = questions.find(q => q.id === questionId);
 
         if (question.type === "multiselect") {
             const currentSelections = answers[questionId] || [];
-            if (currentSelections.includes(optionValue)) {
+            if (currentSelections.includes(optionValue)) { //removal
                 setAnswers({
                     ...answers,
                     [questionId]: currentSelections.filter(value => value !== optionValue)
                 });
-            } else {
+            } else { //addition
                 setAnswers({
                     ...answers,
                     [questionId]: [...currentSelections, optionValue]
@@ -67,10 +73,10 @@ export default function Quiz() {
         setError(null);
 
         try {
-            console.log("Submitting quiz answers:", answers);
+            console.log("Submitting background answers:", answers);
 
-            // Send the quiz answers to the server
-            const updatedUser = await updateUserQuizAnswers(answers);
+            // Send the background answers to the server
+            const updatedUser = await updateUserBackground(answers);
             console.log("Received updated user:", updatedUser);
 
             // Update Redux state with the updated user data
@@ -79,7 +85,7 @@ export default function Quiz() {
             // Navigate to project input page after successful submission
             navigate("/projectinput");
         } catch (error) {
-            console.error("Error submitting quiz:", error);
+            console.error("Error submitting background:", error);
             setError(error.message || "Failed to save your preferences. We'll continue anyway.");
             setIsSubmitting(false);
 
@@ -206,7 +212,6 @@ export default function Quiz() {
                         )}
                     </div>
                 );
-            case "select":
             default:
                 return (
                     <div className="space-y-4">
