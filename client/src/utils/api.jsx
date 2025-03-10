@@ -83,6 +83,8 @@ export const fetchTutorialsForStack = async (stackName, stackId) => {
 };
 
 export const updateUserBackground = async (background) => {
+    console.log("updateUserBackground: ", background);
+
     try {
         const response = await fetch(`http://localhost:3000/api/user/update`, {
             method: 'PUT',
@@ -100,6 +102,27 @@ export const updateUserBackground = async (background) => {
         return data;
     } catch (error) {
         console.error('Error updating quiz answers:', error);
+        throw error;
+    }
+};
+
+export const setBackground = async () => {
+    try {
+        const response = await fetch(`http://localhost:3000/api/user/setbackground`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.message || 'Failed to set background status');
+        }
+
+        return data;
+    } catch (error) {
+        console.error('Error setting background status:', error);
         throw error;
     }
 }; 

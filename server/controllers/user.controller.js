@@ -3,6 +3,10 @@ import UserTutorials from "../models/tutorial.model.js";
 import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
 
+export const test = (req, res, next) => {
+  return res.status(200).json({ message: "Test successful" });
+}
+
 export const signout = (req, res, next) => {
   try {
     res
@@ -99,8 +103,27 @@ export const updateUserBackground = async (req, res, next) => {
     user.background = background;
     await user.save();
 
-    return res.status(200).json(user);
+    return res.status(200).json({ message: "Background updated successfully" });
   } catch (error) {
     next(errorHandler(500, "Error updating quiz answers"));
   }
 }
+
+export const setBackground = async (req, res, next) => {
+  const userId = req.user.id;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.hasFilledBackground = true;
+
+    await user.save();
+
+    res.status(200).json({ message: "Background set successfully" });
+  } catch (error) {
+    next(errorHandler(500, error));
+  }
+};

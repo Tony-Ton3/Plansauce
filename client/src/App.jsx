@@ -5,16 +5,17 @@ import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
-import ProjectInput from "./components/ProjectInput";
-import CreatedStacks from "./pages/CreatedStacks";
-import Layout from "./components/Layout";
-import PrivateRoute from "./components/PrivateRoute";
+import LearningPath from "./pages/LearningPath";
 import QuizIntro from "./pages/QuizIntro";
 import Quiz from "./pages/Quiz";
+import CreatedStacks from "./pages/CreatedStacks";
+
+import ProjectInput from "./components/ProjectInput";
+import Layout from "./components/Layout";
+import PrivateRoute from "./components/PrivateRoute";
 
 export default function App() {
   const { currentUser } = useSelector((state) => state.user);
-
   return (
     <Routes>
       <Route path="/" element={<Landing />} />
@@ -29,6 +30,7 @@ export default function App() {
 
         <Route element={<Layout />}>
           <Route path="/home" element={<Home />} />
+          <Route path="/learning-path" element={<LearningPath />} />
           <Route path="projectinput" element={<ProjectInput />} />
           <Route path="createdstacks" element={<CreatedStacks />} />
           <Route path="profile" element={<Profile />} />

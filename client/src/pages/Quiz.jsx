@@ -1,10 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { motion } from "framer-motion";
 import { FaCheck, FaPlus } from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
-import { updateUserBackground } from "../utils/api.jsx";
+import { updateUserBackground, setBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
 
 export default function Quiz() {
@@ -75,12 +74,20 @@ export default function Quiz() {
         try {
             console.log("Submitting background answers:", answers);
 
-            // Send the background answers to the server
+            // First, update the user's background information
             const updatedUser = await updateUserBackground(answers);
             console.log("Received updated user:", updatedUser);
 
+            await setBackground();
+
+            // Update the user object in Redux with the hasFilledBackground flag set to true
+            const userWithBackgroundFilled = {
+                ...updatedUser,
+                hasFilledBackground: true
+            };
+
             // Update Redux state with the updated user data
-            dispatch(updateSuccess(updatedUser));
+            dispatch(updateSuccess(userWithBackgroundFilled));
 
             // Navigate to project input page after successful submission
             navigate("/projectinput");
@@ -88,11 +95,6 @@ export default function Quiz() {
             console.error("Error submitting background:", error);
             setError(error.message || "Failed to save your preferences. We'll continue anyway.");
             setIsSubmitting(false);
-
-            // Navigate anyway after a short delay, even if there was an error
-            setTimeout(() => {
-                navigate("/projectinput");
-            }, 2000);
         }
     };
 

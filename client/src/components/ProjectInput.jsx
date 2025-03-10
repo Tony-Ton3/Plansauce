@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setStackSuccess, setStackFailure } from "../redux/techstackSlice";
 import CreatedStacks from "../pages/CreatedStacks";
 import { getClaudeRecommendation } from "../utils/api.jsx";
 import { projectQuestions } from "../constants/projectQuestions";
-import { IoIosArrowDropdown, IoMdAdd, IoMdCheckmark } from "react-icons/io";
-import { FaInfoCircle, FaLightbulb } from "react-icons/fa";
+import { IoMdAdd, IoMdCheckmark } from "react-icons/io";
+import { FaInfoCircle, FaLightbulb, FaArrowRight } from "react-icons/fa";
 
 const ProjectInput = () => {
   const [form, setForm] = useState(() => {
@@ -20,8 +20,8 @@ const ProjectInput = () => {
         scale: "", //personal, startup, enterprise
         features: [], //an array of must have features for the project
         timeline: "", //development timeline
-        experience: "", //experience level of the user
-        knownTechnologies: [], //getting more info about user experience for more catered recommendation
+        // experience: "", //experience level of the user
+        // knownTechnologies: [], //getting more info about user experience for more catered recommendation
       };
   });
 
@@ -33,8 +33,8 @@ const ProjectInput = () => {
       scale: "",
       features: [],
       timeline: "",
-      experience: "",
-      knownTechnologies: [],
+      // experience: "",
+      // knownTechnologies: [],
     };
     setForm(emptyForm);
     localStorage.removeItem("projectForm");
@@ -44,6 +44,8 @@ const ProjectInput = () => {
   const [showTechStack, setShowTechStack] = useState(false);
   const [isSelectOpen, setIsSelectOpen] = useState(false);
   const [formErrors, setFormErrors] = useState({});
+  const [openBackgroundQuiz, setOpenBackgroundQuiz] = useState(false);
+  const backgroundModalRef = useRef(null);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -53,6 +55,27 @@ const ProjectInput = () => {
   useEffect(() => {
     localStorage.setItem("projectForm", JSON.stringify(form));
   }, [form]);
+
+  useEffect(() => {
+    // Check if currentUser exists and has the hasFilledBackground property
+    if (currentUser && currentUser.hasFilledBackground === false) {
+      setOpenBackgroundQuiz(true);
+      // Prevent scrolling when modal is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      setOpenBackgroundQuiz(false);
+      document.body.style.overflow = 'auto';
+    }
+
+    // Cleanup function to restore scrolling when component unmounts
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [currentUser]);
+
+  const handleGoToQuiz = () => {
+    navigate("/quiz");
+  };
 
   //handles text box changes
   const handleInputChange = (id, value) => {
@@ -159,7 +182,7 @@ const ProjectInput = () => {
     const hasError = formErrors[question.id];
 
     return (
-      <div className={`mb-6 ${hasError ? 'animate-pulse' : ''}`}>
+      <div className={`mb-6 ${hasError ? 'animate-pulse' : ''}`} key={question.id}>
         <div className="flex items-baseline mb-2">
           <label htmlFor={question.id} className="text-white font-medium">
             {question.question}
@@ -199,11 +222,6 @@ const ProjectInput = () => {
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400">
-              <IoIosArrowDropdown
-                className={`size-5 transition-transform duration-300 ${isSelectOpen ? "" : "rotate-180"}`}
-              />
-            </div>
           </div>
         ) : (
           <div className="flex flex-wrap gap-2 mt-2">
@@ -216,7 +234,7 @@ const ProjectInput = () => {
                   onClick={() =>
                     handleMultiSelectChange(question.id, option, !isChecked)
                   }
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 ${isChecked
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 ${isChecked
                     ? "bg-accent text-white"
                     : "bg-gray-800 text-white border border-gray-600 hover:border-accent"
                     }`}
@@ -243,87 +261,85 @@ const ProjectInput = () => {
 
   const mandatoryQuestions = allQuestions.filter(q => ["description", "projectType", "scale"].includes(q.id));
   const detailQuestions = allQuestions.filter(q => ["features", "timeline"].includes(q.id));
-  const experienceQuestions = allQuestions.filter(q => ["experience", "knownTechnologies"].includes(q.id));
+  // const experienceQuestions = allQuestions.filter(q => ["experience", "knownTechnologies"].includes(q.id));
 
   return (
-    <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen py-20">
-      <div className="max-w-3xl mx-auto px-6">
-        {/* Page Header */}
-        <div className="mb-10 text-center">
-          <h1 className="text-3xl font-bold text-white mb-3">Create Your Tech Stack</h1>
-          <p className="text-gray-300 max-w-2xl mx-auto">
-            Tell us about your project to get a personalized technology recommendation that matches your needs.
-          </p>
+    <div className="bg-gradient-to-b from-gray-900 to-black min-h-screen py-10">
+      {/* Background Quiz Modal */}
+      {openBackgroundQuiz ? (
+        <div className="flex justify-center items-center pt-[14vh]">
+          <div
+            ref={backgroundModalRef}
+            className="max-w-md w-full "
+          >
+            <h2 className="text-2xl font-bold text-white mb-4">Complete Your Profile</h2>
+            <p className="text-gray-300 mb-6">
+              To provide you with personalized tech stack recommendations, we need to know a bit about your background and experience level.
+            </p>
+            <p className="text-gray-300 mb-6">
+              Taking our quick quiz will help us tailor recommendations to your skill level and learning preferences.
+            </p>
+            <div className="flex flex-col space-y-3">
+              <button
+                onClick={handleGoToQuiz}
+                className="px-4 py-3 bg-accent hover:bg-opacity-90 text-white font-medium rounded-lg flex items-center justify-center"
+              >
+                Take the Quiz <FaArrowRight className="ml-2" />
+              </button>
+            </div>
+          </div>
         </div>
+      ) : (
+        <div className="max-w-3xl mx-auto px-6">
+          {/* Page Header */}
+          <div className="mb-10 text-left">
+            <h1 className="text-3xl font-bold text-white mb-3">Create Your Tech Stack</h1>
+            <p className="text-gray-300 max-w-2xl">
+              Tell us about your project to get a personalized technology recommendation that matches your needs.
+            </p>
+          </div>
 
-        <form onSubmit={handleSubmit}>
-          {/* Required information section */}
-          <div className="mb-12">
-            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
-              <h2 className="text-xl font-medium text-white">Required Information</h2>
-              <div className="ml-3 text-sm text-gray-400 flex items-center">
-                <span className="text-red-400 mr-1">*</span> Required fields
+          <form onSubmit={handleSubmit}>
+            {/* Required information section */}
+            <div className="mb-12">
+              <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
+                <h2 className="text-xl font-medium text-white">Required Information</h2>
+                <div className="ml-3 text-sm text-gray-400 flex items-center">
+                  <span className="text-red-400 mr-1">*</span> Required fields
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                {mandatoryQuestions.map(question => renderQuestion(question))}
               </div>
             </div>
 
-            <div className="space-y-4">
-              {mandatoryQuestions.map(question => renderQuestion(question))}
-            </div>
-          </div>
+            {/* Project details section */}
+            <div className="mb-12">
+              <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
+                <h2 className="text-xl font-medium text-white">Project Details</h2>
+                <div className="ml-3 text-sm text-gray-400 flex items-center">
+                  <FaInfoCircle className="mr-1" /> Optional but recommended
+                </div>
+              </div>
 
-          {/* Project details section */}
-          <div className="mb-12">
-            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
-              <h2 className="text-xl font-medium text-white">Project Details</h2>
-              <div className="ml-3 text-sm text-gray-400 flex items-center">
-                <FaInfoCircle className="mr-1" /> Optional but recommended
+              <div className="space-y-4">
+                {detailQuestions.map(question => renderQuestion(question))}
               </div>
             </div>
 
-            <div className="space-y-4">
-              {detailQuestions.map(question => renderQuestion(question))}
+            {/* Submit button */}
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                className="px-8 py-4 bg-accent hover:bg-opacity-90 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
+              >
+                Generate My Tech Stack
+              </button>
             </div>
-          </div>
-
-          {/* Experience section */}
-          <div className="mb-12">
-            <div className="flex items-center mb-6 pb-2 border-b border-gray-700">
-              <h2 className="text-xl font-medium text-white">Your Experience</h2>
-              <div className="ml-3 text-sm text-gray-400 flex items-center">
-                <FaLightbulb className="mr-1" /> Helps tailor recommendations
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              {experienceQuestions.map(question => renderQuestion(question))}
-            </div>
-          </div>
-
-          {/* Tip box */}
-          <div className="bg-gray-800 border-l-4 border-accent p-4 mb-8 rounded-r-md">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <FaInfoCircle className="h-5 w-5 text-accent" />
-              </div>
-              <div className="ml-3">
-                <p className="text-gray-300">
-                  The more details you provide, the more tailored your tech stack recommendation will be.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Submit button */}
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="px-8 py-4 bg-accent hover:bg-opacity-90 text-white font-medium rounded-lg shadow-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-accent"
-            >
-              Generate My Tech Stack
-            </button>
-          </div>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };
