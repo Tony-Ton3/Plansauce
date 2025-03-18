@@ -13,6 +13,7 @@ import CreatedStacks from "./pages/CreatedStacks";
 import ProjectInput from "./components/ProjectInput";
 import Layout from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
+import Tasks from "./pages/Tasks"
 
 export default function App() {
   const { currentUser } = useSelector((state) => state.user);
@@ -34,6 +35,7 @@ export default function App() {
           <Route path="projectinput" element={<ProjectInput />} />
           <Route path="createdstacks" element={<CreatedStacks />} />
           <Route path="profile" element={<Profile />} />
+          <Route path="tasks" element={<Tasks />} />
         </Route>
       </Route>
 
