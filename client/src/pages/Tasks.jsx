@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { DndProvider, useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown, FaChevronRight } from "react-icons/fa";
@@ -128,30 +128,88 @@ const ItemTypes = {
 // Subtask component
 const Subtask = ({ subtask, parentId, toggleSubtaskCompletion }) => {
   return (
-    <div className="flex items-start gap-3 py-2 pl-8 relative">
+    <div className="flex items-center gap-3 py-2 pl-8 relative group">
       {/* GitHub-like branch line */}
-      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
       
       {/* Horizontal connector line */}
-      <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-200"></div>
+      <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
       
-      <div className="flex-shrink-0">
+      <div className="flex-shrink-0 flex items-center">
         <button 
           onClick={() => toggleSubtaskCompletion(parentId, subtask.id)} 
-          className="text-sm focus:outline-none"
+          className="text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-full"
         >
           {subtask.completed ? (
             <FaCheckCircle className="text-blue-500" />
           ) : (
-            <FaRegCircle className="text-gray-400" />
+            <FaRegCircle className="text-gray-600 hover:text-gray-500" />
           )}
         </button>
       </div>
       
-      <div className="flex-grow">
-        <p className={`${subtask.completed ? 'line-through text-gray-400' : 'text-gray-700'} text-sm`}>
+      <div className="flex-grow flex items-center">
+        <p className={`${subtask.completed ? 'line-through text-gray-500' : 'text-gray-300'} text-sm`}>
           {subtask.text}
         </p>
+      </div>
+    </div>
+  );
+};
+
+// TaskInsights component
+const TaskInsights = ({ task, expanded }) => {
+  if (!expanded) return null;
+  
+  return (
+    <div className="mt-4 border-t border-gray-800 pt-4">
+      <div className="space-y-4">
+        {/* Quick Actions */}
+        <div className="flex gap-2">
+          <button className="px-3 py-1.5 text-sm bg-blue-500/10 text-blue-400 rounded-full hover:bg-blue-500/20 transition-colors">
+            Generate Implementation Guide
+          </button>
+          <button className="px-3 py-1.5 text-sm bg-purple-500/10 text-purple-400 rounded-full hover:bg-purple-500/20 transition-colors">
+            Copy Smart Prompt
+          </button>
+          <button className="px-3 py-1.5 text-sm bg-green-500/10 text-green-400 rounded-full hover:bg-green-500/20 transition-colors">
+            Find Resources
+          </button>
+        </div>
+        
+        {/* AI Insights */}
+        <div className="bg-gray-800/50 rounded-lg p-4 space-y-3 backdrop-blur-sm">
+          <h3 className="text-sm font-medium text-gray-100">AI Insights</h3>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span className="font-medium text-gray-300">Estimated Time:</span>
+              <span>4-6 hours</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span className="font-medium text-gray-300">Complexity:</span>
+              <span>Medium</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <span className="font-medium text-gray-300">Prerequisites:</span>
+              <span>API Setup, Database Schema</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* Implementation Approaches */}
+        <div className="space-y-2">
+          <h3 className="text-sm font-medium text-gray-100">Recommended Approaches</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-800 hover:border-gray-700 transition-colors backdrop-blur-sm">
+              <h4 className="font-medium text-sm text-gray-200">JWT Authentication</h4>
+              <p className="text-xs text-gray-400 mt-1">Best for stateless, scalable systems</p>
+            </div>
+            <div className="p-3 bg-gray-800/50 rounded-lg border border-gray-800 hover:border-gray-700 transition-colors backdrop-blur-sm">
+              <h4 className="font-medium text-sm text-gray-200">OAuth Integration</h4>
+              <p className="text-xs text-gray-400 mt-1">Best for social login support</p>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -160,8 +218,10 @@ const Subtask = ({ subtask, parentId, toggleSubtaskCompletion }) => {
 // Task component with drag and drop functionality
 const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskCompletion, deleteTask }) => {
   const [expanded, setExpanded] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
   const ref = useRef(null);
   const contentRef = useRef(null);
+  const deleteTimerRef = useRef(null);
   
   const [{ isDragging }, drag, preview] = useDrag({
     type: ItemTypes.TASK,
@@ -207,90 +267,143 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     console.log("Toggling expand state to:", !expanded);
     setExpanded(!expanded);
   };
+  
+  const handleDeleteClick = (e) => {
+    e.stopPropagation();
+    
+    if (deleteConfirm) {
+      // Already in delete confirm state, so actually delete
+      deleteTask(index);
+      clearTimeout(deleteTimerRef.current);
+    } else {
+      // Start delete confirmation UI
+      setDeleteConfirm(true);
+      
+      // Auto-reset after 5 seconds
+      deleteTimerRef.current = setTimeout(() => {
+        setDeleteConfirm(false);
+      }, 5000);
+    }
+  };
+  
+  const cancelDelete = (e) => {
+    e.stopPropagation();
+    setDeleteConfirm(false);
+    clearTimeout(deleteTimerRef.current);
+  };
+  
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (deleteTimerRef.current) {
+        clearTimeout(deleteTimerRef.current);
+      }
+    };
+  }, []);
 
   return (
-    <div className={`mb-3 ${isDragging ? 'opacity-50' : 'opacity-100'}`}>
+    <div className={`mb-6 ${isDragging ? 'opacity-50' : 'opacity-100'}`}>
       {/* Main task card */}
       <div 
         ref={ref}
-        className={`bg-white border border-gray-200 rounded-t-xl ${!expanded ? 'rounded-b-xl' : ''} p-4 flex items-start gap-3 ${
-          isDragging ? 'shadow-lg' : 'hover:shadow-sm'
-        }`}
+        className={`bg-gray-900 border ${deleteConfirm ? 'border-red-500/50' : 'border-gray-800'} rounded-t-xl ${!expanded ? 'rounded-b-xl' : ''} p-4 flex flex-col gap-3 ${
+          isDragging ? 'shadow-lg shadow-blue-500/10' : (deleteConfirm ? 'shadow-md shadow-red-500/10' : 'hover:shadow-md hover:shadow-blue-500/5')
+        } transition-all duration-200 hover:border-gray-700`}
       >
-        <div className="flex-shrink-0 pt-1">
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              toggleTaskCompletion(index);
-            }} 
-            className="text-xl focus:outline-none"
-            aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 pt-1">
+            <button 
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleTaskCompletion(index);
+              }} 
+              className="text-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 rounded-full"
+              aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
+            >
+              {task.completed ? (
+                <FaCheckCircle className="text-blue-500" />
+              ) : (
+                <FaRegCircle className="text-gray-600 hover:text-gray-500" />
+              )}
+            </button>
+          </div>
+          
+          <div 
+            className={`flex-grow cursor-pointer ${deleteConfirm ? 'pr-20' : ''}`} 
+            onClick={toggleExpand}
           >
-            {task.completed ? (
-              <FaCheckCircle className="text-blue-500" />
-            ) : (
-              <FaRegCircle className="text-gray-400" />
-            )}
-          </button>
-        </div>
-        
-        <div 
-          className="flex-grow cursor-pointer" 
-          onClick={toggleExpand}
-        >
-          <div className="flex items-center">
-            <p className={`${task.completed ? 'line-through text-gray-400' : 'text-gray-800'} text-base mr-2`}>
-              {task.text}
-            </p>
+            <div className="flex items-center">
+              <p className={`${task.completed ? 'line-through text-gray-500' : 'text-gray-100'} text-base mr-2`}>
+                {task.text}
+              </p>
+              {task.subtasks && task.subtasks.length > 0 && (
+                <span className="text-gray-500">
+                  {expanded ? 
+                    <FaChevronDown className="text-xs" /> : 
+                    <FaChevronRight className="text-xs" />
+                  }
+                </span>
+              )}
+            </div>
+            
+            {/* Subtask progress indicator */}
             {task.subtasks && task.subtasks.length > 0 && (
-              <span className="text-gray-400">
-                {expanded ? 
-                  <FaChevronDown className="text-xs" /> : 
-                  <FaChevronRight className="text-xs" />
-                }
-              </span>
+              <div className="mt-2 flex items-center text-xs">
+                <div className="w-24 bg-gray-800 rounded-full h-1.5 mr-2">
+                  <div 
+                    className="bg-blue-600 h-1.5 rounded-full shadow-sm shadow-blue-500/20"
+                    style={{ width: `${completionPercentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-gray-500">{completedSubtasks}/{totalSubtasks}</span>
+              </div>
             )}
           </div>
           
-          {/* Subtask progress indicator */}
-          {task.subtasks && task.subtasks.length > 0 && !expanded && (
-            <div className="mt-2 flex items-center text-xs">
-              <div className="w-24 bg-gray-200 rounded-full h-1.5 mr-2">
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {!deleteConfirm ? (
+              <>
+                <button 
+                  onClick={handleDeleteClick}
+                  className="text-gray-500 hover:text-red-400 transition-colors"
+                  aria-label="Delete task"
+                >
+                  <FaTimes />
+                </button>
                 <div 
-                  className="bg-blue-500 h-1.5 rounded-full" 
-                  style={{ width: `${completionPercentage}%` }}
-                ></div>
+                  ref={drag}
+                  className="text-gray-600 cursor-move hover:text-gray-400 transition-colors p-1 rounded hover:bg-gray-800"
+                >
+                  <FaGripLines />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center gap-2 animate-pulse">
+                <button
+                  onClick={cancelDelete}
+                  className="px-2 py-1 text-xs font-medium text-gray-300 bg-gray-800 rounded hover:bg-gray-700"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleDeleteClick}
+                  className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-500 shadow-sm shadow-red-500/20"
+                >
+                  Delete
+                </button>
               </div>
-              <span className="text-gray-500">{completedSubtasks}/{totalSubtasks}</span>
-            </div>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              deleteTask(index);
-            }}
-            className="text-gray-400 hover:text-red-500 transition-colors"
-            aria-label="Delete task"
-          >
-            <FaTimes />
-          </button>
-          <div 
-            ref={drag}
-            className="text-gray-300 cursor-move hover:text-gray-500 transition-colors p-1 rounded hover:bg-gray-100"
-          >
-            <FaGripLines />
+            )}
           </div>
         </div>
+        
+        <TaskInsights task={task} expanded={expanded} />
       </div>
       
       {/* Subtasks accordion panel */}
       {task.subtasks && task.subtasks.length > 0 && (
         <div 
           ref={contentRef}
-          className={`overflow-hidden transition-all duration-300 bg-gray-50 border-l border-r border-b border-gray-200 rounded-b-xl ${
+          className={`overflow-hidden transition-all duration-300 bg-gray-900/50 border-l border-r border-b ${deleteConfirm ? 'border-red-500/50' : 'border-gray-800'} rounded-b-xl backdrop-blur-sm ${
             expanded ? 'max-h-96 py-2' : 'max-h-0 py-0 border-t-0'
           }`}
         >
@@ -314,23 +427,23 @@ const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewT
     return (
       <form 
         onSubmit={addNewTask}
-        className="max-w-2xl mx-auto bg-white rounded-xl border border-blue-200 shadow-md overflow-hidden"
+        className="max-w-2xl mx-auto bg-gray-900 rounded-xl border border-gray-800 shadow-lg shadow-blue-500/5 overflow-hidden"
       >
         <div className="p-3">
           <textarea
             placeholder="What needs to be done?"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
-            className="w-full resize-none border-none focus:ring-0 focus:outline-none text-gray-800 placeholder-gray-400 text-lg"
+            className="w-full resize-none border-none bg-transparent focus:ring-0 focus:outline-none text-gray-100 placeholder-gray-500 text-lg"
             rows={2}
             autoFocus
           />
         </div>
-        <div className="bg-gray-50 p-3 flex justify-between items-center border-t border-gray-100">
+        <div className="bg-gray-800/50 p-3 flex justify-between items-center border-t border-gray-800">
           <button 
             type="button"
             onClick={() => setIsComposing(false)}
-            className="text-gray-500 hover:text-gray-700"
+            className="text-gray-400 hover:text-gray-300"
           >
             Cancel
           </button>
@@ -338,7 +451,7 @@ const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewT
             type="submit"
             disabled={!newTask.trim()}
             className={`rounded-full px-4 py-2 font-medium ${
-              newTask.trim() ? 'bg-blue-500 text-white hover:bg-blue-600' : 'bg-blue-200 text-white cursor-not-allowed'
+              newTask.trim() ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20' : 'bg-gray-700 text-gray-400 cursor-not-allowed'
             }`}
           >
             Add Task
@@ -351,7 +464,7 @@ const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewT
   return (
     <button
       onClick={() => setIsComposing(true)}
-      className="max-w-2xl mx-auto flex items-center gap-2 bg-white rounded-full border border-gray-300 p-3 w-full text-left text-gray-500 hover:bg-gray-50"
+      className="max-w-2xl mx-auto flex items-center gap-2 bg-gray-900 rounded-full border border-gray-800 p-3 w-full text-left text-gray-400 hover:bg-gray-800/50 hover:border-gray-700 shadow-lg shadow-blue-500/5"
     >
       <FaPlus className="text-blue-500" />
       <span>Add a new task...</span>
@@ -462,12 +575,12 @@ function Tasks() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className="flex flex-col min-h-screen bg-gray-50">
+      <div className="flex flex-col min-h-screen bg-gray-950">
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-white border-b border-gray-200 p-4">
+        <header className="sticky top-0 z-10 bg-gray-900/50 border-b border-gray-800 p-4 backdrop-blur-xl">
           <div className="max-w-2xl mx-auto flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-900">Project Tasks</h1>
-            <div className="text-sm text-gray-500">
+            <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
+            <div className="text-sm text-gray-400">
               {tasks.filter(t => t.completed).length}/{tasks.length} completed
             </div>
           </div>
@@ -475,7 +588,7 @@ function Tasks() {
         
         {/* Main content */}
         <main className="flex-grow w-full max-w-2xl mx-auto px-4 py-3 mb-16">
-          <div className="space-y-0">
+          <div className="space-y-6">
             {tasks.map((task, index) => (
               <Task
                 key={task.id}
@@ -491,7 +604,7 @@ function Tasks() {
         </main>
         
         {/* Footer - Compose area */}
-        <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-3 z-10">
+        <footer className="fixed bottom-0 left-0 right-0 bg-gray-900/50 border-t border-gray-800 p-3 z-10 backdrop-blur-xl">
           <ComposeArea 
             isComposing={isComposing}
             setIsComposing={setIsComposing}
