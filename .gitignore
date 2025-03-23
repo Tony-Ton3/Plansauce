@@ -25,4 +25,8 @@ dist-ssr
 *.sw?
 .env
 
-text.txt
+.cursor/
+
+venv/
+
+
