@@ -19,10 +19,44 @@ export const backgroundQuestions = [
         question: "Which technologies are you already comfortable with?",
         type: "multiselect",
         options: [
-            "JavaScript", "Python", "Java", "C#", "React", 
-            "Node.js", "Django", "MySQL", "Docker", "AWS"
+            "JavaScript",
+            "TypeScript",
+            "React",
+            "Next.js",
+            "HTML/CSS",
+            "Tailwind CSS",
+            "Node.js",
+            "Python",
+            "Java",
+            "Django",
+            "MySQL",
+            "PostgreSQL",
+            "MongoDB",
+            "Git",
+            "Docker",
+            "AWS"
         ],
-        // Used to avoid recommending unfamiliar tech
+        suggestions: [
+            // Frontend
+            "Vue.js", "Angular", "Svelte", "Bootstrap", "Material-UI", "Chakra UI", 
+            "Redux", "Zustand", "Framer Motion", "Styled-Components", "Sass", "Emotion",
+            
+            // Backend
+            "Express", "FastAPI", "Flask", "Spring Boot", "Ruby on Rails", "ASP.NET Core",
+            "GraphQL", "Socket.IO", "NestJS", "Laravel", "Hapi.js", "Koa", "Phoenix",
+            
+            // Database & Storage
+            "Redis", "Firebase", "Supabase", "DynamoDB", "Cassandra", "ElasticSearch", "SQLite",
+            
+            // Deployment & DevOps
+            "Vercel", "Netlify", "Kubernetes", "CI/CD", "Google Cloud", "Azure", "Heroku", "DigitalOcean",
+            
+            // Testing
+            "Jest", "Cypress", "Playwright", "Mocha", "Chai",
+            
+            // AI/ML
+            "OpenAI API", "LangChain", "TensorFlow", "PyTorch", "Hugging Face", "vLLM"
+        ],
         allowCustomInput: true
     },
     {
@@ -31,7 +65,7 @@ export const backgroundQuestions = [
         type: "slider",
         min: 2,
         max: 40,
-        step: 5,
+        step: 1,
         labels: {
             2: "2h (Weekends)",
             20: "20h (Part-time)",

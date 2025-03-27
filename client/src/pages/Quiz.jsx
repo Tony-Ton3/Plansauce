@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
-import { FaCheck, FaPlus } from "react-icons/fa";
+import { FaCheck, FaPlus, FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
 import { updateUserBackground, setBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
@@ -20,8 +20,51 @@ export default function Quiz() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [error, setError] = useState(null);
     const [customTech, setCustomTech] = useState("");
+    const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchInputRef = useRef(null);
 
     const questions = backgroundQuestions;
+
+    // Filter suggestions when customTech changes
+    useEffect(() => {
+        if (customTech.trim() === "") {
+            setFilteredSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const techQuestion = questions.find(q => q.id === "known_tech");
+        if (!techQuestion || !techQuestion.suggestions) return;
+
+        // Filter out suggestions that are already in options or selected
+        const selectedTechs = answers.known_tech || [];
+        const availableSuggestions = techQuestion.suggestions.filter(
+            tech => !techQuestion.options.includes(tech) && !selectedTechs.includes(tech)
+        );
+
+        // Filter suggestions based on input
+        const filtered = availableSuggestions.filter(
+            tech => tech.toLowerCase().includes(customTech.toLowerCase())
+        ).slice(0, 5); // Limit to 5 suggestions
+
+        setFilteredSuggestions(filtered);
+        setShowSuggestions(filtered.length > 0);
+    }, [customTech, answers.known_tech]);
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const handleOptionSelect = (questionId, optionValue) => {
         const question = questions.find(q => q.id === questionId);
@@ -47,17 +90,26 @@ export default function Quiz() {
         }
     };
 
-    const handleAddCustomTech = (questionId) => {
-        if (customTech.trim() === "") return;
+    const handleAddCustomTech = (questionId, tech = null) => {
+        const techToAdd = tech || customTech.trim();
+        if (techToAdd === "") return;
 
         const currentSelections = answers[questionId] || [];
-        if (!currentSelections.includes(customTech)) {
+        if (!currentSelections.includes(techToAdd)) {
             setAnswers({
                 ...answers,
-                [questionId]: [...currentSelections, customTech]
+                [questionId]: [...currentSelections, techToAdd]
             });
         }
         setCustomTech("");
+        setShowSuggestions(false);
+    };
+
+    const handleCustomTechKeyDown = (e, questionId) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddCustomTech(questionId);
+        }
     };
 
     const handleSliderChange = (questionId, value) => {
@@ -114,12 +166,18 @@ export default function Quiz() {
         return questions.every(question => {
             const answer = answers[question.id];
 
-            if (question.type === "multiselect") {
+            if (question.id === "known_tech") {
+                return Array.isArray(answer) && answer.length > 0;
+            } else if (question.type === "multiselect") {
                 return Array.isArray(answer) && answer.length > 0;
             }
 
-            return answer !== undefined;
+            return answer !== undefined && answer !== "";
         });
+    };
+
+    const handleSuggestionClick = (questionId, suggestion) => {
+        handleAddCustomTech(questionId, suggestion);
     };
 
     // Function to render a single question
@@ -151,69 +209,158 @@ export default function Quiz() {
                     </div>
                 );
             case "multiselect":
-                return (
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-medium text-white mb-4">
-                            {questionData.question}
-                        </h3>
-                        <div className="flex flex-wrap gap-2">
-                            {questionData.options.map((option) => (
-                                <button
-                                    key={option}
-                                    onClick={() => handleOptionSelect(questionData.id, option)}
-                                    className={`px-4 py-2 rounded-md border transition-colors ${isOptionSelected(questionData.id, option)
-                                        ? "bg-blue-900 border-blue-400 text-blue-200"
-                                        : "border-gray-600 text-gray-300 hover:border-blue-400"
-                                        }`}
-                                >
-                                    {option}
-                                </button>
-                            ))}
-                        </div>
-
-                        {questionData.allowCustomInput && (
-                            <div className="mt-4">
-                                <div className="flex">
-                                    <input
-                                        type="text"
-                                        value={customTech}
-                                        onChange={(e) => setCustomTech(e.target.value)}
-                                        placeholder="Add custom technology..."
-                                        className="flex-grow px-4 py-2 bg-gray-800 border border-gray-600 text-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    />
-                                    <button
-                                        onClick={() => handleAddCustomTech(questionData.id)}
-                                        className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    >
-                                        <FaPlus />
-                                    </button>
+                if (questionData.id === "known_tech") {
+                    return (
+                        <div className="space-y-6">
+                            <h3 className="text-xl font-medium text-white mb-4">
+                                {questionData.question}
+                            </h3>
+                            
+                            {/* Search input for adding custom tech */}
+                            <div className="relative mb-6" ref={searchInputRef}>
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <FaSearch className="text-gray-400" />
                                 </div>
-
-                                {Array.isArray(answers[questionData.id]) && answers[questionData.id].length > 0 && (
-                                    <div className="mt-3">
-                                        <p className="text-sm text-gray-300 mb-2">Selected technologies:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {answers[questionData.id].map(tech => (
-                                                <span
-                                                    key={tech}
-                                                    className="px-3 py-1 bg-blue-900 text-blue-200 rounded-full text-sm flex items-center"
+                                <input
+                                    type="text"
+                                    value={customTech}
+                                    onChange={(e) => setCustomTech(e.target.value)}
+                                    onKeyDown={(e) => handleCustomTechKeyDown(e, questionData.id)}
+                                    placeholder="Search all skills..."
+                                    className="w-full pl-10 pr-16 py-3 bg-gray-800 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                                <button
+                                    onClick={() => handleAddCustomTech(questionData.id)}
+                                    className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center"
+                                >
+                                    <FaPlus className="mr-2" /> Add
+                                </button>
+                                
+                                {/* Suggestions dropdown */}
+                                {showSuggestions && (
+                                    <div className="absolute z-10 mt-1 w-full bg-gray-800 border border-gray-600 rounded-md shadow-lg">
+                                        <ul className="py-1 max-h-60 overflow-auto">
+                                            {filteredSuggestions.map((suggestion) => (
+                                                <li 
+                                                    key={suggestion}
+                                                    className="px-4 py-2 hover:bg-gray-700 cursor-pointer text-gray-200"
+                                                    onClick={() => handleSuggestionClick(questionData.id, suggestion)}
                                                 >
-                                                    {tech}
-                                                    <button
-                                                        className="ml-2 text-blue-300 hover:text-blue-100"
-                                                        onClick={() => handleOptionSelect(questionData.id, tech)}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
+                                                    {suggestion}
+                                                </li>
                                             ))}
-                                        </div>
+                                        </ul>
                                     </div>
                                 )}
                             </div>
-                        )}
-                    </div>
-                );
+
+                            {/* Technology bubbles */}
+                            <div className="flex flex-wrap gap-3">
+                                {questionData.options.map((option) => (
+                                    <button
+                                        key={option}
+                                        onClick={() => handleOptionSelect(questionData.id, option)}
+                                        className={`px-5 py-3 rounded-full transition-colors ${
+                                            isOptionSelected(questionData.id, option)
+                                                ? "bg-blue-600 text-white"
+                                                : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                        }`}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Selected technologies display */}
+                            {Array.isArray(answers[questionData.id]) && answers[questionData.id].length > 0 && (
+                                <div className="mt-8">
+                                    <p className="text-sm text-gray-300 mb-3">Your selected technologies:</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {answers[questionData.id].map(tech => (
+                                            <span
+                                                key={tech}
+                                                className="px-3 py-1 bg-blue-800 text-blue-200 rounded-full text-sm flex items-center"
+                                            >
+                                                {tech}
+                                                <button
+                                                    className="ml-2 text-blue-300 hover:text-blue-100"
+                                                    onClick={() => handleOptionSelect(questionData.id, tech)}
+                                                >
+                                                    ×
+                                                </button>
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    );
+                } else {
+                    // Default multiselect for other questions
+                    return (
+                        <div className="space-y-4">
+                            <h3 className="text-xl font-medium text-white mb-4">
+                                {questionData.question}
+                            </h3>
+                            <div className="flex flex-wrap gap-2">
+                                {questionData.options.map((option) => (
+                                    <button
+                                        key={option}
+                                        onClick={() => handleOptionSelect(questionData.id, option)}
+                                        className={`px-4 py-2 rounded-md border transition-colors ${isOptionSelected(questionData.id, option)
+                                            ? "bg-blue-900 border-blue-400 text-blue-200"
+                                            : "border-gray-600 text-gray-300 hover:border-blue-400"
+                                            }`}
+                                    >
+                                        {option}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {questionData.allowCustomInput && (
+                                <div className="mt-4">
+                                    <div className="flex">
+                                        <input
+                                            type="text"
+                                            value={customTech}
+                                            onChange={(e) => setCustomTech(e.target.value)}
+                                            placeholder="Add custom technology..."
+                                            className="flex-grow px-4 py-2 bg-gray-800 border border-gray-600 text-white rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        />
+                                        <button
+                                            onClick={() => handleAddCustomTech(questionData.id)}
+                                            className="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                        >
+                                            <FaPlus />
+                                        </button>
+                                    </div>
+
+                                    {Array.isArray(answers[questionData.id]) && answers[questionData.id].length > 0 && (
+                                        <div className="mt-3">
+                                            <p className="text-sm text-gray-300 mb-2">Selected technologies:</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {answers[questionData.id].map(tech => (
+                                                    <span
+                                                        key={tech}
+                                                        className="px-3 py-1 bg-blue-900 text-blue-200 rounded-full text-sm flex items-center"
+                                                    >
+                                                        {tech}
+                                                        <button
+                                                            className="ml-2 text-blue-300 hover:text-blue-100"
+                                                            onClick={() => handleOptionSelect(questionData.id, tech)}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    );
+                }
             default:
                 return (
                     <div className="space-y-4">
