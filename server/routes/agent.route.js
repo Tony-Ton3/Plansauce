@@ -1,14 +1,14 @@
 import express from 'express';
 import {
-    processWithPython,
-    processWithCrewAI,
-    checkPythonHealth,
+    //processWithPython,
+    generateTasks
 } from '../controllers/agent.controllers.js';
+import { verifyToken } from "../utils/verifyUser.js";
 
 const router = express.Router();
 
-router.post('/process-with-python', processWithPython);
-router.post('/crew-ai', processWithCrewAI);
-router.get('/python-health', checkPythonHealth);
+
+// router.post('/process-with-python', processWithPython);
+router.post('/generate-tasks', verifyToken, generateTasks);
 
 export default router;
