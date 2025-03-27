@@ -3,6 +3,7 @@ import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown
 import { FiCheck } from "react-icons/fi";
 
 //mock data for tasks with subtasks
+/*
 const initialTasks = [
   { 
     id: "1", 
@@ -118,6 +119,7 @@ const initialTasks = [
     ]
   },
 ];
+*/
 
 //subtask component
 const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSelectSubtask }) => {
@@ -126,10 +128,23 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
     onSelectSubtask(subtask, parentId, parentText, action);
   };
 
+  // Handle completion with double-click
+  const handleSubtaskCompletion = (e) => {
+    e.stopPropagation(); // Prevent selecting subtask
+    toggleSubtaskCompletion(parentId, subtask.id);
+  };
+
+  // Handle subtask selection - explicitly pass the default action as null 
+  // to prevent opening implementation guide by default
+  const handleSubtaskClick = () => {
+    // Pass null as action to just select the subtask without opening a specific panel
+    onSelectSubtask(subtask, parentId, parentText, null);
+  };
+
   return (
     <div 
       className="flex items-center gap-3 py-2 pl-8 relative group hover:bg-gray-800/30 rounded-md transition-colors cursor-pointer"
-      onClick={() => onSelectSubtask(subtask, parentId, parentText)}
+      onClick={handleSubtaskClick}
     >
       {/* github-like branch line */}
       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
@@ -137,15 +152,14 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
       {/* horizontal connector line */}
       <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
       
-      {/* improved checkbox with larger hit area */}
+      {/* improved checkbox with larger hit area - now requires double click */}
       <div 
-        onClick={(e) => {
-          e.stopPropagation(); //prevent selecting subtask when clicking checkbox
-          toggleSubtaskCompletion(parentId, subtask.id);
-        }}
+        onDoubleClick={handleSubtaskCompletion}
+        onClick={(e) => e.stopPropagation()} // Prevent triggering parent click handler
         className="flex-shrink-0 h-7 w-7 flex items-center justify-center cursor-pointer hover:bg-gray-800/50 rounded-full transition-colors"
         role="button"
-        aria-label={subtask.completed ? "Mark as incomplete" : "Mark as complete"}
+        aria-label={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
+        title={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
       >
         {subtask.completed ? (
           <FaCheckCircle className="text-blue-500" />
@@ -156,35 +170,34 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
       
       <div 
         className="flex-grow flex items-center justify-between cursor-pointer"
-        onClick={(e) => {
-          e.stopPropagation();
-          toggleSubtaskCompletion(parentId, subtask.id);
-        }}
       >
         <p className={`${subtask.completed ? 'line-through text-gray-500' : 'text-gray-300'} text-sm`}>
           {subtask.text}
         </p>
         
-        //quick action buttons for subtasks
+        {/* subtask action buttons - Implementation Guide, Technical Prompt, Development Resources */}
         <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2" onClick={e => e.stopPropagation()}>
           <button 
             onClick={(e) => handleActionClick(e, 'implementation')}
             className="text-xs text-gray-400 hover:text-blue-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="View implementation details"
+            aria-label="Implementation Guide"
+            title="Implementation Guide"
           >
             <FaCode />
           </button>
           <button 
-            onClick={(e) => handleActionClick(e, 'prompt')}
+            onClick={(e) => handleActionClick(e, 'technical')}
             className="text-xs text-gray-400 hover:text-purple-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="View smart prompt"
+            aria-label="Technical Prompt"
+            title="Technical Prompt"
           >
             <FaBook />
           </button>
           <button 
-            onClick={(e) => handleActionClick(e, 'resources')}
+            onClick={(e) => handleActionClick(e, 'development')}
             className="text-xs text-gray-400 hover:text-green-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="View resources"
+            aria-label="Development Resources"
+            title="Development Resources"
           >
             <FaLink />
           </button>
@@ -220,6 +233,69 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
   }, [isOpen]);
   
   if (!isRendered) return null;
+
+  // Determine if this is a task or subtask context
+  const isSubtask = !!subtask;
+  const currentItem = subtask || task;
+  
+  // Set icon and color based on action type
+  let actionIcon, actionColor, actionTitle, actionDescription;
+  
+  if (isSubtask) {
+    // Subtask actions
+    switch (action) {
+      case 'implementation':
+        actionIcon = <FaCode className="text-blue-400 text-sm" />;
+        actionColor = "blue";
+        actionTitle = "Implementation Guide";
+        actionDescription = `Step-by-step guide for implementing ${currentItem.text}`;
+        break;
+      case 'technical':
+        actionIcon = <FaBook className="text-purple-400 text-sm" />;
+        actionColor = "purple";
+        actionTitle = "Technical Prompt";
+        actionDescription = `Specific code-focused prompts for ${currentItem.text}`;
+        break;
+      case 'development':
+        actionIcon = <FaLink className="text-green-400 text-sm" />;
+        actionColor = "green";
+        actionTitle = "Development Resources";
+        actionDescription = `API documentation and code references for ${currentItem.text}`;
+        break;
+      default:
+        actionIcon = <FaCode className="text-blue-400 text-sm" />;
+        actionColor = "blue";
+        actionTitle = "Implementation Guide";
+        actionDescription = `Step-by-step guide for implementing ${currentItem.text}`;
+    }
+  } else {
+    // Task actions
+    switch (action) {
+      case 'breakdown':
+        actionIcon = <FaCode className="text-blue-400 text-sm" />;
+        actionColor = "blue";
+        actionTitle = "Task Breakdown";
+        actionDescription = `Why this task matters and what it accomplishes`;
+        break;
+      case 'prompt':
+        actionIcon = <FaBook className="text-purple-400 text-sm" />;
+        actionColor = "purple";
+        actionTitle = "Smart Prompt";
+        actionDescription = `Strategic planning prompts for ${currentItem.text}`;
+        break;
+      case 'resources':
+        actionIcon = <FaLink className="text-green-400 text-sm" />;
+        actionColor = "green";
+        actionTitle = "Resources";
+        actionDescription = `Reference materials for ${currentItem.text}`;
+        break;
+      default:
+        actionIcon = <FaCode className="text-blue-400 text-sm" />;
+        actionColor = "blue";
+        actionTitle = "Task Breakdown";
+        actionDescription = `Why this task matters and what it accomplishes`;
+    }
+  }
   
   //use a sliding panel from the right side
   return (
@@ -240,7 +316,7 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
           <div className="flex flex-col gap-1">
             {/* breadcrumb navigation */}
-            {subtask && parentTask && (
+            {isSubtask && parentTask && (
               <div className="flex items-center text-sm text-gray-400">
                 <span>{parentTask}</span>
                 <span className="mx-2">›</span>
@@ -249,13 +325,11 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
             )}
             
             <div className="flex items-center gap-3">
-              <div className="w-6 h-6 bg-blue-500/20 rounded-full flex items-center justify-center">
-                {action === 'implementation' && <FaCode className="text-blue-400 text-sm" />}
-                {action === 'prompt' && <FaBook className="text-purple-400 text-sm" />}
-                {action === 'resources' && <FaLink className="text-green-400 text-sm" />}
+              <div className={`w-6 h-6 bg-${actionColor}-500/20 rounded-full flex items-center justify-center`}>
+                {actionIcon}
               </div>
               <h2 className="text-lg font-semibold text-gray-100">
-                {subtask ? subtask.text : task.text}
+                {actionTitle}: {currentItem.text}
               </h2>
             </div>
           </div>
@@ -270,266 +344,318 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
         {/* tabs for different actions */}
         <div className="border-b border-gray-800">
           <div className="flex px-6">
-            <button className={`py-3 px-4 border-b-2 ${action === 'implementation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-              Implementation Guide
-            </button>
-            <button className={`py-3 px-4 border-b-2 ${action === 'prompt' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-              Smart Prompt
-            </button>
-            <button className={`py-3 px-4 border-b-2 ${action === 'resources' ? 'border-green-500 text-green-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-              Resources
-            </button>
+            {isSubtask ? (
+              // Subtask tabs
+              <>
+                <button className={`py-3 px-4 border-b-2 ${action === 'implementation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Implementation Guide
+                </button>
+                <button className={`py-3 px-4 border-b-2 ${action === 'technical' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Technical Prompt
+                </button>
+                <button className={`py-3 px-4 border-b-2 ${action === 'development' ? 'border-green-500 text-green-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Development Resources
+                </button>
+              </>
+            ) : (
+              // Task tabs
+              <>
+                <button className={`py-3 px-4 border-b-2 ${action === 'breakdown' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Task Breakdown
+                </button>
+                <button className={`py-3 px-4 border-b-2 ${action === 'prompt' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Smart Prompt
+                </button>
+                <button className={`py-3 px-4 border-b-2 ${action === 'resources' ? 'border-green-500 text-green-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
+                  Resources
+                </button>
+              </>
+            )}
           </div>
         </div>
         
         {/* panel content */}
         <div className="flex-1 overflow-y-auto p-6">
           {(() => {
-            //determine if this is a task or subtask context
-            const isSubtask = !!subtask;
-            const currentItem = subtask || task;
-            const contextType = isSubtask ? 'subtask' : 'task';
-            
-            switch (action) {
-              case 'implementation':
-                return (
-                  <div className="space-y-6">
-                    <div className="border-b border-gray-800 pb-4">
-                      <h3 className="text-xl font-semibold text-gray-100">Implementation Guide</h3>
-                      <p className="text-gray-400 mt-2">
-                        {isSubtask 
-                          ? `Step-by-step guide for implementing ${currentItem.text}`
-                          : `Overview and planning for ${currentItem.text}`
-                        }
-                      </p>
-                    </div>
+            if (isSubtask) {
+              // Subtask-specific content
+              switch (action) {
+                case 'implementation':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Implementation Guide</h3>
+                        <p className="text-gray-400 mt-2">
+                          Step-by-step guide for implementing {currentItem.text}
+                        </p>
+                      </div>
 
-                    {isSubtask ? (
-                      //subtask-specific content - more detailed implementation steps
-                      <>
-                        //steps section
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-medium text-gray-300">Implementation Steps</h4>
-                          <div className="space-y-3">
-                            <div className="bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
-                              <div className="flex items-center gap-3">
-                                <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">1</span>
-                                <h5 className="text-gray-200 font-medium">Setup Dependencies</h5>
-                              </div>
-                              <p className="mt-2 text-gray-400 text-sm pl-9">Install and configure required packages...</p>
-                              <div className="mt-3 pl-9">
-                                <pre className="bg-gray-900/50 p-3 rounded-md text-sm text-gray-300 font-mono">npm install @api-package/core</pre>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* code examples */}
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-medium text-gray-300">Code Examples</h4>
-                          <div className="bg-gray-800/50 rounded-lg overflow-hidden">
-                            <div className="border-b border-gray-700 p-3 flex justify-between items-center">
-                              <span className="text-sm text-gray-400">example.ts</span>
-                              <button className="text-gray-500 hover:text-gray-300">Copy</button>
-                            </div>
-                            <pre className="p-4 text-sm text-gray-300 font-mono">
-                              <code>{`import { API } from '@api/core';\n\nasync function setup() {\n  // Implementation code...\n}`}</code>
-                            </pre>
-                          </div>
-                        </div>
-                      </>
-                    ) : (
-                      //task-level content - more about planning and architecture
-                      <>
-                        //overview section
-                        <div className="space-y-4">
-                          <h4 className="text-sm font-medium text-gray-300">Task Overview</h4>
+                      {/* steps section */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Implementation Steps</h4>
+                        <div className="space-y-3">
                           <div className="bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
-                            <p className="text-gray-300">
-                              This task involves {task.text.toLowerCase()}, which requires planning and implementation across multiple steps.
-                            </p>
-                            
-                            <div className="mt-4 flex gap-3 flex-wrap">
-                              <div className="bg-blue-500/10 px-3 py-1.5 rounded-full text-xs text-blue-400">
-                                Architecture Design
-                              </div>
-                              <div className="bg-purple-500/10 px-3 py-1.5 rounded-full text-xs text-purple-400">
-                                Implementation Plan
-                              </div>
-                              <div className="bg-green-500/10 px-3 py-1.5 rounded-full text-xs text-green-400">
-                                Testing Strategy
-                              </div>
+                            <div className="flex items-center gap-3">
+                              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">1</span>
+                              <h5 className="text-gray-200 font-medium">Setup Dependencies</h5>
+                            </div>
+                            <p className="mt-2 text-gray-400 text-sm pl-9">Install and configure required packages...</p>
+                            <div className="mt-3 pl-9">
+                              <pre className="bg-gray-900/50 p-3 rounded-md text-sm text-gray-300 font-mono">npm install @api-package/core</pre>
                             </div>
                           </div>
                         </div>
+                      </div>
 
-                        {/* subtasks progress */}
-                        <div className="space-y-4">
-                          <div className="flex items-center justify-between">
-                            <h4 className="text-sm font-medium text-gray-300">Implementation Progress</h4>
-                            <span className="text-xs text-gray-400">
-                              {task.subtasks ? `${task.subtasks.filter(st => st.completed).length}/${task.subtasks.length} completed` : '0/0 completed'}
-                            </span>
+                      {/* code examples */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Code Examples</h4>
+                        <div className="bg-gray-800/50 rounded-lg overflow-hidden">
+                          <div className="border-b border-gray-700 p-3 flex justify-between items-center">
+                            <span className="text-sm text-gray-400">example.ts</span>
+                            <button className="text-gray-500 hover:text-gray-300">Copy</button>
                           </div>
+                          <pre className="p-4 text-sm text-gray-300 font-mono">
+                            <code>{`import { API } from '@api/core';\n\nasync function setup() {\n  // Implementation code...\n}`}</code>
+                          </pre>
+                        </div>
+                      </div>
+                    </div>
+                  );
+
+                case 'technical':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Technical Prompt</h3>
+                        <p className="text-gray-400 mt-2">
+                          Code-focused prompts for {currentItem.text}
+                        </p>
+                      </div>
+
+                      <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
+                        <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
+                          {`I'm working on implementing ${currentItem.text} for a web application.
+
+Technical Context:
+- Subtask: ${currentItem.text}
+- Parent Task: ${parentTask}
+- Status: ${currentItem.completed ? 'Completed' : 'In Progress'}
+
+Please provide:
+1. Detailed code implementation
+2. Handling edge cases specific to this functionality
+3. Unit testing approach
+4. Performance optimization tips`}
+                        </pre>
+                        <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
+                          Copy to Clipboard
+                        </button>
+                      </div>
+                    </div>
+                  );
+
+                case 'development':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Development Resources</h3>
+                        <p className="text-gray-400 mt-2">
+                          API documentation and code references for {currentItem.text}
+                        </p>
+                      </div>
+
+                      {/* API docs */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">API Documentation</h4>
+                        <div className="space-y-2">
+                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <FaBook className="text-blue-400" />
+                              <div>
+                                <h5 className="text-gray-200">API Reference</h5>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Complete technical documentation
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* code examples */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Code Snippets</h4>
+                        <div className="space-y-2">
+                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <FaCode className="text-purple-400" />
+                              <div>
+                                <h5 className="text-gray-200">
+                                  Sample Implementation
+                                </h5>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Ready-to-use code examples
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  );
+
+                default:
+                  return null;
+              }
+            } else {
+              // Task-level content
+              switch (action) {
+                case 'breakdown':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Task Breakdown</h3>
+                        <p className="text-gray-400 mt-2">
+                          Why this task matters for the project
+                        </p>
+                      </div>
+
+                      {/* importance section */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Task Importance</h4>
+                        <div className="bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
+                          <p className="text-gray-300">
+                            This task is critical because it establishes the foundation for {task.text.toLowerCase()}, which is essential for the project's success.
+                          </p>
                           
-                          <div className="bg-gray-800/50 rounded-lg p-4">
-                            {task.subtasks && task.subtasks.length > 0 ? (
-                              <div className="space-y-2">
-                                {task.subtasks.map(st => (
-                                  <div key={st.id} className="flex items-center gap-3">
-                                    <div className={`w-2 h-2 rounded-full ${st.completed ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                                    <span className={`text-sm ${st.completed ? 'text-gray-400 line-through' : 'text-gray-300'}`}>
-                                      {st.text}
-                                    </span>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : (
-                              <p className="text-gray-400 text-sm">No subtasks defined yet.</p>
-                            )}
+                          <div className="mt-4 flex gap-3 flex-wrap">
+                            <div className="bg-blue-500/10 px-3 py-1.5 rounded-full text-xs text-blue-400">
+                              Core Functionality
+                            </div>
+                            <div className="bg-purple-500/10 px-3 py-1.5 rounded-full text-xs text-purple-400">
+                              User Experience
+                            </div>
+                            <div className="bg-green-500/10 px-3 py-1.5 rounded-full text-xs text-green-400">
+                              Project Structure
+                            </div>
                           </div>
                         </div>
-                      </>
-                    )}
-                  </div>
-                );
+                      </div>
 
-              case 'prompt':
-                return (
-                  <div className="space-y-6">
-                    <div className="border-b border-gray-800 pb-4">
-                      <h3 className="text-xl font-semibold text-gray-100">Smart Prompt</h3>
-                      <p className="text-gray-400 mt-2">
-                        {isSubtask 
-                          ? `Task-specific prompt for ${currentItem.text}`
-                          : `General prompt template for ${currentItem.text}`
-                        }
-                      </p>
-                    </div>
-
-                    <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
-                      <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
-                        {`I'm working on ${isSubtask ? `implementing ${currentItem.text}` : `planning ${currentItem.text}`} for a web application.
-
-                        ${isSubtask ? `Technical Context:
-                        - Subtask: ${currentItem.text}
-                        - Parent Task: ${parentTask}
-                        - Status: ${currentItem.completed ? 'Completed' : 'In Progress'}
-
-                        Please provide:
-                        1. Detailed implementation approach
-                        2. Code examples with best practices
-                        3. Potential edge cases to handle
-                        4. Unit testing strategy` 
-                        : 
-                        `Project Context:
-                        - Task: ${currentItem.text}
-                        - Progress: ${currentItem.subtasks?.filter(st => st.completed).length || 0}/${currentItem.subtasks?.length || 0} subtasks completed
-                        - Subtasks: ${currentItem.subtasks?.map(st => st.text).join(', ')}
-
-                        Please provide:
-                        1. High-level architecture recommendations
-                        2. Implementation strategy
-                        3. Common pitfalls to avoid
-                        4. Testing approach
-                        5. Resource planning`}
-                        `}
-                      </pre>
-                      <button className="mt-4 w-full bg-blue-600/20 text-blue-400 py-2 rounded-lg hover:bg-blue-600/30 transition-colors">
-                        Copy to Clipboard
-                      </button>
-                    </div>
-                  </div>
-                );
-
-              case 'resources':
-                return (
-                  <div className="space-y-6">
-                    <div className="border-b border-gray-800 pb-4">
-                      <h3 className="text-xl font-semibold text-gray-100">Curated Resources</h3>
-                      <p className="text-gray-400 mt-2">
-                        {isSubtask 
-                          ? `Specific resources for ${currentItem.text}`
-                          : `General resources for ${currentItem.text}`
-                        }
-                      </p>
-                    </div>
-
-                    {/* official docs */}
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-gray-300">
-                        {isSubtask ? 'Technical Documentation' : 'Official Documentation'}
-                      </h4>
-                      <div className="space-y-2">
-                        <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <FaBook className="text-blue-400" />
-                            <div>
-                              <h5 className="text-gray-200">
-                                {isSubtask ? 'Implementation Guide' : 'API Documentation'}
-                              </h5>
-                              <p className="text-sm text-gray-400 mt-1">
-                                {isSubtask 
-                                  ? 'Step-by-step technical implementation guide'
-                                  : 'Complete API reference and guides'
-                                }
-                              </p>
+                      {/* subtasks progress */}
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <h4 className="text-sm font-medium text-gray-300">Implementation Progress</h4>
+                          <span className="text-xs text-gray-400">
+                            {task.subtasks ? `${task.subtasks.filter(st => st.completed).length}/${task.subtasks.length} completed` : '0/0 completed'}
+                          </span>
+                        </div>
+                        
+                        <div className="bg-gray-800/50 rounded-lg p-4">
+                          {task.subtasks && task.subtasks.length > 0 ? (
+                            <div className="space-y-2">
+                              {task.subtasks.map(st => (
+                                <div key={st.id} className="flex items-center gap-3">
+                                  <div className={`w-2 h-2 rounded-full ${st.completed ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
+                                  <span className={`text-sm ${st.completed ? 'text-gray-400 line-through' : 'text-gray-300'}`}>
+                                    {st.text}
+                                  </span>
+                                </div>
+                              ))}
                             </div>
-                          </div>
-                        </a>
+                          ) : (
+                            <p className="text-gray-400 text-sm">No subtasks defined yet.</p>
+                          )}
+                        </div>
                       </div>
                     </div>
+                  );
 
-                    {/* community resources */}
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-gray-300">Community Resources</h4>
-                      <div className="space-y-2">
-                        <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <FaCode className="text-purple-400" />
-                            <div>
-                              <h5 className="text-gray-200">
-                                {isSubtask ? 'Code Snippets' : 'Example Repository'}
-                              </h5>
-                              <p className="text-sm text-gray-400 mt-1">
-                                {isSubtask
-                                  ? 'Ready-to-use code examples for specific implementation'
-                                  : 'Community-maintained examples and patterns'
-                                }
-                              </p>
-                            </div>
-                          </div>
-                        </a>
+                case 'prompt':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Smart Prompt</h3>
+                        <p className="text-gray-400 mt-2">
+                          Strategic planning prompts for {currentItem.text}
+                        </p>
+                      </div>
+
+                      <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
+                        <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
+                          {`I'm working on planning ${currentItem.text} for a web application.
+
+Project Context:
+- Task: ${currentItem.text}
+- Progress: ${currentItem.subtasks?.filter(st => st.completed).length || 0}/${currentItem.subtasks?.length || 0} subtasks completed
+- Subtasks: ${currentItem.subtasks?.map(st => st.text).join(', ') || 'None defined'}
+
+Please provide:
+1. High-level architecture recommendations
+2. Implementation strategy
+3. Common pitfalls to avoid
+4. Testing approach
+5. Resource planning`}
+                        </pre>
+                        <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
+                          Copy to Clipboard
+                        </button>
                       </div>
                     </div>
+                  );
 
-                    {/* related articles */}
-                    <div className="space-y-4">
-                      <h4 className="text-sm font-medium text-gray-300">Related Articles</h4>
-                      <div className="space-y-2">
-                        <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <FaLink className="text-green-400" />
-                            <div>
-                              <h5 className="text-gray-200">
-                                {isSubtask ? 'Tutorial' : 'Best Practices Guide'}
-                              </h5>
-                              <p className="text-sm text-gray-400 mt-1">
-                                {isSubtask 
-                                  ? 'Detailed tutorial for this specific task'
-                                  : 'Comprehensive guide to implementation patterns'
-                                }
-                              </p>
+                case 'resources':
+                  return (
+                    <div className="space-y-6">
+                      <div className="border-b border-gray-800 pb-4">
+                        <h3 className="text-xl font-semibold text-gray-100">Resources</h3>
+                        <p className="text-gray-400 mt-2">
+                          Reference materials for {currentItem.text}
+                        </p>
+                      </div>
+
+                      {/* official docs */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Official Documentation</h4>
+                        <div className="space-y-2">
+                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <FaBook className="text-blue-400" />
+                              <div>
+                                <h5 className="text-gray-200">API Documentation</h5>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Complete API reference and guides
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        </a>
+                          </a>
+                        </div>
+                      </div>
+
+                      {/* community resources */}
+                      <div className="space-y-4">
+                        <h4 className="text-sm font-medium text-gray-300">Community Resources</h4>
+                        <div className="space-y-2">
+                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
+                            <div className="flex items-center gap-3">
+                              <FaCode className="text-purple-400" />
+                              <div>
+                                <h5 className="text-gray-200">Example Repository</h5>
+                                <p className="text-sm text-gray-400 mt-1">
+                                  Community-maintained examples and patterns
+                                </p>
+                              </div>
+                            </div>
+                          </a>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
+                  );
 
-              default:
-                return null;
+                default:
+                  return null;
+              }
             }
           })()}
         </div>
@@ -551,6 +677,39 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   const ref = useRef(null);
   const contentRef = useRef(null);
   const deleteTimerRef = useRef(null);
+  
+  useEffect(() => {
+    try {
+      const fetchTaskDetails = async () => {
+        const response = await fetch('http://localhost:3000/api/agent/generate-tasks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            taskId: task.id,
+            taskText: task.text,
+            subtasks: task.subtasks
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Unauthorized - Please login again');
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Task details:', data);
+      };
+
+      fetchTaskDetails();
+    } catch (error) {
+      console.error('Error fetching task details:', error);
+    }
+  }, [task.id, task.text, task.subtasks]);
   
   //handle drag start
   const handleDragStart = (e) => {
@@ -616,7 +775,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     setExpanded(!expanded);
   };
   
-  //handle task click
+  //handle task click - now only expands/collapses
   const handleTaskClick = (e) => {
     //don't trigger task click when clicking on control buttons
     if (
@@ -631,17 +790,17 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     setExpanded(!expanded);
   };
 
-  //handle action button
+  //handle action button for tasks - task breakdown, smart prompt, resources
   const handleActionButton = (action) => {
     setSelectedSubtask(null); //reset any selected subtask
     setActiveAction(action);
     setShowActionPanel(true);
   };
   
-  //handle subtask selection
-  const handleSelectSubtask = (subtask, parentId, parentText, action = 'implementation') => {
+  //handle subtask selection - implementation guide, technical prompt, development resources
+  const handleSelectSubtask = (subtask, parentId, parentText, action = null) => {
     setSelectedSubtask(subtask);
-    setActiveAction(action || 'implementation'); //default to implementation view if not specified
+    setActiveAction(action || 'implementation'); // Default to implementation if no action specified
     setShowActionPanel(true);
   };
   
@@ -687,7 +846,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     };
   }, []);
 
-  //handle task completion
+  //handle task completion (now requires double click)
   const handleTaskCompletion = (e) => {
     e.stopPropagation();
     //trigger animation
@@ -744,12 +903,12 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
       >
         {/* task checkbox */}
         <div 
-          onClick={handleTaskCompletion}
+          onDoubleClick={handleTaskCompletion}
           className={`flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
             ${checkAnimation ? 'scale-110 bg-blue-500/20' : 'hover:bg-gray-800/50'}`}
           role="button"
-          aria-label={task.completed ? "Mark as incomplete" : "Mark as complete"}
-          title={task.completed ? "Mark as incomplete" : "Mark as complete"}
+          aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
+          title={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
         >
           {task.completed ? (
             <div className="relative">
@@ -768,11 +927,8 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
           )}
         </div>
         
-        {/* task name with completion animation */}
-        <div 
-          className="flex-grow flex items-center py-1.5 cursor-pointer"
-          onClick={handleTaskCompletion}
-        >
+        {/* task name - no longer toggles task completion on click */}
+        <div className="flex-grow flex items-center py-1.5 cursor-pointer">
           <p className={`${task.completed ? 'line-through text-gray-500' : 'text-gray-100'} text-base mr-2 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
             {task.text}
           </p>
@@ -789,19 +945,19 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         
         {/* right side actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* action buttons - always visible */}
+          {/* task action buttons - Task Breakdown, Smart Prompt, Resources */}
           <div className="flex gap-1.5 mr-2">
             <button 
               onClick={(e) => {
                 e.stopPropagation();
-                handleActionButton('implementation');
+                handleActionButton('breakdown');
               }}
               className="p-1.5 text-xs bg-blue-500/10 text-blue-400 rounded-full hover:bg-blue-500/20 transition-colors group/tooltip relative"
-              aria-label="Implementation Guide"
-              title="Implementation Guide"
+              aria-label="Task Breakdown"
+              title="Task Breakdown"
             >
               <FaCode />
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Implementation Guide</span>
+              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Task Breakdown</span>
             </button>
             <button 
               onClick={(e) => {
@@ -878,7 +1034,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
           )}
         </div>
       </div>
-      
+
       {/* bottom drop indicator line */}
       {showDropIndicator && (
         <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 translate-y-0.5 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] z-10" />
@@ -905,11 +1061,11 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         </div>
       )}
 
-      {/* action panel for task - similar to notion page view */}
+      {/* action panel for task or subtask - with different options for each */}
       <TaskActionPanel 
         isOpen={showActionPanel}
         onClose={closeActionPanel}
-        action={activeAction || 'implementation'}
+        action={activeAction || (selectedSubtask ? 'implementation' : 'breakdown')}
         task={task}
         subtask={selectedSubtask}
         parentTask={selectedSubtask ? task.text : null}
@@ -970,9 +1126,85 @@ const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewT
 };
 
 function Tasks() {
-  const [tasks, setTasks] = useState(initialTasks);
-  const [newTask, setNewTask] = useState("");
+  const [tasks, setTasks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [newTask, setNewTask] = useState({
+    "projectDescription": "A mobile app for tracking daily workouts",
+    "techStack": ["React Native", "Firebase", "TypeScript"],
+    "projectType": "mobile"
+  });
+
   const [isComposing, setIsComposing] = useState(false);
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('http://localhost:3000/api/agent/generate-tasks', {
+          method: 'POST',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            projectDescription: newTask.projectDescription,
+            techStack: newTask.techStack,
+            projectType: newTask.projectType
+          })
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error('Unauthorized - Please login again');
+          }
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const responseData = await response.json();
+        
+        // Handle the response data format - ensure it matches what our component expects
+        let formattedTasks = [];
+        
+        // Check if data is in the expected format
+        if (responseData?.data?.tasks) {
+          formattedTasks = responseData.data.tasks.map(task => ({
+            id: task.id || task.taskId || String(Math.random()),
+            text: task.text,
+            completed: task.completed || false,
+            subtasks: Array.isArray(task.subtasks) ? task.subtasks.map(subtask => ({
+              id: subtask.id || String(Math.random()),
+              text: subtask.text,
+              completed: subtask.completed || false
+            })) : []
+          }));
+        } else if (Array.isArray(responseData.data)) {
+          // If data is directly an array
+          formattedTasks = responseData.data.map(task => ({
+            id: task.id || String(Math.random()),
+            text: task.text,
+            completed: task.completed || false,
+            subtasks: Array.isArray(task.subtasks) ? task.subtasks.map(subtask => ({
+              id: subtask.id || String(Math.random()),
+              text: subtask.text,
+              completed: subtask.completed || false
+            })) : []
+          }));
+        }
+        
+        setTasks(formattedTasks);
+        console.log("Formatted tasks:", formattedTasks);
+        
+      } catch (error) {
+        console.error('Error fetching tasks:', error);
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTasks();
+  }, []);
   
   const toggleTaskCompletion = (index) => {
     setTasks(prevTasks => {
@@ -1078,14 +1310,38 @@ function Tasks() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
           <div className="text-sm text-gray-400">
-              {tasks.filter(t => t.completed).length}/{tasks.length} completed
-            </div>
+            {loading ? "Loading..." : 
+              (tasks && tasks.filter ? 
+                `${tasks.filter(t => t.completed).length}/${tasks.length} completed` : 
+                "0/0 completed")}
           </div>
-        </header>
+        </div>
+      </header>
         
-        {/* main content */}
+      {/* main content */}
       <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-6 mb-16">
-        <div className="space-y-1">
+        {loading ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-blue-500 animate-spin mr-2">
+              <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <span className="text-gray-400">Loading tasks...</span>
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+            <p>Error: {error}</p>
+            <button 
+              onClick={() => window.location.reload()}
+              className="mt-2 text-sm bg-red-500/20 hover:bg-red-500/30 px-3 py-1 rounded"
+            >
+              Try Again
+            </button>
+          </div>
+        ) : tasks && tasks.length > 0 ? (
+          <div className="space-y-1">
             {tasks.map((task, index) => (
               <Task
                 key={task.id}
@@ -1098,19 +1354,30 @@ function Tasks() {
               />
             ))}
           </div>
-        </main>
+        ) : (
+          <div className="flex flex-col items-center justify-center h-64 text-center">
+            <p className="text-gray-400 mb-4">No tasks available.</p>
+            <button 
+              onClick={() => setIsComposing(true)}
+              className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-500 shadow-lg shadow-blue-500/20"
+            >
+              Create a Task
+            </button>
+          </div>
+        )}
+      </main>
         
-        {/* footer - compose area */}
+      {/* footer - compose area */}
       <footer className="fixed bottom-0 left-0 right-0 bg-gray-900/50 border-t border-gray-800 p-3 z-10 backdrop-blur-xl">
-          <ComposeArea 
-            isComposing={isComposing}
-            setIsComposing={setIsComposing}
-            newTask={newTask}
-            setNewTask={setNewTask}
-            addNewTask={addNewTask}
-          />
-        </footer>
-      </div>
+        <ComposeArea 
+          isComposing={isComposing}
+          setIsComposing={setIsComposing}
+          newTask={newTask.projectDescription}
+          setNewTask={(value) => setNewTask({...newTask, projectDescription: value})}
+          addNewTask={addNewTask}
+        />
+      </footer>
+    </div>
   );
 }
 
