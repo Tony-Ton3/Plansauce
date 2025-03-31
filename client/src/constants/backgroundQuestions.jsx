@@ -34,7 +34,8 @@ export const backgroundQuestions = [
             "MongoDB",
             "Git",
             "Docker",
-            "AWS"
+            "AWS",
+            "GCP"
         ],
         suggestions: [
             // Frontend
@@ -49,7 +50,7 @@ export const backgroundQuestions = [
             "Redis", "Firebase", "Supabase", "DynamoDB", "Cassandra", "ElasticSearch", "SQLite",
             
             // Deployment & DevOps
-            "Vercel", "Netlify", "Kubernetes", "CI/CD", "Google Cloud", "Azure", "Heroku", "DigitalOcean",
+            "Vercel", "Netlify", "Kubernetes", "CI/CD", "Azure", "Heroku", "DigitalOcean",
             
             // Testing
             "Jest", "Cypress", "Playwright", "Mocha", "Chai",

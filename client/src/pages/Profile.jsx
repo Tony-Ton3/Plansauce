@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { updateStart, updateSuccess, updateFailure, deleteUserStart, deleteUserSuccess, deleteUserFailure } from "../redux/userSlice";
-import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaEdit, FaTrash, FaCheck, FaPlus } from "react-icons/fa";
+import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaEdit, FaTrash, FaCheck, FaPlus, FaSearch } from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
 import { updateUserBackground } from "../utils/api.jsx";
 
@@ -14,6 +14,7 @@ export default function Profile() {
         password: "",
         newPassword: "",
     });
+
     const [background, setBackground] = useState({
         experience: "",
         known_tech: [],
@@ -21,6 +22,7 @@ export default function Profile() {
         risk_tolerance: "",
         collaboration: ""
     });
+
     const [updateMode, setUpdateMode] = useState(false);
     const [quizEditMode, setQuizEditMode] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -28,9 +30,49 @@ export default function Profile() {
     const [successMessage, setSuccessMessage] = useState("");
     const [deleteConfirm, setDeleteConfirm] = useState(false);
     const [activeTab, setActiveTab] = useState("preferences"); // "profile" or "preferences"
+    const [customTech, setCustomTech] = useState("");
+    const [filteredSuggestions, setFilteredSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const searchInputRef = useRef(null);
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!quizEditMode || customTech.trim() === "") {
+            setFilteredSuggestions([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const techQuestion = backgroundQuestions.find(q => q.id === "known_tech");
+        if (!techQuestion || !techQuestion.suggestions) return;
+
+        const selectedTechs = background.known_tech || [];
+        const availableSuggestions = techQuestion.suggestions.filter(
+            tech => !techQuestion.options.includes(tech) && !selectedTechs.includes(tech)
+        );
+
+        const filtered = availableSuggestions.filter(
+            tech => tech.toLowerCase().includes(customTech.toLowerCase())
+        ).slice(0, 5);
+
+        setFilteredSuggestions(filtered);
+        setShowSuggestions(filtered.length > 0);
+    }, [customTech, background.known_tech, quizEditMode]);
+
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+                setShowSuggestions(false);
+            }
+        }
+        
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     useEffect(() => {
         if (currentUser) {
@@ -41,7 +83,6 @@ export default function Profile() {
                 newPassword: "",
             });
 
-            // Initialize background data from user data if available
             if (currentUser.background) {
                 console.log("Background data from user:", currentUser.background);
                 setBackground({
@@ -52,7 +93,6 @@ export default function Profile() {
                     collaboration: currentUser.background.collaboration || ""
                 });
             } else {
-                // Initialize with default values if no background data
                 setBackground({
                     experience: "",
                     known_tech: [],
@@ -76,6 +116,7 @@ export default function Profile() {
     const toggleQuizEditMode = () => {
         setQuizEditMode(!quizEditMode);
         setSuccessMessage("");
+        setCustomTech("");
     };
 
     const toggleShowPassword = () => {
@@ -95,7 +136,6 @@ export default function Profile() {
         try {
             dispatch(updateStart());
 
-            // Only include fields that have values
             const updateData = {
                 username: formData.username,
             };
@@ -140,7 +180,6 @@ export default function Profile() {
         try {
             dispatch(updateStart());
 
-            // Use the utility function to update background data
             const updatedUser = await updateUserBackground(background);
 
             dispatch(updateSuccess(updatedUser));
@@ -177,33 +216,50 @@ export default function Profile() {
         const question = backgroundQuestions.find(q => q.id === questionId);
 
         if (question.type === "multiselect") {
-            // For multi-select questions
             const currentSelections = background[questionId] || [];
             if (currentSelections.includes(optionValue)) {
-                // Remove if already selected
                 setBackground({
                     ...background,
                     [questionId]: currentSelections.filter(value => value !== optionValue)
                 });
             } else {
-                // Add to selections
                 setBackground({
                     ...background,
                     [questionId]: [...currentSelections, optionValue]
                 });
             }
         } else if (question.type === "slider") {
-            // For slider questions
             setBackground({
                 ...background,
                 [questionId]: parseInt(optionValue)
             });
         } else {
-            // For single-select questions
             setBackground({
                 ...background,
                 [questionId]: optionValue
             });
+        }
+    };
+
+    const handleAddCustomTech = (questionId, tech = null) => {
+        const techToAdd = tech || customTech.trim();
+        if (techToAdd === "") return;
+
+        const currentSelections = background[questionId] || [];
+        if (!currentSelections.includes(techToAdd)) {
+            setBackground({
+                ...background,
+                [questionId]: [...currentSelections, techToAdd]
+            });
+        }
+        setCustomTech("");
+        setShowSuggestions(false);
+    };
+
+    const handleCustomTechKeyDown = (e, questionId) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleAddCustomTech(questionId);
         }
     };
 
@@ -223,6 +279,10 @@ export default function Profile() {
         }
 
         return answer === optionValue;
+    };
+
+    const handleSuggestionClick = (questionId, suggestion) => {
+        handleAddCustomTech(questionId, suggestion);
     };
 
     const renderProfileTab = () => (
@@ -359,6 +419,91 @@ export default function Profile() {
                         ? Array.isArray(answer) && answer.length > 0
                         : answer !== undefined && answer !== null && answer !== "";
 
+                    if (quizEditMode && question.id === "known_tech") {
+                        return (
+                            <div key={question.id} className="bg-[#252b38] p-4 rounded-lg">
+                                <h3 className="text-white font-medium mb-3">{question.question}</h3>
+                                
+                                <div className="relative mb-6" ref={searchInputRef}>
+                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <FaSearch className="text-gray-400" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={customTech}
+                                        onChange={(e) => setCustomTech(e.target.value)}
+                                        onKeyDown={(e) => handleCustomTechKeyDown(e, question.id)}
+                                        placeholder="Search all skills..."
+                                        className="w-full pl-10 pr-16 py-3 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#8e5fe7]"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => handleAddCustomTech(question.id)}
+                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 bg-[#8e5fe7] text-white rounded-md hover:bg-[#7d4fd6] focus:outline-none focus:ring-2 focus:ring-[#8e5fe7] flex items-center"
+                                    >
+                                        <FaPlus className="mr-2" /> Add
+                                    </button>
+                                    
+                                    {showSuggestions && (
+                                        <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg">
+                                            <ul className="py-1 max-h-60 overflow-auto">
+                                                {filteredSuggestions.map((suggestion) => (
+                                                    <li 
+                                                        key={suggestion}
+                                                        className="px-4 py-2 hover:bg-gray-600 cursor-pointer text-gray-200"
+                                                        onClick={() => handleSuggestionClick(question.id, suggestion)}
+                                                    >
+                                                        {suggestion}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="flex flex-wrap gap-3 mb-4">
+                                    {question.options.map((option) => (
+                                        <button
+                                            key={option}
+                                            type="button"
+                                            onClick={() => handleOptionSelect(question.id, option)}
+                                            className={`px-4 py-2 rounded-full transition-colors ${
+                                                isOptionSelected(question.id, option)
+                                                    ? "bg-[#8e5fe7] text-white"
+                                                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                                            }`}
+                                        >
+                                            {option}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {Array.isArray(answer) && answer.length > 0 && (
+                                    <div className="mt-4">
+                                        <p className="text-sm text-gray-400 mb-2">Your selected technologies:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {answer.map(tech => (
+                                                <span
+                                                    key={tech}
+                                                    className="px-3 py-1 bg-[#1a1f29] text-gray-200 rounded-full text-sm flex items-center"
+                                                >
+                                                    {tech}
+                                                    <button
+                                                        type="button"
+                                                        className="ml-2 text-gray-400 hover:text-white"
+                                                        onClick={() => handleOptionSelect(question.id, tech)}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        );
+                    }
+
                     return (
                         <div key={question.id} className="bg-[#252b38] p-4 rounded-lg">
                             <h3 className="text-white font-medium mb-3">{question.question}</h3>
@@ -492,13 +637,11 @@ export default function Profile() {
                     </div>
                 </div>
 
-                {/* User Info */}
                 <div className="mb-6 text-center">
                     <h2 className="text-xl text-white mb-2">{currentUser?.name || ""}</h2>
                     <p className="text-gray-400">{currentUser?.email || ""}</p>
                 </div>
 
-                {/* Tabs */}
                 <div className="flex border-b border-gray-700 mb-6">
                     <button
                         className={`px-4 py-2 font-medium ${activeTab === 'preferences' ? 'text-[#8e5fe7] border-b-2 border-[#8e5fe7]' : 'text-gray-400 hover:text-gray-300'}`}
@@ -515,11 +658,9 @@ export default function Profile() {
 
                 </div>
 
-                {/* Tab content */}
                 {activeTab === 'profile' ? renderProfileTab() : renderPreferencesTab()}
             </div>
 
-            {/* Delete Account Confirmation Modal */}
             {deleteConfirm && (
                 <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
                     <div className="bg-[#1a1f29] p-6 rounded-xl max-w-md w-full">

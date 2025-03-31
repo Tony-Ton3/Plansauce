@@ -26,9 +26,19 @@ export const projectQuestions = [
           question: "What's the expected scale of your project?",
           type: "select",
           options: [
-            "Small (personal project)",
-            "Medium (startup/small business)",
-            "Large (enterprise)",
+            "Personal",
+            "Small (1-1k users)",
+            "Medium (1k-10k users)",
+            "Large (10k+ users)",
+          ],
+        },
+        {
+          id: "techStack",
+          question: "How would you like to choose your tech stack?",
+          type: "radio",
+          options: [
+            "Use technologies I know",
+            "Use AI recommendations",
           ],
         },
       ],
@@ -48,13 +58,14 @@ export const projectQuestions = [
             "Payment Processing",
             "File Upload/Download",
             "API Integration",
+            "None of these"
           ],
         },
         {
           id: "timeline",
           question: "What's your development timeline?",
           type: "select",
-          options: ["Quick prototype", "1-3 months", "3-6 months", "6+ months"],
+          options: ["Quick prototype", "1-3 months", "3-6 months", "6+ months", "No rush"],
         },
       ],
     },

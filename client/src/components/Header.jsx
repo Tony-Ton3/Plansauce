@@ -44,7 +44,8 @@ export default function Header() {
   // };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-30 backdrop-blur-[30px] text-white px-8 py-4 ml-[70px] border-b border-gray-800">
+    // <header className="fixed top-0 left-0 right-0 z-30 backdrop-blur-[30px] text-white px-8 py-4 ml-[70px] border-b border-gray-800">
+    <header className="fixed top-0 left-0 right-0 z-30 bg-[#0f1218] text-white px-8 py-4 ml-[70px] border-b border-gray-900">
       <div className="flex justify-end items-center">
         {currentUser ? (
           <div className="flex items-center gap-4">

@@ -4,6 +4,7 @@ import authRoutes from "./routes/auth.route.js";
 import userRoutes from "./routes/user.route.js";
 import utilRoutes from "./routes/util.route.js";
 import agentRoutes from "./routes/agent.route.js";
+import projectRoutes from "./routes/project.route.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
@@ -35,6 +36,7 @@ app.use("/api", utilRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/agent", agentRoutes);
+app.use("/api/projects", projectRoutes);
 
 //error middleware
 app.use((err, req, res, next) => {
