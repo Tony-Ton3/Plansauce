@@ -1,125 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown, FaChevronRight, FaCode, FaBook, FaLink, FaTimes as FaClose } from "react-icons/fa";
 import { FiCheck } from "react-icons/fi";
-
-//mock data for tasks with subtasks
-/*
-const initialTasks = [
-  { 
-    id: "1", 
-    text: "Research user authentication methods", 
-    completed: false,
-    subtasks: [
-      { id: "1-1", text: "Compare OAuth providers", completed: false },
-      { id: "1-2", text: "Research JWT implementation", completed: false },
-      { id: "1-3", text: "Evaluate session-based auth", completed: true }
-    ]
-  },
-  { 
-    id: "2", 
-    text: "Explore competitor applications", 
-    completed: false,
-    subtasks: [
-      { id: "2-1", text: "Analyze UI/UX patterns", completed: false },
-      { id: "2-2", text: "Document feature sets", completed: false }
-    ]
-  },
-  { 
-    id: "3", 
-    text: "Identify required third-party APIs", 
-    completed: false,
-    subtasks: [
-      { id: "3-1", text: "Payment processing options", completed: false },
-      { id: "3-2", text: "Email service providers", completed: false },
-      { id: "3-3", text: "File storage solutions", completed: false }
-    ]
-  },
-  { 
-    id: "4", 
-    text: "Create wireframes for dashboard", 
-    completed: false,
-    subtasks: [
-      { id: "4-1", text: "Draft main layout", completed: false },
-      { id: "4-2", text: "Design navigation components", completed: false }
-    ]
-  },
-  { 
-    id: "5", 
-    text: "Design responsive layouts", 
-    completed: false,
-    subtasks: [
-      { id: "5-1", text: "Mobile designs", completed: false },
-      { id: "5-2", text: "Tablet designs", completed: false },
-      { id: "5-3", text: "Desktop designs", completed: false }
-    ]
-  },
-  { 
-    id: "6", 
-    text: "Create UI component library", 
-    completed: false,
-    subtasks: [
-      { id: "6-1", text: "Design system fundamentals", completed: false },
-      { id: "6-2", text: "Build core components", completed: false }
-    ]
-  },
-  { 
-    id: "7", 
-    text: "Set up project repository", 
-    completed: false,
-    subtasks: [
-      { id: "7-1", text: "Initialize repository", completed: false },
-      { id: "7-2", text: "Set up CI/CD pipeline", completed: false }
-    ]
-  },
-  { 
-    id: "8", 
-    text: "Configure development environment", 
-    completed: false,
-    subtasks: [
-      { id: "8-1", text: "Set up local environment", completed: false },
-      { id: "8-2", text: "Configure testing framework", completed: false }
-    ]
-  },
-  { 
-    id: "9", 
-    text: "Implement user authentication flow", 
-    completed: false,
-    subtasks: [
-      { id: "9-1", text: "Implement login", completed: false },
-      { id: "9-2", text: "Implement registration", completed: false },
-      { id: "9-3", text: "Implement password reset", completed: false }
-    ]
-  },
-  { 
-    id: "10", 
-    text: "Write unit tests for API calls", 
-    completed: false,
-    subtasks: [
-      { id: "10-1", text: "Test auth endpoints", completed: false },
-      { id: "10-2", text: "Test data endpoints", completed: false }
-    ]
-  },
-  { 
-    id: "11", 
-    text: "Perform cross-browser testing", 
-    completed: false,
-    subtasks: [
-      { id: "11-1", text: "Test in Chrome", completed: false },
-      { id: "11-2", text: "Test in Firefox", completed: false },
-      { id: "11-3", text: "Test in Safari", completed: false }
-    ]
-  },
-  { 
-    id: "12", 
-    text: "Test responsive design on mobile devices", 
-    completed: false,
-    subtasks: [
-      { id: "12-1", text: "Test on iOS", completed: false },
-      { id: "12-2", text: "Test on Android", completed: false }
-    ]
-  },
-];
-*/
+import { useSelector, useDispatch } from "react-redux";
 
 //subtask component
 const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSelectSubtask }) => {
@@ -128,16 +10,12 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
     onSelectSubtask(subtask, parentId, parentText, action);
   };
 
-  // Handle completion with double-click
   const handleSubtaskCompletion = (e) => {
-    e.stopPropagation(); // Prevent selecting subtask
+    e.stopPropagation();
     toggleSubtaskCompletion(parentId, subtask.id);
   };
 
-  // Handle subtask selection - explicitly pass the default action as null 
-  // to prevent opening implementation guide by default
   const handleSubtaskClick = () => {
-    // Pass null as action to just select the subtask without opening a specific panel
     onSelectSubtask(subtask, parentId, parentText, null);
   };
 
@@ -234,15 +112,12 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
   
   if (!isRendered) return null;
 
-  // Determine if this is a task or subtask context
   const isSubtask = !!subtask;
   const currentItem = subtask || task;
   
-  // Set icon and color based on action type
   let actionIcon, actionColor, actionTitle, actionDescription;
   
   if (isSubtask) {
-    // Subtask actions
     switch (action) {
       case 'implementation':
         actionIcon = <FaCode className="text-blue-400 text-sm" />;
@@ -269,7 +144,6 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
         actionDescription = `Step-by-step guide for implementing ${currentItem.text}`;
     }
   } else {
-    // Task actions
     switch (action) {
       case 'breakdown':
         actionIcon = <FaCode className="text-blue-400 text-sm" />;
@@ -345,7 +219,6 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
         <div className="border-b border-gray-800">
           <div className="flex px-6">
             {isSubtask ? (
-              // Subtask tabs
               <>
                 <button className={`py-3 px-4 border-b-2 ${action === 'implementation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
                   Implementation Guide
@@ -358,7 +231,6 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
                 </button>
               </>
             ) : (
-              // Task tabs
               <>
                 <button className={`py-3 px-4 border-b-2 ${action === 'breakdown' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
                   Task Breakdown
@@ -378,7 +250,6 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
         <div className="flex-1 overflow-y-auto p-6">
           {(() => {
             if (isSubtask) {
-              // Subtask-specific content
               switch (action) {
                 case 'implementation':
                   return (
@@ -436,17 +307,16 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
                       <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
                         <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
                           {`I'm working on implementing ${currentItem.text} for a web application.
+                            Technical Context:
+                            - Subtask: ${currentItem.text}
+                            - Parent Task: ${parentTask}
+                            - Status: ${currentItem.completed ? 'Completed' : 'In Progress'}
 
-Technical Context:
-- Subtask: ${currentItem.text}
-- Parent Task: ${parentTask}
-- Status: ${currentItem.completed ? 'Completed' : 'In Progress'}
-
-Please provide:
-1. Detailed code implementation
-2. Handling edge cases specific to this functionality
-3. Unit testing approach
-4. Performance optimization tips`}
+                            Please provide:
+                            1. Detailed code implementation
+                            2. Handling edge cases specific to this functionality
+                            3. Unit testing approach
+                            4. Performance optimization tips`}
                         </pre>
                         <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
                           Copy to Clipboard
@@ -509,7 +379,6 @@ Please provide:
                   return null;
               }
             } else {
-              // Task-level content
               switch (action) {
                 case 'breakdown':
                   return (
@@ -585,18 +454,17 @@ Please provide:
                       <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
                         <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
                           {`I'm working on planning ${currentItem.text} for a web application.
+                            Project Context:
+                            - Task: ${currentItem.text}
+                            - Progress: ${currentItem.subtasks?.filter(st => st.completed).length || 0}/${currentItem.subtasks?.length || 0} subtasks completed
+                            - Subtasks: ${currentItem.subtasks?.map(st => st.text).join(', ') || 'None defined'}
 
-Project Context:
-- Task: ${currentItem.text}
-- Progress: ${currentItem.subtasks?.filter(st => st.completed).length || 0}/${currentItem.subtasks?.length || 0} subtasks completed
-- Subtasks: ${currentItem.subtasks?.map(st => st.text).join(', ') || 'None defined'}
-
-Please provide:
-1. High-level architecture recommendations
-2. Implementation strategy
-3. Common pitfalls to avoid
-4. Testing approach
-5. Resource planning`}
+                            Please provide:
+                            1. High-level architecture recommendations
+                            2. Implementation strategy
+                            3. Common pitfalls to avoid
+                            4. Testing approach
+                            5. Resource planning`}
                         </pre>
                         <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
                           Copy to Clipboard
@@ -677,39 +545,6 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   const ref = useRef(null);
   const contentRef = useRef(null);
   const deleteTimerRef = useRef(null);
-  
-  useEffect(() => {
-    try {
-      const fetchTaskDetails = async () => {
-        const response = await fetch('http://localhost:3000/api/agent/generate-tasks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          },
-          body: JSON.stringify({
-            taskId: task.id,
-            taskText: task.text,
-            subtasks: task.subtasks
-          })
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Unauthorized - Please login again');
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const data = await response.json();
-        console.log('Task details:', data);
-      };
-
-      fetchTaskDetails();
-    } catch (error) {
-      console.error('Error fetching task details:', error);
-    }
-  }, [task.id, task.text, task.subtasks]);
   
   //handle drag start
   const handleDragStart = (e) => {
@@ -871,7 +706,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
       {/* left-side drag handle and add indicator (visible on hover) */}
       <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center opacity-0 group-hover/task:opacity-100 transition-opacity -ml-10 px-2 gap-2">
         <div 
-          className="w-4 h-4 bg-gray-800/70 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700/80 cursor-grab transition-colors"
+          className="w-4 h-2 bg-gray-800/70 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700/80 cursor-grab transition-colors"
           title="Drag to reorder"
           aria-label="Drag to reorder"
         >
@@ -1127,85 +962,27 @@ const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewT
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [newTask, setNewTask] = useState({
-    "projectDescription": "A mobile app for tracking daily workouts",
-    "techStack": ["React Native", "Firebase", "TypeScript"],
-    "projectType": "mobile"
-  });
-
   const [isComposing, setIsComposing] = useState(false);
-
-  useEffect(() => {
-    const fetchTasks = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('http://localhost:3000/api/agent/generate-tasks', {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            projectDescription: newTask.projectDescription,
-            techStack: newTask.techStack,
-            projectType: newTask.projectType
-          })
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Unauthorized - Please login again');
-          }
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        
-        // Handle the response data format - ensure it matches what our component expects
-        let formattedTasks = [];
-        
-        // Check if data is in the expected format
-        if (responseData?.data?.tasks) {
-          formattedTasks = responseData.data.tasks.map(task => ({
-            id: task.id || task.taskId || String(Math.random()),
-            text: task.text,
-            completed: task.completed || false,
-            subtasks: Array.isArray(task.subtasks) ? task.subtasks.map(subtask => ({
-              id: subtask.id || String(Math.random()),
-              text: subtask.text,
-              completed: subtask.completed || false
-            })) : []
-          }));
-        } else if (Array.isArray(responseData.data)) {
-          // If data is directly an array
-          formattedTasks = responseData.data.map(task => ({
-            id: task.id || String(Math.random()),
-            text: task.text,
-            completed: task.completed || false,
-            subtasks: Array.isArray(task.subtasks) ? task.subtasks.map(subtask => ({
-              id: subtask.id || String(Math.random()),
-              text: subtask.text,
-              completed: subtask.completed || false
-            })) : []
-          }));
-        }
-        
-        setTasks(formattedTasks);
-        console.log("Formatted tasks:", formattedTasks);
-        
-      } catch (error) {
-        console.error('Error fetching tasks:', error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTasks();
-  }, []);
+  const [newTask, setNewTask] = useState('');
   
+  const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    if (currentTasks) {
+      setTasks(currentTasks);
+      setLoading(false);
+    } else {
+      setLoading(reduxLoading);
+    }
+    
+    if (reduxError) {
+      setError(reduxError);
+    }
+  }, [currentTasks, reduxLoading, reduxError]);
+
   const toggleTaskCompletion = (index) => {
     setTasks(prevTasks => {
       const updatedTasks = [...prevTasks];
@@ -1299,13 +1076,91 @@ function Tasks() {
       }
     ]);
     
-    setNewTask("");
+    //clear the input
+    setNewTask('');
     setIsComposing(false);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white">
+        <div className="max-w-4xl mx-auto pt-12 px-4">
+          <div className="flex justify-center items-center h-64">
+            <div className="animate-pulse flex flex-col items-center">
+              <div className="h-10 w-10 rounded-full bg-blue-500/20 mb-4"></div>
+              <div className="text-blue-500 font-medium">Loading tasks...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white">
+        <div className="max-w-4xl mx-auto pt-12 px-4">
+          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-8">
+            <h2 className="text-red-400 font-medium mb-2">Error Loading Tasks</h2>
+            <p className="text-gray-300">{error}</p>
+          </div>
+          <button 
+            onClick={() => window.location.href = '/projectinput'} 
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg"
+          >
+            Return to Project Input
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Check if there are tasks in the component state OR in Redux state
+  const hasTasks = (tasks && tasks.length > 0) || (currentTasks && currentTasks.length > 0);
+  
+  if (!hasTasks) {
+    return (
+      <div className="min-h-screen bg-gray-950 text-white">
+        <div className="max-w-4xl mx-auto pt-12 px-4">
+          <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8 text-center">
+            <h2 className="text-blue-400 font-medium mb-3 text-xl">No Tasks Found</h2>
+            <p className="text-gray-300 mb-6">
+              You don't have any tasks yet. Create a new task or return to project input.
+            </p>
+            <div className="flex justify-center gap-4">
+              <button 
+                onClick={() => setIsComposing(true)} 
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              >
+                <FaPlus size={14} />
+                Create Task
+              </button>
+              <button 
+                onClick={() => window.location.href = '/projectinput'} 
+                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
+              >
+                Project Input
+              </button>
+            </div>
+          </div>
+          {isComposing && (
+            <div className="mt-6">
+              <ComposeArea
+                isComposing={isComposing}
+                setIsComposing={setIsComposing}
+                newTask={newTask}
+                setNewTask={setNewTask}
+                addNewTask={addNewTask}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-950">
-      {/* header - more notion-like */}
       <header className="sticky top-0 z-10 bg-gray-900/50 border-b border-gray-800 p-4 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
@@ -1372,8 +1227,8 @@ function Tasks() {
         <ComposeArea 
           isComposing={isComposing}
           setIsComposing={setIsComposing}
-          newTask={newTask.projectDescription}
-          setNewTask={(value) => setNewTask({...newTask, projectDescription: value})}
+          newTask={newTask}
+          setNewTask={(value) => setNewTask(value)}
           addNewTask={addNewTask}
         />
       </footer>
