@@ -16,7 +16,6 @@ class TaskGenerationCrew:
         )
 
     def generate_tasks(self, project_description: str, tech_stack: List[str] = None, project_type: str = "web", should_recommend_tech_stack: bool = None) -> Dict[str, Any]:
-        """Generate tasks for a project using CrewAI with Claude"""
         tech_stack = tech_stack or []
         
         if should_recommend_tech_stack is None:

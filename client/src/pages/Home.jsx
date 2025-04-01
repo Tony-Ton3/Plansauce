@@ -8,7 +8,7 @@ export default function Home() {
   return (
     <div className="px-8 py-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="font-nerko text-4xl md:text-5xl font-bold text-white mb-6">
+        <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
           Welcome to <span className="text-[#8e5fe7]">LearnStack</span>
         </h1>
 
@@ -17,7 +17,7 @@ export default function Home() {
         </p>
 
         <div className="bg-[#1a1f29] rounded-lg shadow-lg p-8 mb-10">
-          <h2 className="font-nerko text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-bold text-white mb-4">
             How It Works
           </h2>
 

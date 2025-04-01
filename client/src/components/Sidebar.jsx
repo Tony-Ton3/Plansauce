@@ -130,7 +130,7 @@ function Sidebar() {
                 <div className="min-w-[30px] flex justify-center">
                     <TbStack3Filled className="text-2xl text-white" />
                 </div>
-                <div className="ml-3 font-nerko text-xl whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <div className="ml-3 text-xl whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     LearnStack
                 </div>
             </div>
@@ -236,10 +236,17 @@ function Sidebar() {
                     >
                         <div 
                             className="flex items-center px-3 py-1 text-gray-300 hover:bg-[#333] hover:text-white rounded cursor-pointer transition-colors"
+                            onClick={() => navigate("/profile")}
+                        >
+                            <span>Profile</span>
+                        </div>
+                        <div 
+                            className="flex items-center px-3 py-1 text-gray-300 hover:bg-[#333] hover:text-white rounded cursor-pointer transition-colors"
                             onClick={handleSignOut}
                         >
                             <span>Sign out</span>
                         </div>
+           
                     </div>
                 )}
             </div>

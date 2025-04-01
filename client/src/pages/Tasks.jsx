@@ -1143,7 +1143,7 @@ function Tasks() {
               </button>
             </div>
           </div>
-          {isComposing && (
+          {/* {isComposing && (
             <div className="mt-6">
               <ComposeArea
                 isComposing={isComposing}
@@ -1153,7 +1153,7 @@ function Tasks() {
                 addNewTask={addNewTask}
               />
             </div>
-          )}
+          )} */}
         </div>
       </div>
     );
@@ -1223,7 +1223,7 @@ function Tasks() {
       </main>
         
       {/* footer - compose area */}
-      <footer className="fixed bottom-0 left-0 right-0 bg-gray-900/50 border-t border-gray-800 p-3 z-10 backdrop-blur-xl">
+      {/* <footer className="fixed bottom-0 left-0 right-0 bg-gray-900/50 border-t border-gray-800 p-3 z-10 backdrop-blur-xl">
         <ComposeArea 
           isComposing={isComposing}
           setIsComposing={setIsComposing}
@@ -1231,7 +1231,7 @@ function Tasks() {
           setNewTask={(value) => setNewTask(value)}
           addNewTask={addNewTask}
         />
-      </footer>
+      </footer> */}
     </div>
   );
 }

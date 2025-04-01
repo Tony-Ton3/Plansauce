@@ -101,9 +101,10 @@ export const updateUserBackground = async (req, res, next) => {
     }
 
     user.background = background;
-    await user.save();
+    const updatedUser = await user.save();
 
-    return res.status(200).json({ message: "Background updated successfully" });
+    const { password, ...userData } = updatedUser._doc;
+    return res.status(200).json(userData);
   } catch (error) {
     next(errorHandler(500, "Error updating quiz answers"));
   }

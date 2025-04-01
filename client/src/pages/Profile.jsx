@@ -9,7 +9,7 @@ import { updateUserBackground } from "../utils/api.jsx";
 export default function Profile() {
     const { currentUser, loading, error } = useSelector((state) => state.user);
     const [formData, setFormData] = useState({
-        username: "",
+        name: "",
         email: "",
         password: "",
         newPassword: "",
@@ -77,7 +77,7 @@ export default function Profile() {
     useEffect(() => {
         if (currentUser) {
             setFormData({
-                username: currentUser.name || "",
+                name: currentUser.name || "",
                 email: currentUser.email || "",
                 password: "",
                 newPassword: "",
@@ -129,15 +129,15 @@ export default function Profile() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (updateMode && !formData.username) {
-            return dispatch(updateFailure("Username is required"));
+        if (updateMode && !formData.name) {
+            return dispatch(updateFailure("Name is required"));
         }
 
         try {
             dispatch(updateStart());
 
             const updateData = {
-                username: formData.username,
+                name: formData.name,
             };
 
             if (formData.password) {
@@ -148,7 +148,7 @@ export default function Profile() {
                 updateData.newPassword = formData.newPassword;
             }
 
-            const res = await fetch(`http://localhost:3000/api/user/update/${currentUser._id}`, {
+            const res = await fetch(`http://localhost:3000/api/user/update`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(updateData),
@@ -288,14 +288,14 @@ export default function Profile() {
     const renderProfileTab = () => (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-gray-300 mb-1">Username</label>
+                <label className="block text-gray-300 mb-1">Name</label>
                 <div className="relative">
                     <input
                         type="text"
-                        id="username"
-                        placeholder="Username"
+                        id="name"
+                        placeholder="Name"
                         className={`w-full px-4 py-2 rounded-lg bg-[#252b38] text-white border ${updateMode ? 'border-[#8e5fe7]' : 'border-gray-700'}`}
-                        value={formData.username}
+                        value={formData.name}
                         onChange={handleChange}
                         disabled={!updateMode}
                     />
@@ -617,7 +617,7 @@ export default function Profile() {
     return (
         <div className="min-h-screen pt-20 px-4 bg-[#0f1218]">
             <div className="max-w-2xl mx-auto bg-[#1a1f29] p-8 rounded-xl shadow-lg">
-                <h1 className="text-3xl font-nerko text-white mb-6 text-center">Your Profile</h1>
+                <h1 className="text-3xl text-white mb-6 text-center">Your Profile</h1>
 
                 {error && (
                     <div className="bg-red-500 text-white p-3 rounded-lg mb-4">
