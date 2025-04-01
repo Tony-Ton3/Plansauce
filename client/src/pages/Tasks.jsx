@@ -3,6 +3,17 @@ import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown
 import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
 
+// Define project phases
+const PROJECT_PHASES = [
+  { id: 'plan', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
+  { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
+  { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
+  { id: 'frontend', name: 'Frontend', description: 'User interface development, client-side logic' },
+  { id: 'testing', name: 'Testing', description: 'Writing tests, quality assurance checks' },
+  { id: 'deploy', name: 'Deploy', description: 'Infrastructure setup, deployment process, going live' },
+  { id: 'maintain', name: 'Maintain', description: 'Monitoring, updates, bug fixes after launch' },
+];
+
 //subtask component
 const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSelectSubtask }) => {
   const handleActionClick = (e, action) => {
@@ -31,7 +42,7 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
       <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
       
       {/* improved checkbox with larger hit area - now requires double click */}
-      <div 
+      <div
         onDoubleClick={handleSubtaskCompletion}
         onClick={(e) => e.stopPropagation()} // Prevent triggering parent click handler
         className="flex-shrink-0 h-7 w-7 flex items-center justify-center cursor-pointer hover:bg-gray-800/50 rounded-full transition-colors"
@@ -652,7 +663,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     
     if (deleteConfirm) {
       //already in delete confirm state, so actually delete
-      deleteTask(index);
+      deleteTask(task.id);
       clearTimeout(deleteTimerRef.current);
     } else {
       //start delete confirmation UI
@@ -681,9 +692,11 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     };
   }, []);
 
-  //handle task completion (now requires double click)
+  //handle task completion (simplified and foolproof)
   const handleTaskCompletion = (e) => {
     e.stopPropagation();
+    e.preventDefault();
+    
     //trigger animation
     setCheckAnimation(true);
     
@@ -692,8 +705,12 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
       setCheckAnimation(false);
     }, 600);
     
-    //toggle task completion
-    toggleTaskCompletion(index);
+    // Make absolutely sure we're passing the task ID
+    if (task && task.id) {
+      toggleTaskCompletion(task.id);
+    } else {
+      console.error("Task or task ID is missing", task);
+    }
   };
 
   return (
@@ -736,14 +753,18 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         } transition-all duration-200 hover:border-gray-700 group`}
         onClick={handleTaskClick}
       >
-        {/* task checkbox */}
+        {/* task checkbox - very explicitly use the task ID */}
         <div 
-          onDoubleClick={handleTaskCompletion}
+          onClick={(e) => {
+            e.stopPropagation(); 
+            handleTaskCompletion(e);
+          }}
           className={`flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
             ${checkAnimation ? 'scale-110 bg-blue-500/20' : 'hover:bg-gray-800/50'}`}
           role="button"
-          aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
-          title={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
+          aria-label={task.completed ? "Click to mark as incomplete" : "Click to mark as complete"}
+          title={task.completed ? "Click to mark as incomplete" : "Click to mark as complete"}
+          data-task-id={task.id}
         >
           {task.completed ? (
             <div className="relative">
@@ -909,54 +930,84 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   );
 };
 
-//compose area component without animations
-const ComposeArea = ({ isComposing, setIsComposing, newTask, setNewTask, addNewTask }) => {
-  if (isComposing) {
-    return (
-      <form 
-        onSubmit={addNewTask}
-        className="max-w-2xl mx-auto bg-gray-900 rounded-xl border border-gray-800 shadow-lg shadow-blue-500/5 overflow-hidden"
-      >
-        <div className="p-3">
-          <textarea
-            placeholder="What needs to be done?"
-            value={newTask}
-            onChange={(e) => setNewTask(e.target.value)}
-            className="w-full resize-none border-none bg-transparent focus:ring-0 focus:outline-none text-gray-100 placeholder-gray-500 text-lg"
-            rows={2}
-            autoFocus
-          />
-        </div>
-        <div className="bg-gray-800/50 p-3 flex justify-between items-center border-t border-gray-800">
-          <button 
-            type="button"
-            onClick={() => setIsComposing(false)}
-            className="text-gray-400 hover:text-gray-300"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit"
-            disabled={!newTask.trim()}
-            className={`rounded-full px-4 py-2 font-medium ${
-              newTask.trim() ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20' : 'bg-gray-700 text-gray-400 cursor-not-allowed'
-            }`}
-          >
-            Add Task
-          </button>
-        </div>
-      </form>
-    );
-  }
+// Phase Navigation component with counts
+const PhaseNavigationWithCounts = ({ phases, currentPhase, onChange, phaseTaskCounts }) => {
+  return (
+    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-10">
+      <div className="flex flex-col gap-2 bg-gray-900/70 backdrop-blur-md rounded-2xl p-3 border border-gray-800 shadow-lg shadow-blue-500/5">
+        {phases.map((phase) => {
+          const count = phaseTaskCounts[phase.id] || { total: 0, completed: 0 };
+          
+          return (
+            <button
+              key={phase.id}
+              onClick={() => onChange(phase.id)}
+              className={`relative group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all
+                ${currentPhase === phase.id 
+                  ? 'bg-gray-800 text-white shadow-inner' 
+                  : 'bg-transparent text-gray-400 hover:bg-gray-800/40 hover:text-gray-300'}`}
+              title={phase.description}
+            >
+              {/* Active indicator */}
+              {currentPhase === phase.id && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-500 rounded-full"></div>
+              )}
+              
+              <span className="ml-2">{phase.name}</span>
+              
+              {/* Task count badge */}
+              {count.total > 0 && (
+                <span className={`ml-3 px-2 py-0.5 rounded-full text-xs ${
+                  currentPhase === phase.id 
+                    ? 'bg-blue-900/50 text-blue-300 border border-blue-800' 
+                    : 'bg-gray-900/50 text-gray-400 border border-gray-800'
+                }`}>
+                  {count.completed}/{count.total}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// Phase Empty State component
+const PhaseEmptyState = ({ phase, setIsComposing }) => {
+  const currentPhase = PROJECT_PHASES.find(p => p.id === phase);
   
   return (
-    <button
-      onClick={() => setIsComposing(true)}
-      className="max-w-2xl mx-auto flex items-center gap-2 bg-gray-900 rounded-full border border-gray-800 p-3 w-full text-left text-gray-400 hover:bg-gray-800/50 hover:border-gray-700 shadow-lg shadow-blue-500/5"
-    >
-      <FaPlus className="text-blue-500" />
-      <span>Add a new task...</span>
-    </button>
+    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
+      <h3 className="text-lg font-medium text-gray-200 mb-2">No tasks in {currentPhase.name}</h3>
+      <p className="text-gray-400 mb-4">{currentPhase.description}</p>
+      <button 
+        onClick={() => setIsComposing(true)}
+        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 py-2 transition-colors shadow-lg shadow-blue-500/20"
+      >
+        <FaPlus size={12} />
+        <span>Add a task to this phase</span>
+      </button>
+    </div>
+  );
+};
+
+// Phase Info Banner component - shows when hovering over phase
+const PhaseInfoBanner = ({ phase, tasksCount, completedCount }) => {
+  const currentPhase = PROJECT_PHASES.find(p => p.id === phase);
+  
+  return (
+    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 mb-6 shadow-inner shadow-blue-500/5">
+      <div className="flex items-start justify-between">
+        <div>
+          <h2 className="text-xl font-medium text-gray-100">{currentPhase.name}</h2>
+          <p className="text-gray-400 text-sm mt-1">{currentPhase.description}</p>
+        </div>
+        <div className="bg-gray-900/50 px-3 py-1 rounded-full text-sm text-gray-300 border border-gray-800">
+          {completedCount}/{tasksCount} completed
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -966,13 +1017,22 @@ function Tasks() {
   const [error, setError] = useState(null);
   const [isComposing, setIsComposing] = useState(false);
   const [newTask, setNewTask] = useState('');
+  const [currentPhase, setCurrentPhase] = useState('plan');
+  const [newTaskPhase, setNewTaskPhase] = useState('plan');
+  const [phaseTaskCounts, setPhaseTaskCounts] = useState({});
   
   const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
   const dispatch = useDispatch();
   
+  // Setup initial tasks
   useEffect(() => {
     if (currentTasks) {
-      setTasks(currentTasks);
+      // Initialize phase for existing tasks if they don't have one
+      const tasksWithPhases = currentTasks.map(task => ({
+        ...task,
+        phase: task.phase || 'plan' // Default to planning phase if not specified
+      }));
+      setTasks(tasksWithPhases);
       setLoading(false);
     } else {
       setLoading(reduxLoading);
@@ -983,28 +1043,49 @@ function Tasks() {
     }
   }, [currentTasks, reduxLoading, reduxError]);
 
-  const toggleTaskCompletion = (index) => {
-    setTasks(prevTasks => {
-      const updatedTasks = [...prevTasks];
-      const newCompletedState = !updatedTasks[index].completed;
+  // Calculate task counts by phase - simplified
+  useEffect(() => {
+    if (tasks && tasks.length > 0) {
+      const counts = {};
       
-      //update the task
-      updatedTasks[index] = {
-        ...updatedTasks[index],
-        completed: newCompletedState
-      };
+      PROJECT_PHASES.forEach(phase => {
+        const phaseTasks = tasks.filter(task => task.phase === phase.id);
+        const completed = phaseTasks.filter(task => task.completed).length;
+        
+        counts[phase.id] = {
+          total: phaseTasks.length,
+          completed
+        };
+      });
       
-      //if marking as completed, also mark all subtasks as completed
-      //if marking as incompleted, also mark all subtasks as incompleted
-      if (updatedTasks[index].subtasks) {
-        updatedTasks[index].subtasks = updatedTasks[index].subtasks.map(subtask => ({
-          ...subtask,
-          completed: newCompletedState
-        }));
+      setPhaseTaskCounts(counts);
+    }
+  }, [tasks]);
+
+  // Extremely simplified toggle task completion
+  const toggleTaskCompletion = (taskId) => {
+    // Log the task ID we're trying to toggle
+    console.log('Toggling task with ID:', taskId);
+    
+    // Create a completely new array
+    const newTasks = tasks.map(task => {
+      // Only modify the task with this specific ID
+      if (task.id === taskId) {
+        console.log('Found task to toggle:', task.text, '- Current completion:', task.completed);
+        
+        // Create a new task object with toggled completion
+        return {
+          ...task,
+          completed: !task.completed
+        };
       }
       
-      return updatedTasks;
+      // Return other tasks unchanged
+      return task;
     });
+    
+    // Set the entire state to the new array
+    setTasks(newTasks);
   };
   
   const toggleSubtaskCompletion = (parentId, subtaskId) => {
@@ -1039,23 +1120,19 @@ function Tasks() {
     });
   };
   
-  const deleteTask = (index) => {
-    setTasks(prevTasks => {
-      const updatedTasks = [...prevTasks];
-      updatedTasks.splice(index, 1);
-      return updatedTasks;
-    });
+  const deleteTask = (taskId) => {
+    setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
   
   const moveTask = (fromIndex, toIndex) => {
     setTasks(prevTasks => {
-      //create a copy of the tasks array
+      // Create a copy of the tasks array
       const updatedTasks = [...prevTasks];
       
-      //remove the task from the original position
+      // Remove the task from the original position
       const [movedTask] = updatedTasks.splice(fromIndex, 1);
       
-      //insert the task at the new position
+      // Insert the task at the new position
       updatedTasks.splice(toIndex, 0, movedTask);
       
       return updatedTasks;
@@ -1072,14 +1149,20 @@ function Tasks() {
         id: Date.now().toString(), 
         text: newTask, 
         completed: false,
-        subtasks: [] //new tasks start with empty subtasks
+        phase: newTaskPhase,
+        subtasks: []
       }
     ]);
     
-    //clear the input
     setNewTask('');
     setIsComposing(false);
   };
+
+  // Filter tasks by current phase
+  const currentPhaseTasks = tasks.filter(task => task.phase === currentPhase);
+  
+  // Count completed tasks in current phase
+  const completedTasksCount = currentPhaseTasks.filter(task => task.completed).length;
 
   if (loading) {
     return (
@@ -1118,63 +1201,36 @@ function Tasks() {
   // Check if there are tasks in the component state OR in Redux state
   const hasTasks = (tasks && tasks.length > 0) || (currentTasks && currentTasks.length > 0);
   
-  if (!hasTasks) {
-    return (
-      <div className="min-h-screen bg-gray-950 text-white">
-        <div className="max-w-4xl mx-auto pt-12 px-4">
-          <div className="bg-blue-900/20 border border-blue-800 rounded-lg p-6 mb-8 text-center">
-            <h2 className="text-blue-400 font-medium mb-3 text-xl">No Tasks Found</h2>
-            <p className="text-gray-300 mb-6">
-              You don't have any tasks yet. Create a new task or return to project input.
-            </p>
-            <div className="flex justify-center gap-4">
-              <button 
-                onClick={() => setIsComposing(true)} 
-                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              >
-                <FaPlus size={14} />
-                Create Task
-              </button>
-              <button 
-                onClick={() => window.location.href = '/projectinput'} 
-                className="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg"
-              >
-                Project Input
-              </button>
-            </div>
-          </div>
-          {/* {isComposing && (
-            <div className="mt-6">
-              <ComposeArea
-                isComposing={isComposing}
-                setIsComposing={setIsComposing}
-                newTask={newTask}
-                setNewTask={setNewTask}
-                addNewTask={addNewTask}
-              />
-            </div>
-          )} */}
-        </div>
-      </div>
-    );
-  }
+  // We'll render the UI even if there are no tasks, as we want to show phase navigation
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-950">
-      <header className="sticky top-0 z-10 bg-gray-900/50 border-b border-gray-800 p-4 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
-          <div className="text-sm text-gray-400">
-            {loading ? "Loading..." : 
-              (tasks && tasks.filter ? 
-                `${tasks.filter(t => t.completed).length}/${tasks.length} completed` : 
-                "0/0 completed")}
+      <header className="sticky top-0 z-20 bg-gray-900/70 border-b border-gray-800 p-4 backdrop-blur-xl">
+        <div className="max-w-4xl mx-auto">
+          <div className="flex items-center justify-between">
+            <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
+            <div className="text-sm text-gray-400">
+              {loading ? "Loading..." : 
+                (tasks && tasks.filter ? 
+                  `${tasks.filter(t => t.completed).length}/${tasks.length} completed` : 
+                  "0/0 completed")}
+            </div>
           </div>
         </div>
       </header>
+      
+      {/* Phase navigation on the right side */}
+      {!loading && !error && (
+        <PhaseNavigationWithCounts
+          phases={PROJECT_PHASES} 
+          currentPhase={currentPhase} 
+          onChange={setCurrentPhase}
+          phaseTaskCounts={phaseTaskCounts}
+        />
+      )}
         
-      {/* main content */}
-      <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-6 mb-16">
+      {/* main content - adjusted to make room for side navigation */}
+      <main className="flex-grow w-full max-w-3xl mx-auto px-4 py-6 pb-16">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-blue-500 animate-spin mr-2">
@@ -1195,43 +1251,135 @@ function Tasks() {
               Try Again
             </button>
           </div>
-        ) : tasks && tasks.length > 0 ? (
-          <div className="space-y-1">
-            {tasks.map((task, index) => (
-              <Task
-                key={task.id}
-                task={task}
-                index={index}
-                moveTask={moveTask}
-                toggleTaskCompletion={toggleTaskCompletion}
-                toggleSubtaskCompletion={toggleSubtaskCompletion}
-                deleteTask={deleteTask}
-              />
-            ))}
-          </div>
         ) : (
-          <div className="flex flex-col items-center justify-center h-64 text-center">
-            <p className="text-gray-400 mb-4">No tasks available.</p>
-            <button 
-              onClick={() => setIsComposing(true)}
-              className="bg-blue-600 text-white px-4 py-2 rounded-full hover:bg-blue-500 shadow-lg shadow-blue-500/20"
-            >
-              Create a Task
-            </button>
-          </div>
+          <>
+            {/* Phase title and info */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-medium text-gray-100 mb-1">
+                {PROJECT_PHASES.find(p => p.id === currentPhase)?.name}
+              </h2>
+              <p className="text-gray-400 text-sm">
+                {PROJECT_PHASES.find(p => p.id === currentPhase)?.description}
+              </p>
+            </div>
+            
+            {/* Task counter - simplified without progress bar */}
+            <div className="mb-6 flex justify-between items-center text-sm">
+              <span className="text-gray-400">
+                {currentPhaseTasks.length} {currentPhaseTasks.length === 1 ? 'task' : 'tasks'}
+              </span>
+              <span className="text-gray-400">
+                {completedTasksCount}/{currentPhaseTasks.length} completed
+              </span>
+            </div>
+            
+            {/* Task area with frame-like border */}
+            <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4 mb-6 min-h-[400px]">
+              {currentPhaseTasks.length > 0 ? (
+                <div className="space-y-1">
+                  {currentPhaseTasks.map((task) => (
+                    <Task
+                      key={task.id}
+                      task={task}
+                      index={tasks.findIndex(t => t.id === task.id)}
+                      moveTask={moveTask}
+                      toggleTaskCompletion={toggleTaskCompletion}
+                      toggleSubtaskCompletion={toggleSubtaskCompletion}
+                      deleteTask={deleteTask}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <PhaseEmptyState phase={currentPhase} setIsComposing={setIsComposing} />
+              )}
+            </div>
+          </>
         )}
       </main>
         
-      {/* footer - compose area */}
-      {/* <footer className="fixed bottom-0 left-0 right-0 bg-gray-900/50 border-t border-gray-800 p-3 z-10 backdrop-blur-xl">
-        <ComposeArea 
-          isComposing={isComposing}
-          setIsComposing={setIsComposing}
-          newTask={newTask}
-          setNewTask={(value) => setNewTask(value)}
-          addNewTask={addNewTask}
-        />
-      </footer> */}
+      {/* Compose area - Add task dialog */}
+      {isComposing && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-full max-w-lg animate-fadeIn">
+            <form onSubmit={addNewTask}>
+              <div className="p-6 space-y-4">
+                <h2 className="text-xl font-semibold text-gray-100">Create New Task</h2>
+                
+                <div>
+                  <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-400 mb-1">
+                    Task Title
+                  </label>
+                  <input
+                    id="taskTitle"
+                    type="text"
+                    value={newTask}
+                    onChange={(e) => setNewTask(e.target.value)}
+                    placeholder="What needs to be done?"
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="taskPhase" className="block text-sm font-medium text-gray-400 mb-1">
+                    Project Phase
+                  </label>
+                  <select
+                    id="taskPhase"
+                    value={newTaskPhase}
+                    onChange={(e) => setNewTaskPhase(e.target.value)}
+                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {PROJECT_PHASES.map((phase) => (
+                      <option key={phase.id} value={phase.id}>
+                        {phase.name}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="mt-1 text-sm text-gray-500">
+                    {PROJECT_PHASES.find(p => p.id === newTaskPhase)?.description}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="border-t border-gray-800 px-6 py-4 flex justify-end space-x-3">
+                <button 
+                  type="button" 
+                  onClick={() => setIsComposing(false)}
+                  className="px-4 py-2 text-gray-400 hover:text-gray-300 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={!newTask.trim()}
+                  className={`px-4 py-2 rounded-lg font-medium ${
+                    newTask.trim() 
+                      ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20' 
+                      : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  }`}
+                >
+                  Create Task
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+        
+      {/* Floating action button to add new task */}
+      {!isComposing && (
+        <button
+          onClick={() => {
+            setNewTaskPhase(currentPhase); // Set the default phase to current phase
+            setIsComposing(true);
+          }}
+          className="fixed right-6 bottom-6 bg-blue-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:bg-blue-500 transition-colors z-10"
+          aria-label="Add new task"
+        >
+          <FaPlus />
+        </button>
+      )}
     </div>
   );
 }
