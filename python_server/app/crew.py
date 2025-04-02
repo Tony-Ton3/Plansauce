@@ -41,6 +41,15 @@ class TaskGenerationCrew:
                     First, recommend an appropriate tech stack for this project based on the requirements.
                     Then break this down into 3-5 main tasks, each with 2-3 subtasks.
                     
+                    Each task should be categorized into one of these categories:
+                    - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
+                    - setup: Setup - Environment configuration, repository initialization, installing core tools
+                    - backend: Backend - Server-side logic, API development, database interactions
+                    - frontend: Frontend - User interface development, client-side logic
+                    - testing: Testing - Writing tests, quality assurance checks
+                    - deploy: Deploy - Infrastructure setup, deployment process, going live
+                    - maintain: Maintain - Monitoring, updates, bug fixes after launch
+                    
                     Format the response as a JSON object with this structure:
                     {{
                         "tasks": [
@@ -48,6 +57,7 @@ class TaskGenerationCrew:
                                 "id": "task-1",
                                 "text": "Task description",
                                 "completed": false,
+                                "category": "plan", 
                                 "subtasks": [
                                     {{
                                         "id": "subtask-1-1",
@@ -67,6 +77,15 @@ class TaskGenerationCrew:
                     Break this down into 3-5 main tasks, each with 2-3 subtasks.
                     If the user has specified technologies they want to use, optimize the tasks for these technologies.
                     
+                    Each task should be categorized into one of these categories:
+                    - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
+                    - setup: Setup - Environment configuration, repository initialization, installing core tools
+                    - backend: Backend - Server-side logic, API development, database interactions
+                    - frontend: Frontend - User interface development, client-side logic
+                    - testing: Testing - Writing tests, quality assurance checks
+                    - deploy: Deploy - Infrastructure setup, deployment process, going live
+                    - maintain: Maintain - Monitoring, updates, bug fixes after launch
+                    
                     Format the response as a JSON object with this structure:
                     {{
                         "tasks": [
@@ -74,6 +93,7 @@ class TaskGenerationCrew:
                                 "id": "task-1",
                                 "text": "Task description",
                                 "completed": false,
+                                "category": "plan",
                                 "subtasks": [
                                     {{
                                         "id": "subtask-1-1",

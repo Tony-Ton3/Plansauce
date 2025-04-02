@@ -99,16 +99,6 @@ export const generateTasks = async (req, res, next) => {
   try {
     const { description, projectType, scale, features, timeline, useAI } = req.body;
     
-    // Validate required fields
-    if (!description) {
-      return res.status(400).json({
-        success: false,
-        message: 'Project description is required'
-      });
-    }
-    
-    console.log(`Sending request to Python server with data:`, req.body);
-    
     // get user's tech stack if useAI is false
     let techStack = [];
     
@@ -143,15 +133,11 @@ export const generateTasks = async (req, res, next) => {
     
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Python API response error:', errorText);
       throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
     }
     
-    // Parse the response from Python
     const result = await response.json();
-    console.log("Response from Python server:", result);
     
-    // Extract tasks from the result
     let tasks = [];
     if (result.data && Array.isArray(result.data)) {
       tasks = result.data;
@@ -161,10 +147,8 @@ export const generateTasks = async (req, res, next) => {
       tasks = result;
     }
     
-    // If user is logged in and we have tasks, save them to the database
-    if (req.user && tasks.length > 0) {
+    if (tasks.length > 0) {
       try {
-        // First, create a new project
         const projectName = description.substring(0, 50) + (description.length > 50 ? '...' : '');
         
         const project = new Project({
@@ -178,9 +162,7 @@ export const generateTasks = async (req, res, next) => {
         });
         
         const savedProject = await project.save();
-        console.log(`Created new project with ID: ${savedProject._id}`);
         
-        // Then create tasks associated with this project
         const savedTasks = [];
         for (let i = 0; i < tasks.length; i++) {
           const task = tasks[i];
@@ -190,6 +172,7 @@ export const generateTasks = async (req, res, next) => {
             taskId: task.id || `task-${i + 1}`,
             text: task.text,
             completed: Boolean(task.completed),
+            category: task.category || 'plan',
             order: i,
             subtasks: Array.isArray(task.subtasks) 
               ? task.subtasks.map((subtask, j) => ({
@@ -203,8 +186,6 @@ export const generateTasks = async (req, res, next) => {
           const savedTask = await newTask.save();
           savedTasks.push(savedTask);
         }
-        
-        console.log(`Saved ${savedTasks.length} tasks for project ${savedProject._id}`);
         
         result.projectId = savedProject._id;
         result.projectName = savedProject.name;

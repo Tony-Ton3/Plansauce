@@ -3,8 +3,7 @@ import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown
 import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
 
-// Define project phases
-const PROJECT_PHASES = [
+const PROJECT_CATEGORIES = [
   { id: 'plan', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
   { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
   { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
@@ -924,35 +923,35 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   );
 };
 
-// Phase Navigation component with counts
-const PhaseNavigationWithCounts = ({ phases, currentPhase, onChange, phaseTaskCounts }) => {
+// Phase Navigation component with counts - rename to CategoryNavigation
+const CategoryNavigationWithCounts = ({ categories, currentCategory, onChange, categoryTaskCounts }) => {
   return (
     <div className="fixed right-6 top-1/2 -translate-y-1/2 z-10">
       <div className="flex flex-col gap-2 bg-gray-900/70 backdrop-blur-md rounded-2xl p-3 border border-gray-800 shadow-lg shadow-blue-500/5">
-        {phases.map((phase) => {
-          const count = phaseTaskCounts[phase.id] || { total: 0, completed: 0 };
+        {categories.map((category) => {
+          const count = categoryTaskCounts[category.id] || { total: 0, completed: 0 };
           
           return (
             <button
-              key={phase.id}
-              onClick={() => onChange(phase.id)}
+              key={category.id}
+              onClick={() => onChange(category.id)}
               className={`relative group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all
-                ${currentPhase === phase.id 
+                ${currentCategory === category.id 
                   ? 'bg-gray-800 text-white shadow-inner' 
                   : 'bg-transparent text-gray-400 hover:bg-gray-800/40 hover:text-gray-300'}`}
-              title={phase.description}
+              title={category.description}
             >
               {/* Active indicator */}
-              {currentPhase === phase.id && (
+              {currentCategory === category.id && (
                 <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-500 rounded-full"></div>
               )}
               
-              <span className="ml-2">{phase.name}</span>
+              <span className="ml-2">{category.name}</span>
               
               {/* Task count badge */}
               {count.total > 0 && (
                 <span className={`ml-3 px-2 py-0.5 rounded-full text-xs ${
-                  currentPhase === phase.id 
+                  currentCategory === category.id 
                     ? 'bg-blue-900/50 text-blue-300 border border-blue-800' 
                     : 'bg-gray-900/50 text-gray-400 border border-gray-800'
                 }`}>
@@ -967,20 +966,20 @@ const PhaseNavigationWithCounts = ({ phases, currentPhase, onChange, phaseTaskCo
   );
 };
 
-// Phase Empty State component
-const PhaseEmptyState = ({ phase, setIsComposing }) => {
-  const currentPhase = PROJECT_PHASES.find(p => p.id === phase);
+// Phase Empty State component - rename to CategoryEmptyState
+const CategoryEmptyState = ({ category, setIsComposing }) => {
+  const currentCategory = PROJECT_CATEGORIES.find(c => c.id === category);
   
   return (
     <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-      <h3 className="text-lg font-medium text-gray-200 mb-2">No tasks in {currentPhase.name}</h3>
-      <p className="text-gray-400 mb-4">{currentPhase.description}</p>
+      <h3 className="text-lg font-medium text-gray-200 mb-2">No tasks in {currentCategory.name}</h3>
+      <p className="text-gray-400 mb-4">{currentCategory.description}</p>
       <button 
         onClick={() => setIsComposing(true)}
         className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 py-2 transition-colors shadow-lg shadow-blue-500/20"
       >
         <FaPlus size={12} />
-        <span>Add a task to this phase</span>
+        <span>Add a task to this category</span>
       </button>
     </div>
   );
@@ -992,9 +991,9 @@ function Tasks() {
   const [error, setError] = useState(null);
   const [isComposing, setIsComposing] = useState(false);
   const [newTask, setNewTask] = useState('');
-  const [currentPhase, setCurrentPhase] = useState('plan');
-  const [newTaskPhase, setNewTaskPhase] = useState('plan');
-  const [phaseTaskCounts, setPhaseTaskCounts] = useState({});
+  const [currentCategory, setCurrentCategory] = useState('plan');
+  const [newTaskCategory, setNewTaskCategory] = useState('plan');
+  const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   
   const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
   const dispatch = useDispatch();
@@ -1002,12 +1001,12 @@ function Tasks() {
   // Setup initial tasks
   useEffect(() => {
     if (currentTasks) {
-      // Initialize phase for existing tasks if they don't have one
-      const tasksWithPhases = currentTasks.map(task => ({
+      // Initialize category for new tasks if needed
+      const tasksWithCategories = currentTasks.map(task => ({
         ...task,
-        phase: task.phase || 'plan' // Default to planning phase if not specified
+        category: task.category || 'plan' // Default to planning category if not specified
       }));
-      setTasks(tasksWithPhases);
+      setTasks(tasksWithCategories);
       setLoading(false);
     } else {
       setLoading(reduxLoading);
@@ -1022,17 +1021,17 @@ function Tasks() {
     if (tasks && tasks.length > 0) {
       const counts = {};
       
-      PROJECT_PHASES.forEach(phase => {
-        const phaseTasks = tasks.filter(task => task.phase === phase.id);
-        const completed = phaseTasks.filter(task => task.completed).length;
+      PROJECT_CATEGORIES.forEach(category => {
+        const categoryTasks = tasks.filter(task => task.category === category.id);
+        const completed = categoryTasks.filter(task => task.completed).length;
         
-        counts[phase.id] = {
-          total: phaseTasks.length,
+        counts[category.id] = {
+          total: categoryTasks.length,
           completed
         };
       });
       
-      setPhaseTaskCounts(counts);
+      setCategoryTaskCounts(counts);
     }
   }, [tasks]);
 
@@ -1123,7 +1122,7 @@ function Tasks() {
         id: Date.now().toString(), 
         text: newTask, 
         completed: false,
-        phase: newTaskPhase,
+        category: newTaskCategory,
         subtasks: []
       }
     ]);
@@ -1132,11 +1131,11 @@ function Tasks() {
     setIsComposing(false);
   };
 
-  // Filter tasks by current phase
-  const currentPhaseTasks = tasks.filter(task => task.phase === currentPhase);
+  // Filter tasks by current category
+  const currentCategoryTasks = tasks.filter(task => task.category === currentCategory);
   
-  // Count completed tasks in current phase
-  const completedTasksCount = currentPhaseTasks.filter(task => task.completed).length;
+  // Count completed tasks in current category
+  const completedTasksCount = currentCategoryTasks.filter(task => task.completed).length;
 
   if (loading) {
     return (
@@ -1175,7 +1174,7 @@ function Tasks() {
   // Check if there are tasks in the component state OR in Redux state
   const hasTasks = (tasks && tasks.length > 0) || (currentTasks && currentTasks.length > 0);
   
-  // We'll render the UI even if there are no tasks, as we want to show phase navigation
+  // We'll render the UI even if there are no tasks, as we want to show category navigation
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-950">
@@ -1193,13 +1192,13 @@ function Tasks() {
         </div>
       </header>
       
-      {/* Phase navigation on the right side */}
+      {/* Category navigation on the right side */}
       {!loading && !error && (
-        <PhaseNavigationWithCounts
-          phases={PROJECT_PHASES} 
-          currentPhase={currentPhase} 
-          onChange={setCurrentPhase}
-          phaseTaskCounts={phaseTaskCounts}
+        <CategoryNavigationWithCounts
+          categories={PROJECT_CATEGORIES} 
+          currentCategory={currentCategory} 
+          onChange={setCurrentCategory}
+          categoryTaskCounts={categoryTaskCounts}
         />
       )}
         
@@ -1227,31 +1226,31 @@ function Tasks() {
           </div>
         ) : (
           <>
-            {/* Phase title and info */}
+            {/* Category title and info */}
             <div className="mb-6">
               <h2 className="text-2xl font-medium text-gray-100 mb-1">
-                {PROJECT_PHASES.find(p => p.id === currentPhase)?.name}
+                {PROJECT_CATEGORIES.find(c => c.id === currentCategory)?.name}
               </h2>
               <p className="text-gray-400 text-sm">
-                {PROJECT_PHASES.find(p => p.id === currentPhase)?.description}
+                {PROJECT_CATEGORIES.find(c => c.id === currentCategory)?.description}
               </p>
             </div>
             
             {/* Task counter - simplified without progress bar */}
             <div className="mb-6 flex justify-between items-center text-sm">
               <span className="text-gray-400">
-                {currentPhaseTasks.length} {currentPhaseTasks.length === 1 ? 'task' : 'tasks'}
+                {currentCategoryTasks.length} {currentCategoryTasks.length === 1 ? 'task' : 'tasks'}
               </span>
               <span className="text-gray-400">
-                {completedTasksCount}/{currentPhaseTasks.length} completed
+                {completedTasksCount}/{currentCategoryTasks.length} completed
               </span>
             </div>
             
             {/* Task area with frame-like border */}
             <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4 mb-6 min-h-[400px]">
-              {currentPhaseTasks.length > 0 ? (
+              {currentCategoryTasks.length > 0 ? (
                 <div className="space-y-1">
-                  {currentPhaseTasks.map((task) => (
+                  {currentCategoryTasks.map((task) => (
                     <Task
                       key={task.id}
                       task={task}
@@ -1264,7 +1263,7 @@ function Tasks() {
                   ))}
                 </div>
               ) : (
-                <PhaseEmptyState phase={currentPhase} setIsComposing={setIsComposing} />
+                <CategoryEmptyState category={currentCategory} setIsComposing={setIsComposing} />
               )}
             </div>
           </>
@@ -1295,23 +1294,23 @@ function Tasks() {
                 </div>
                 
                 <div>
-                  <label htmlFor="taskPhase" className="block text-sm font-medium text-gray-400 mb-1">
-                    Project Phase
+                  <label htmlFor="taskCategory" className="block text-sm font-medium text-gray-400 mb-1">
+                    Task Category
                   </label>
                   <select
-                    id="taskPhase"
-                    value={newTaskPhase}
-                    onChange={(e) => setNewTaskPhase(e.target.value)}
+                    id="taskCategory"
+                    value={newTaskCategory}
+                    onChange={(e) => setNewTaskCategory(e.target.value)}
                     className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    {PROJECT_PHASES.map((phase) => (
-                      <option key={phase.id} value={phase.id}>
-                        {phase.name}
+                    {PROJECT_CATEGORIES.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
                       </option>
                     ))}
                   </select>
                   <p className="mt-1 text-sm text-gray-500">
-                    {PROJECT_PHASES.find(p => p.id === newTaskPhase)?.description}
+                    {PROJECT_CATEGORIES.find(c => c.id === newTaskCategory)?.description}
                   </p>
                 </div>
               </div>
@@ -1344,7 +1343,7 @@ function Tasks() {
       {/* {!isComposing && (
         <button
           onClick={() => {
-            setNewTaskPhase(currentPhase); // Set the default phase to current phase
+            setNewTaskCategory(currentCategory); // Set the default category to current category
             setIsComposing(true);
           }}
           className="fixed right-6 bottom-6 bg-blue-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:bg-blue-500 transition-colors z-10"
