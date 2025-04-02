@@ -697,20 +697,14 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     e.stopPropagation();
     e.preventDefault();
     
-    //trigger animation
-    setCheckAnimation(true);
+    const taskId = task._id;
     
-    //reset animation after duration
+    setCheckAnimation(true);
     setTimeout(() => {
       setCheckAnimation(false);
     }, 600);
     
-    // Make absolutely sure we're passing the task ID
-    if (task && task.id) {
-      toggleTaskCompletion(task.id);
-    } else {
-      console.error("Task or task ID is missing", task);
-    }
+    toggleTaskCompletion(taskId);
   };
 
   return (
@@ -755,15 +749,15 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
       >
         {/* task checkbox - very explicitly use the task ID */}
         <div 
-          onClick={(e) => {
+          onDoubleClick={(e) => {
             e.stopPropagation(); 
             handleTaskCompletion(e);
           }}
           className={`flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
             ${checkAnimation ? 'scale-110 bg-blue-500/20' : 'hover:bg-gray-800/50'}`}
           role="button"
-          aria-label={task.completed ? "Click to mark as incomplete" : "Click to mark as complete"}
-          title={task.completed ? "Click to mark as incomplete" : "Click to mark as complete"}
+          aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
+          title={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
           data-task-id={task.id}
         >
           {task.completed ? (
@@ -992,25 +986,6 @@ const PhaseEmptyState = ({ phase, setIsComposing }) => {
   );
 };
 
-// Phase Info Banner component - shows when hovering over phase
-const PhaseInfoBanner = ({ phase, tasksCount, completedCount }) => {
-  const currentPhase = PROJECT_PHASES.find(p => p.id === phase);
-  
-  return (
-    <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-5 mb-6 shadow-inner shadow-blue-500/5">
-      <div className="flex items-start justify-between">
-        <div>
-          <h2 className="text-xl font-medium text-gray-100">{currentPhase.name}</h2>
-          <p className="text-gray-400 text-sm mt-1">{currentPhase.description}</p>
-        </div>
-        <div className="bg-gray-900/50 px-3 py-1 rounded-full text-sm text-gray-300 border border-gray-800">
-          {completedCount}/{tasksCount} completed
-        </div>
-      </div>
-    </div>
-  );
-};
-
 function Tasks() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -1043,7 +1018,6 @@ function Tasks() {
     }
   }, [currentTasks, reduxLoading, reduxError]);
 
-  // Calculate task counts by phase - simplified
   useEffect(() => {
     if (tasks && tasks.length > 0) {
       const counts = {};
@@ -1062,30 +1036,30 @@ function Tasks() {
     }
   }, [tasks]);
 
-  // Extremely simplified toggle task completion
   const toggleTaskCompletion = (taskId) => {
-    // Log the task ID we're trying to toggle
-    console.log('Toggling task with ID:', taskId);
-    
-    // Create a completely new array
-    const newTasks = tasks.map(task => {
-      // Only modify the task with this specific ID
-      if (task.id === taskId) {
-        console.log('Found task to toggle:', task.text, '- Current completion:', task.completed);
+    if (!taskId) {
+      console.error("No task ID provided");
+      return;
+    }
+
+    setTasks(prevTasks => {
+      return prevTasks.map(task => {
+        const taskIdentifier = task._id;
         
-        // Create a new task object with toggled completion
-        return {
-          ...task,
-          completed: !task.completed
-        };
-      }
-      
-      // Return other tasks unchanged
-      return task;
+        if (taskIdentifier === taskId) {
+          const updatedTask = {
+            ...task,
+            completed: !task.completed,
+            subtasks: task.subtasks?.map(subtask => ({
+              ...subtask,
+              completed: !task.completed
+            }))
+          };
+          return updatedTask;
+        }
+        return task;
+      });
     });
-    
-    // Set the entire state to the new array
-    setTasks(newTasks);
   };
   
   const toggleSubtaskCompletion = (parentId, subtaskId) => {
@@ -1367,8 +1341,7 @@ function Tasks() {
         </div>
       )}
         
-      {/* Floating action button to add new task */}
-      {!isComposing && (
+      {/* {!isComposing && (
         <button
           onClick={() => {
             setNewTaskPhase(currentPhase); // Set the default phase to current phase
@@ -1379,7 +1352,7 @@ function Tasks() {
         >
           <FaPlus />
         </button>
-      )}
+      )} */}
     </div>
   );
 }
