@@ -33,12 +33,25 @@ async def generate_tasks(request: Request):
         features = data.get('features', [])
         timeline = data.get('timeline', 'flexible')
         
+        # Extract user background information
+        user_background = data.get('userBackground', {})
+        experience_level = user_background.get('experience', 'Intermediate')
+        time_commitment = user_background.get('time_commitment', 20)
+        risk_tolerance = user_background.get('risk_tolerance', 'Scalability')
+        collaboration = user_background.get('collaboration', 'Solo developer')
+        
         enhanced_description = f"""
         Project Description: {project_description}
         Project Type: {project_type}
         Project Scale: {scale}
         Features: {', '.join(features) if features else 'No specific features mentioned'}
         Timeline: {timeline}
+        
+        User Context:
+        Experience Level: {experience_level}
+        Time Commitment: {time_commitment} hours per week
+        Priority: {risk_tolerance}
+        Collaboration: {collaboration}
         """
         
         if should_recommend_tech_stack:
@@ -53,6 +66,7 @@ async def generate_tasks(request: Request):
             project_description=enhanced_description,
             tech_stack=tech_stack,
             project_type=project_type,
+            user_background=user_background,
             should_recommend_tech_stack=should_recommend_tech_stack
         )
         

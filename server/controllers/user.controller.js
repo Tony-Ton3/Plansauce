@@ -109,22 +109,3 @@ export const updateUserBackground = async (req, res, next) => {
     next(errorHandler(500, "Error updating quiz answers"));
   }
 }
-
-export const setBackground = async (req, res, next) => {
-  const userId = req.user.id;
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.hasFilledBackground = true;
-
-    await user.save();
-
-    res.status(200).json({ message: "Background set successfully" });
-  } catch (error) {
-    next(errorHandler(500, error));
-  }
-};

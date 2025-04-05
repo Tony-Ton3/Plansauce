@@ -104,27 +104,6 @@ export const updateUserBackground = async (background) => {
     }
 };
 
-export const setBackground = async () => {
-    try {
-        const response = await fetch(`http://localhost:3000/api/user/setbackground`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-        });
-
-        const data = await response.json();
-
-        if (!response.ok) {
-            throw new Error(data.message || 'Failed to set background status');
-        }
-
-        return data;
-    } catch (error) {
-        console.error('Error setting background status:', error);
-        throw error;
-    }
-}; 
-
 export const getTasks = async(form) => {
     try{
         const response = await fetch(`${API_BASE_URL}/agent/generate-tasks`, {
@@ -218,3 +197,25 @@ export const setCurrentProject = async (projectId) => {
         throw error;
     }
 };
+
+export const enhanceProjectIdea = async (description) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/agent/enhance-idea`, {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json'},
+            credentials: 'include',
+            body: JSON.stringify({ description })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to enhance project idea');
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error enhancing project idea:', error);
+        throw error;
+    }
+}

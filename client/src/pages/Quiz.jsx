@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { FaCheck, FaPlus, FaChevronDown, FaChevronUp, FaSearch } from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
-import { updateUserBackground, setBackground } from "../utils/api.jsx";
+import { updateUserBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
 
 export default function Quiz() {
@@ -126,20 +126,12 @@ export default function Quiz() {
         try {
             console.log("Submitting background answers:", answers);
 
-            // First, update the user's background information
+            // Update the user's background information
             const updatedUser = await updateUserBackground(answers);
             console.log("Received updated user:", updatedUser);
 
-            await setBackground();
-
-            // Update the user object in Redux with the hasFilledBackground flag set to true
-            const userWithBackgroundFilled = {
-                ...updatedUser,
-                hasFilledBackground: true
-            };
-
             // Update Redux state with the updated user data
-            dispatch(updateSuccess(userWithBackgroundFilled));
+            dispatch(updateSuccess(updatedUser));
 
             // Navigate to project input page after successful submission
             navigate("/projectinput");

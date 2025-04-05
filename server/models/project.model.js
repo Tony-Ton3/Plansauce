@@ -19,17 +19,10 @@ const ProjectSchema = new mongoose.Schema({
     type: String,
     default: 'web'
   },
-  scale: {
+  priority: {
     type: String,
-    default: 'small'
-  },
-  features: {
-    type: [String],
-    default: []
-  },
-  timeline: {
-    type: String,
-    default: 'flexible'
+    enum: ['Speed', 'Scalability', 'Learning'],
+    default: 'Speed'
   }
 }, { timestamps: true });
 

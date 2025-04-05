@@ -15,8 +15,9 @@ class TaskGenerationCrew:
             temperature=0.7
         )
 
-    def generate_tasks(self, project_description: str, tech_stack: List[str] = None, project_type: str = "web", should_recommend_tech_stack: bool = None) -> Dict[str, Any]:
+    def generate_tasks(self, project_description: str, tech_stack: List[str] = None, project_type: str = "web", should_recommend_tech_stack: bool = None, user_background: Dict[str, Any] = None) -> Dict[str, Any]:
         tech_stack = tech_stack or []
+        user_background = user_background or {}
         
         if should_recommend_tech_stack is None:
             should_recommend_tech_stack = len(tech_stack) == 0
@@ -28,18 +29,65 @@ class TaskGenerationCrew:
                 backstory=dedent("""
                     You analyze project requirements and create structured task breakdowns.
                     You think step-by-step and organize work logically.
+                    You create actionable, well-scoped tasks that don't require additional clarification.
                 """),
                 llm=self.llm,
                 verbose=True
             )
+            
+            # Extract relevant user background info
+            experience_level = user_background.get('experience', '')
+            time_commitment = user_background.get('time_commitment', '')
+            risk_tolerance = user_background.get('risk_tolerance', '')
+            collaboration = user_background.get('collaboration', '')
+            
+            # Determine optimal task granularity based on experience
+            task_granularity = "3-5"
+            subtask_granularity = "2-3"
+            
+            if "Beginner" in str(experience_level):
+                task_granularity = "4-6"
+                subtask_granularity = "3-5"
+            elif "Advanced" in str(experience_level):
+                task_granularity = "3-4"
+                subtask_granularity = "2-3"
+            
+            # Adjust for project scale if available
+            project_scale = user_background.get('scale', '')
+            if project_scale:
+                if "large" in str(project_scale).lower():
+                    task_granularity = "5-7"
+                elif "small" in str(project_scale).lower():
+                    task_granularity = "3-4"
+            
+            # Create user context section
+            user_context = ""
+            if any([experience_level, time_commitment, risk_tolerance, collaboration]):
+                user_context = dedent(f"""
+                    USER BACKGROUND INFORMATION:
+                    - Experience Level: {experience_level}
+                    - Weekly Time Available: {time_commitment} hours
+                    - Priority: {risk_tolerance}
+                    - Working Style: {collaboration}
+                    
+                    Consider this user background when creating tasks. Adjust complexity, scope, and detail based on their experience level.
+                    If they have limited time, focus on essential tasks first. Consider their priority between speed, scalability, or learning.
+                    Tailor the collaboration aspects based on whether they're working solo or in a team.
+                """)
             
             if should_recommend_tech_stack:
                 task_description = dedent(f"""
                     Create a task breakdown for the following project:
                     {project_description}
                     
+                    {user_context}
+                    
                     First, recommend an appropriate tech stack for this project based on the requirements.
-                    Then break this down into 3-5 main tasks, each with 2-3 subtasks.
+                    Then break this down into {task_granularity} main tasks, each with {subtask_granularity} subtasks.
+                    
+                    IMPORTANT: Make each subtask HIGHLY ACTIONABLE with specific instructions.
+                    A user should be able to complete each subtask without needing additional information.
+                    Include technical details and specific steps in each subtask.
                     
                     Each task should be categorized into one of these categories:
                     - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
@@ -61,7 +109,7 @@ class TaskGenerationCrew:
                                 "subtasks": [
                                     {{
                                         "id": "subtask-1-1",
-                                        "text": "Subtask description",
+                                        "text": "Subtask description with specific actionable details",
                                         "completed": false
                                     }}
                                 ]
@@ -74,8 +122,14 @@ class TaskGenerationCrew:
                     Create a task breakdown for the following project:
                     {project_description}
                     
-                    Break this down into 3-5 main tasks, each with 2-3 subtasks.
+                    {user_context}
+                    
+                    Break this down into {task_granularity} main tasks, each with {subtask_granularity} subtasks.
                     If the user has specified technologies they want to use, optimize the tasks for these technologies.
+                    
+                    IMPORTANT: Make each subtask HIGHLY ACTIONABLE with specific instructions.
+                    A user should be able to complete each subtask without needing additional information.
+                    Include technical details and specific steps in each subtask.
                     
                     Each task should be categorized into one of these categories:
                     - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
@@ -97,7 +151,7 @@ class TaskGenerationCrew:
                                 "subtasks": [
                                     {{
                                         "id": "subtask-1-1",
-                                        "text": "Subtask description",
+                                        "text": "Subtask description with specific actionable details",
                                         "completed": false
                                     }}
                                 ]

@@ -1,114 +1,42 @@
-import AgentInteraction from "../models/agent.model.js";
+// import AgentInteraction from "../models/agent.model.js";
 import Task from "../models/task.model.js";
 import Project from "../models/project.model.js";
 import UserProject from "../models/userProject.model.js";
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const apiBaseUrl = 'http://localhost:8000/api';
-
-// export const processWithPython = async (req, res, next) => {
-//   const startTime = Date.now();
-  
-//   try {
-//     // Check if Python service is available
-//     const isHealthy = await checkPythonServiceHealth();
-    
-//     if (!isHealthy) {
-//       return res.status(503).json({
-//         success: false,
-//         message: 'Python service is unavailable'
-//       });
-//     }
-    
-//     // Get message from request body
-//     const { message } = req.body;
-    
-//     if (!message) {
-//       return res.status(400).json({
-//         success: false,
-//         message: 'Message is required'
-//       });
-//     }
-    
-//     // Call Python echo endpoint
-//     const response = await fetch(`${apiBaseUrl}/echo`, {
-//       method: 'POST',
-//       headers: {
-//         'Content-Type': 'application/json'
-//       },
-//       body: JSON.stringify({ message })
-//     });
-    
-//     if (!response.ok) {
-//       throw new Error(`HTTP error! status: ${response.status}`);
-//     }
-    
-//     const result = await response.json();
-//     const processingTime = Date.now() - startTime;
-    
-//     // Store the interaction in the database
-//     if (req.user && req.user.id) {
-//       const interaction = new AgentInteraction({
-//         userId: req.user.id,
-//         interactionType: 'echo',
-//         input: { message },
-//         output: result,
-//         status: 'success',
-//         processingTime,
-//       });
-      
-//       await interaction.save();
-//     }
-    
-//     return res.json({
-//       success: true,
-//       data: result,
-//       processedByPython: true,
-//       processingTime,
-//     });
-    
-//   } catch (error) {
-//     console.error('Error in processWithPython:', error);
-    
-//     // Store the error interaction if user is logged in
-//     if (req.user && req.user.id) {
-//       const processingTime = Date.now() - startTime;
-//       const interaction = new AgentInteraction({
-//         userId: req.user.id,
-//         interactionType: 'echo',
-//         input: req.body,
-//         output: {},
-//         status: 'error',
-//         errorMessage: error.message,
-//         processingTime,
-//       });
-      
-//       await interaction.save();
-//     }
-    
-//     return res.status(500).json({
-//       success: false,
-//       message: 'Error processing with Python service',
-//       error: error.message
-//     });
-//   }
-// };
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export const generateTasks = async (req, res, next) => {
   try {
-    const { description, projectType, scale, features, timeline, useAI } = req.body;
+    const { name, description, priority } = req.body;
     
-    // get user's tech stack if useAI is false
+    if (!description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Project description is required'
+      });
+    }
+    
+    // get user's background info
     let techStack = [];
+    let userBackground = {};
     
-    if (useAI === false && req.user) {
+    if (req.user) {
       try {
-        // get user's tech stack from database
+        // get user's background from database
         const user = await User.findById(req.user.id);
-        if (user && user.background && Array.isArray(user.background.known_tech)) {
-          techStack = user.background.known_tech;
-          console.log("Using user's known technologies:", techStack);
+        if (user && user.background) {
+          userBackground = user.background;
+          
+          if (Array.isArray(user.background.known_tech)) {
+            techStack = user.background.known_tech;
+          }
         }
       } catch (err) {
         console.error("Error fetching user background:", err);
@@ -123,11 +51,15 @@ export const generateTasks = async (req, res, next) => {
       },
       body: JSON.stringify({
         projectDescription: description,
-        projectType: projectType || 'web',
-        scale: scale || 'small',
-        features: features || [],
-        timeline: timeline || 'flexible',
+        projectType: "web",
+        scale: "small",
+        features: [],
+        timeline: "flexible",
         techStack: techStack,
+        userBackground: {
+          ...userBackground,
+          priority: priority
+        },
       })
     });
     
@@ -149,16 +81,14 @@ export const generateTasks = async (req, res, next) => {
     
     if (tasks.length > 0) {
       try {
-        const projectName = description.substring(0, 50) + (description.length > 50 ? '...' : '');
+        const projectName = name || (description.substring(0, 50) + (description.length > 50 ? '...' : ''));
         
         const project = new Project({
           userId: req.user.id,
           name: projectName,
           description: description,
-          projectType: projectType || 'web',
-          scale: scale || 'small',
-          features: features || [],
-          timeline: timeline || 'flexible'
+          projectType: "web",
+          priority: priority
         });
         
         const savedProject = await project.save();
@@ -202,6 +132,98 @@ export const generateTasks = async (req, res, next) => {
     return res.status(500).json({
       success: false,
       message: 'Error generating tasks',
+      error: error.message
+    });
+  }
+};
+
+export const enhanceProjectIdea = async (req, res, next) => {
+  const startTime = Date.now();
+  
+  try {
+    const { description } = req.body;
+    
+    if (!description) {
+      return res.status(400).json({
+        success: false,
+        message: 'Description is required'
+      });
+    }
+    
+    // Create a prompt for enhancement
+    const prompt = `Enhance the following project idea by adding more details and specifics: "${description}". 
+    Return a concise description (3-4 sentences) followed by:
+    
+    Key Features:
+    - 3-4 bullet points (short phrases, not paragraphs)
+    
+    Keep the total response under 250 words and focus on clarity over comprehensiveness.`;
+    
+    // Direct API call to Gemini
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              { text: prompt }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1000,
+          topP: 0.95,
+          topK: 40
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.text();
+      console.error("Gemini API error:", errorData);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    
+    let enhancedDescription = "";
+    
+    if (data && data.candidates && data.candidates.length > 0 && 
+        data.candidates[0].content && data.candidates[0].content.parts) {
+      enhancedDescription = data.candidates[0].content.parts[0].text;
+    } else {
+      throw new Error("Invalid response format from Gemini API");
+    }
+    
+    const featuresStart = enhancedDescription.indexOf("Key Features:");
+    const featuresEnd = enhancedDescription.indexOf("Target Audience:");
+    
+    let suggestedFeatures = [];
+    
+    if (featuresStart !== -1 && featuresEnd !== -1) {
+      const featuresText = enhancedDescription.substring(featuresStart + 12, featuresEnd).trim();
+      suggestedFeatures = featuresText.split("-")
+        .map(feature => feature.trim())
+        .filter(feature => feature.length > 0);
+    }
+    
+    return res.json({
+      success: true,
+      enhancedDescription,
+      suggestedFeatures,
+      processingTime: Date.now() - startTime,
+    });
+    
+  } catch (error) {
+    console.error('Error enhancing project idea:', error);
+    
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to enhance project idea. Please try again later.',
       error: error.message
     });
   }
