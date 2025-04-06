@@ -9,6 +9,13 @@ export default {
         primary: "#26bede",
         secondary: "#9085ec",
         accent: "#8e5fe7",
+        brand: {
+          yellow: "#fcc700",
+          orange: "#ff8905",
+          black: "#000000",
+          gray: "#433f3b",
+          pink: "#f42f98",
+        },
       },
       fontFamily: {
         nerko: ['"Nerko One"', "cursive"],
@@ -18,7 +25,5 @@ export default {
   daisyui: {
     themes: ["winter"],
   },
-  plugins: [
-    require('daisyui'),
-  ],
+  plugins: [require("daisyui")],
 };

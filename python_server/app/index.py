@@ -16,66 +16,46 @@ app.add_middleware(
 
 @app.post("/api/generate-tasks")
 async def generate_tasks(request: Request):
-    """Generate tasks for a project"""
+    """Generate tasks for a project based on description, priority, and tech background"""
     try:
         data = await request.json()
         print(f"Received data: {data}")
         
-        project_description = data.get('projectDescription')
-        if not project_description:
+        description = data.get('description')
+        if not description:
             raise HTTPException(status_code=400, detail="Project description is required")
         
-        tech_stack = data.get('techStack', [])
-        should_recommend_tech_stack = len(tech_stack) == 0
+        priority = data.get('priority', '')
+        background = data.get('background', {})
+        known_tech = background.get('known_tech', [])
+        disliked_tech = background.get('disliked_tech', [])
         
-        project_type = data.get('projectType', 'web')
-        scale = data.get('scale', 'small')
-        features = data.get('features', [])
-        timeline = data.get('timeline', 'flexible')
-        
-        # Extract user background information
-        user_background = data.get('userBackground', {})
-        experience_level = user_background.get('experience', 'Intermediate')
-        time_commitment = user_background.get('time_commitment', 20)
-        risk_tolerance = user_background.get('risk_tolerance', 'Scalability')
-        collaboration = user_background.get('collaboration', 'Solo developer')
-        
+        # Create enhanced description with tech context
+        tech_context = ""
+        if known_tech:
+            tech_context += f"\nPreferred technologies: {', '.join(known_tech)}"
+        if disliked_tech:
+            tech_context += f"\nTechnologies to avoid: {', '.join(disliked_tech)}"
+            
         enhanced_description = f"""
-        Project Description: {project_description}
-        Project Type: {project_type}
-        Project Scale: {scale}
-        Features: {', '.join(features) if features else 'No specific features mentioned'}
-        Timeline: {timeline}
-        
-        User Context:
-        Experience Level: {experience_level}
-        Time Commitment: {time_commitment} hours per week
-        Priority: {risk_tolerance}
-        Collaboration: {collaboration}
+        Project Description: {description}
+        Priority: {priority}
+        {tech_context}
         """
-        
-        if should_recommend_tech_stack:
-            enhanced_description += "\nPlease recommend an appropriate tech stack for this project."
-        elif tech_stack:
-            enhanced_description += f"\nUser prefers to use the following technologies: {', '.join(tech_stack)}"
         
         print(f"Enhanced description: {enhanced_description}")
         
         crew = TaskGenerationCrew()
         result = crew.generate_tasks(
             project_description=enhanced_description,
-            tech_stack=tech_stack,
-            project_type=project_type,
-            user_background=user_background,
-            should_recommend_tech_stack=should_recommend_tech_stack
+            tech_stack=known_tech,
+            priority=priority
         )
         
-        response = {
+        return {
             "success": True,
             "data": result.get("tasks", [])
         }
-        
-        return response
         
     except Exception as e:
         print(f"Error in generate_tasks endpoint: {str(e)}")

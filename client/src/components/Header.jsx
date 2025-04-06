@@ -6,13 +6,13 @@ import { signoutSuccess } from "../redux/userSlice";
 export default function Header() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
+  
   const { currentUser } = useSelector((state) => state.user);
 
   const handleSignout = async () => {
     try {
       const res = await fetch(`http://localhost:3000/api/user/signout`, {
-        method: "POST",
+        method: "GET",
         credentials: "include",
       });
       const data = await res.json();
@@ -50,7 +50,8 @@ export default function Header() {
         {currentUser ? (
           <div className="flex items-center gap-4">
             <div className="text-sm text-gray-300">
-              Welcome, <span className="text-white font-medium">{currentUser.name}</span>
+              Welcome,{" "}
+              <span className="text-white font-medium">{currentUser.name}</span>
             </div>
             <button
               onClick={() => handleSignout()}
