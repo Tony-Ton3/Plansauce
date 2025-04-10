@@ -18,6 +18,7 @@ export default function Profile() {
     const [background, setBackground] = useState({
         experience: "",
         known_tech: [],
+        disliked_tech: [],
         time_commitment: 2,
         risk_tolerance: "",
         collaboration: ""
@@ -33,6 +34,7 @@ export default function Profile() {
     const [customTech, setCustomTech] = useState("");
     const [filteredSuggestions, setFilteredSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
+    const [activeField, setActiveField] = useState("known_tech"); // "known_tech" or "disliked_tech"
     const searchInputRef = useRef(null);
 
     const dispatch = useDispatch();
@@ -49,8 +51,10 @@ export default function Profile() {
         if (!techQuestion || !techQuestion.suggestions) return;
 
         const selectedTechs = background.known_tech || [];
+        const dislikedTechs = background.disliked_tech || [];
+        const unavailableTechs = [...selectedTechs, ...dislikedTechs];
         const availableSuggestions = techQuestion.suggestions.filter(
-            tech => !techQuestion.options.includes(tech) && !selectedTechs.includes(tech)
+            tech => !techQuestion.options.includes(tech) && !unavailableTechs.includes(tech)
         );
 
         const filtered = availableSuggestions.filter(
@@ -59,7 +63,7 @@ export default function Profile() {
 
         setFilteredSuggestions(filtered);
         setShowSuggestions(filtered.length > 0);
-    }, [customTech, background.known_tech, quizEditMode]);
+    }, [customTech, background.known_tech, background.disliked_tech, quizEditMode]);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -88,6 +92,7 @@ export default function Profile() {
                 setBackground({
                     experience: currentUser.background.experience || "",
                     known_tech: currentUser.background.known_tech || [],
+                    disliked_tech: currentUser.background.disliked_tech || [],
                     time_commitment: currentUser.background.time_commitment || 2,
                     risk_tolerance: currentUser.background.risk_tolerance || "",
                     collaboration: currentUser.background.collaboration || ""
@@ -96,6 +101,7 @@ export default function Profile() {
                 setBackground({
                     experience: "",
                     known_tech: [],
+                    disliked_tech: [],
                     time_commitment: 2,
                     risk_tolerance: "",
                     collaboration: ""
@@ -285,56 +291,62 @@ export default function Profile() {
         handleAddCustomTech(questionId, suggestion);
     };
 
+    const toggleActiveField = () => {
+        setActiveField(activeField === "known_tech" ? "disliked_tech" : "known_tech");
+        setCustomTech("");
+        setShowSuggestions(false);
+    };
+
     const renderProfileTab = () => (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-                <label className="block text-gray-300 mb-1">Name</label>
+                <label className="block text-gray-500 mb-1">Name</label>
                 <div className="relative">
                     <input
                         type="text"
                         id="name"
                         placeholder="Name"
-                        className={`w-full px-4 py-2 rounded-lg bg-[#252b38] text-white border ${updateMode ? 'border-[#8e5fe7]' : 'border-gray-700'}`}
+                        className={`w-full px-4 py-3 rounded-lg bg-[#1e1e1e] text-white border ${updateMode ? 'border-brand-yellow' : 'border-gray-700'} focus:outline-none focus:ring-1 focus:ring-brand-yellow`}
                         value={formData.name}
                         onChange={handleChange}
                         disabled={!updateMode}
                     />
-                    <FaUser className="absolute right-3 top-3 text-gray-400" />
+                    <FaUser className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 </div>
             </div>
 
             <div>
-                <label className="block text-gray-300 mb-1">Email</label>
+                <label className="block text-gray-500 mb-1">Email</label>
                 <div className="relative">
                     <input
                         type="email"
                         id="email"
                         placeholder="Email"
-                        className="w-full px-4 py-2 rounded-lg bg-[#252b38] text-white border border-gray-700"
+                        className="w-full px-4 py-3 rounded-lg bg-[#1e1e1e] text-white border border-gray-700 focus:outline-none"
                         value={formData.email}
                         disabled
                     />
-                    <FaEnvelope className="absolute right-3 top-3 text-gray-400" />
+                    <FaEnvelope className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                 </div>
             </div>
 
             {updateMode && (
                 <>
                     <div>
-                        <label className="block text-gray-300 mb-1">Current Password</label>
+                        <label className="block text-gray-500 mb-1">Current Password</label>
                         <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
                                 id="password"
                                 placeholder="Current Password"
-                                className="w-full px-4 py-2 rounded-lg bg-[#252b38] text-white border border-[#8e5fe7]"
+                                className="w-full px-4 py-3 rounded-lg bg-[#1e1e1e] text-white border border-brand-yellow focus:outline-none focus:ring-1 focus:ring-brand-yellow"
                                 value={formData.password}
                                 onChange={handleChange}
                             />
                             <button
                                 type="button"
                                 onClick={toggleShowPassword}
-                                className="absolute right-3 top-3 text-gray-400"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
                             >
                                 {showPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
@@ -342,20 +354,20 @@ export default function Profile() {
                     </div>
 
                     <div>
-                        <label className="block text-gray-300 mb-1">New Password</label>
+                        <label className="block text-gray-500 mb-1">New Password</label>
                         <div className="relative">
                             <input
                                 type={showNewPassword ? "text" : "password"}
                                 id="newPassword"
                                 placeholder="New Password"
-                                className="w-full px-4 py-2 rounded-lg bg-[#252b38] text-white border border-[#8e5fe7]"
+                                className="w-full px-4 py-3 rounded-lg bg-[#1e1e1e] text-white border border-brand-yellow focus:outline-none focus:ring-1 focus:ring-brand-yellow"
                                 value={formData.newPassword}
                                 onChange={handleChange}
                             />
                             <button
                                 type="button"
                                 onClick={toggleShowNewPassword}
-                                className="absolute right-3 top-3 text-gray-400"
+                                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-300"
                             >
                                 {showNewPassword ? <FaEyeSlash /> : <FaEye />}
                             </button>
@@ -370,13 +382,13 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={toggleUpdateMode}
-                            className="px-4 py-2 bg-gray-700 text-white rounded-lg"
+                            className="px-6 py-3 bg-white border border-gray-200 text-gray-500 rounded-full hover:bg-gray-50"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-[#8e5fe7] text-white rounded-lg flex items-center"
+                            className="px-6 py-3 bg-brand-yellow text-brand-black rounded-full flex items-center hover:bg-brand-yellow/90"
                             disabled={loading}
                         >
                             {loading ? "Updating..." : "Save Changes"}
@@ -387,14 +399,14 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={toggleUpdateMode}
-                            className="px-4 py-2 bg-[#8e5fe7] text-white rounded-lg flex items-center"
+                            className="px-6 py-3 bg-[#8257e6] text-white rounded-full flex items-center hover:bg-[#8257e6]/90"
                         >
                             <FaEdit className="mr-2" /> Edit Profile
                         </button>
                         <button
                             type="button"
                             onClick={() => setDeleteConfirm(true)}
-                            className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center"
+                            className="px-6 py-3 bg-red-500 text-white rounded-full flex items-center hover:bg-red-600"
                         >
                             <FaTrash className="mr-2" /> Delete Account
                         </button>
@@ -410,177 +422,101 @@ export default function Profile() {
 
         return (
             <form onSubmit={handleQuizSubmit} className="space-y-6">
-                {backgroundQuestions.map((question) => {
-                    console.log(`Checking question ${question.id}, answer:`, background[question.id]);
-                    const isMultiSelect = question.type === "multiselect";
-                    const isSlider = question.type === "slider";
-                    const answer = background[question.id];
-                    const hasAnswer = isMultiSelect
-                        ? Array.isArray(answer) && answer.length > 0
-                        : answer !== undefined && answer !== null && answer !== "";
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                    <div className="mb-4">
+                        <div className="inline-flex rounded-md border border-gray-200 overflow-hidden">
+                            <button
+                                type="button"
+                                onClick={() => activeField !== "known_tech" && toggleActiveField()}
+                                className={`px-5 py-2 text-sm ${
+                                    activeField === "known_tech"
+                                        ? "bg-brand-yellow text-brand-black font-medium"
+                                        : "bg-white text-brand-gray"
+                                }`}
+                            >
+                                Skills I enjoy
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => activeField !== "disliked_tech" && toggleActiveField()}
+                                className={`px-5 py-2 text-sm border-l ${
+                                    activeField === "disliked_tech"
+                                        ? "bg-brand-pink text-white font-medium"
+                                        : "bg-white text-brand-gray"
+                                }`}
+                            >
+                                Skills to avoid
+                            </button>
+                        </div>
+                    </div>
 
-                    if (quizEditMode && question.id === "known_tech") {
-                        return (
-                            <div key={question.id} className="bg-[#252b38] p-4 rounded-lg">
-                                <h3 className="text-white font-medium mb-3">{question.question}</h3>
+                    {quizEditMode && (
+                        <div className="mb-4">
+                            <div className="relative" ref={searchInputRef}>
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <FaSearch className="text-gray-400" />
+                                </div>
+                                <input
+                                    type="text"
+                                    value={customTech}
+                                    onChange={(e) => setCustomTech(e.target.value)}
+                                    onKeyDown={(e) => handleCustomTechKeyDown(e, activeField)}
+                                    onFocus={() => setShowSuggestions(filteredSuggestions.length > 0)}
+                                    onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                                    placeholder="Search or add new skills..."
+                                    className="w-full pl-10 pr-16 py-3 bg-white border border-gray-200 text-brand-black rounded-md focus:outline-none focus:ring-2 focus:ring-brand-yellow"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddCustomTech(activeField)}
+                                    className={`absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 text-white rounded-md flex items-center ${
+                                        activeField === "known_tech" 
+                                            ? "bg-brand-yellow hover:bg-brand-yellow/90" 
+                                            : "bg-brand-pink hover:bg-brand-pink/90"
+                                    }`}
+                                >
+                                    <FaPlus className="mr-2" /> Add
+                                </button>
                                 
-                                <div className="relative mb-6" ref={searchInputRef}>
-                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <FaSearch className="text-gray-400" />
-                                    </div>
-                                    <input
-                                        type="text"
-                                        value={customTech}
-                                        onChange={(e) => setCustomTech(e.target.value)}
-                                        onKeyDown={(e) => handleCustomTechKeyDown(e, question.id)}
-                                        placeholder="Search all skills..."
-                                        className="w-full pl-10 pr-16 py-3 bg-gray-700 border border-gray-600 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-[#8e5fe7]"
-                                    />
-                                    <button
-                                        type="button"
-                                        onClick={() => handleAddCustomTech(question.id)}
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 px-4 py-1 bg-[#8e5fe7] text-white rounded-md hover:bg-[#7d4fd6] focus:outline-none focus:ring-2 focus:ring-[#8e5fe7] flex items-center"
-                                    >
-                                        <FaPlus className="mr-2" /> Add
-                                    </button>
-                                    
-                                    {showSuggestions && (
-                                        <div className="absolute z-10 mt-1 w-full bg-gray-700 border border-gray-600 rounded-md shadow-lg">
-                                            <ul className="py-1 max-h-60 overflow-auto">
-                                                {filteredSuggestions.map((suggestion) => (
-                                                    <li 
-                                                        key={suggestion}
-                                                        className="px-4 py-2 hover:bg-gray-600 cursor-pointer text-gray-200"
-                                                        onClick={() => handleSuggestionClick(question.id, suggestion)}
-                                                    >
-                                                        {suggestion}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )}
-                                </div>
-
-                                <div className="flex flex-wrap gap-3 mb-4">
-                                    {question.options.map((option) => (
-                                        <button
-                                            key={option}
-                                            type="button"
-                                            onClick={() => handleOptionSelect(question.id, option)}
-                                            className={`px-4 py-2 rounded-full transition-colors ${
-                                                isOptionSelected(question.id, option)
-                                                    ? "bg-[#8e5fe7] text-white"
-                                                    : "bg-gray-700 text-gray-300 hover:bg-gray-600"
-                                            }`}
-                                        >
-                                            {option}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {Array.isArray(answer) && answer.length > 0 && (
-                                    <div className="mt-4">
-                                        <p className="text-sm text-gray-400 mb-2">Your selected technologies:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {answer.map(tech => (
-                                                <span
-                                                    key={tech}
-                                                    className="px-3 py-1 bg-[#1a1f29] text-gray-200 rounded-full text-sm flex items-center"
+                                {showSuggestions && (
+                                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
+                                        <ul className="py-1 max-h-60 overflow-auto">
+                                            {filteredSuggestions.map((suggestion) => (
+                                                <li 
+                                                    key={suggestion}
+                                                    className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-brand-black"
+                                                    onClick={() => handleSuggestionClick(activeField, suggestion)}
                                                 >
-                                                    {tech}
-                                                    <button
-                                                        type="button"
-                                                        className="ml-2 text-gray-400 hover:text-white"
-                                                        onClick={() => handleOptionSelect(question.id, tech)}
-                                                    >
-                                                        ×
-                                                    </button>
-                                                </span>
+                                                    {suggestion}
+                                                </li>
                                             ))}
-                                        </div>
+                                        </ul>
                                     </div>
                                 )}
                             </div>
-                        );
-                    }
-
-                    return (
-                        <div key={question.id} className="bg-[#252b38] p-4 rounded-lg">
-                            <h3 className="text-white font-medium mb-3">{question.question}</h3>
-
-                            {quizEditMode ? (
-                                <div className="space-y-2">
-                                    {isSlider ? (
-                                        <div className="space-y-4">
-                                            <div className="flex justify-between text-sm text-gray-400 mb-1">
-                                                {Object.entries(question.labels).map(([value, label]) => (
-                                                    <span key={value}>{label}</span>
-                                                ))}
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min={question.min}
-                                                max={question.max}
-                                                step={question.step}
-                                                value={background[question.id] || question.min}
-                                                onChange={(e) => handleSliderChange(question.id, e.target.value)}
-                                                className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-[#8e5fe7]"
-                                            />
-                                            <div className="text-center text-lg font-medium text-[#8e5fe7]">
-                                                {background[question.id] || question.min} hours per week
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        question.options.map((option) => (
-                                            <button
-                                                key={option}
-                                                type="button"
-                                                onClick={() => handleOptionSelect(question.id, option)}
-                                                className={`w-full p-3 text-left rounded-lg border transition duration-200 flex items-center justify-between ${isOptionSelected(question.id, option)
-                                                    ? "border-[#8e5fe7] bg-[#1a1f29]"
-                                                    : "border-gray-700 hover:border-[#8e5fe7]"
-                                                    }`}
-                                            >
-                                                <span className="text-white">{option}</span>
-                                                {isOptionSelected(question.id, option) ? (
-                                                    <FaCheck className="text-[#8e5fe7]" />
-                                                ) : (
-                                                    isMultiSelect && <FaPlus className="text-gray-400" />
-                                                )}
-                                            </button>
-                                        ))
-                                    )}
-                                </div>
-                            ) : (
-                                <div className="text-gray-300">
-                                    {hasAnswer ? (
-                                        isMultiSelect ? (
-                                            <div className="flex flex-wrap gap-2">
-                                                {answer.map(value => (
-                                                    <span key={value} className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm">
-                                                        {value}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        ) : isSlider ? (
-                                            <span className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm inline-block">
-                                                {answer} hours per week
-                                            </span>
-                                        ) : (
-                                            <span className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm inline-block">
-                                                {answer}
-                                            </span>
-                                        )
-                                    ) : (
-                                        <span className="bg-[#1a1f29] px-3 py-1 rounded-full text-sm inline-block">
-                                            Not specified
-                                        </span>
-                                    )}
-                                </div>
-                            )}
                         </div>
-                    );
-                })}
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                        {/* Only show selected technologies */}
+                        {background[activeField].map((tech) => (
+                            <button
+                                key={tech}
+                                type="button"
+                                onClick={() => quizEditMode && handleOptionSelect(activeField, tech)}
+                                className={`px-4 py-2 rounded-full text-base transition-all hover:scale-105 ${
+                                    activeField === "known_tech"
+                                        ? "bg-brand-yellow text-brand-black"
+                                        : "bg-white text-brand-gray border border-gray-200"
+                                } ${!quizEditMode && "cursor-default hover:scale-100"}`}
+                                disabled={!quizEditMode}
+                            >
+                                {tech}
+                                {quizEditMode && <FaCheck className="ml-1 inline-block" size={10} />}
+                            </button>
+                        ))}
+                    </div>
+                </div>
 
                 <div className="flex justify-between pt-4">
                     {quizEditMode ? (
@@ -588,13 +524,13 @@ export default function Profile() {
                             <button
                                 type="button"
                                 onClick={toggleQuizEditMode}
-                                className="px-4 py-2 bg-gray-700 text-white rounded-lg"
+                                className="px-4 py-2 bg-white border border-gray-200 text-brand-gray rounded-lg hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 type="submit"
-                                className="px-4 py-2 bg-[#8e5fe7] text-white rounded-lg flex items-center"
+                                className="px-4 py-2 bg-brand-yellow text-brand-black rounded-lg flex items-center hover:bg-brand-yellow/90"
                                 disabled={loading}
                             >
                                 {loading ? "Updating..." : "Save Preferences"}
@@ -604,7 +540,7 @@ export default function Profile() {
                         <button
                             type="button"
                             onClick={toggleQuizEditMode}
-                            className="px-4 py-2 bg-[#8e5fe7] text-white rounded-lg flex items-center"
+                            className="px-4 py-2 bg-brand-yellow text-brand-black rounded-lg flex items-center hover:bg-brand-yellow/90"
                         >
                             <FaEdit className="mr-2" /> Edit Preferences
                         </button>
@@ -615,69 +551,68 @@ export default function Profile() {
     };
 
     return (
-        <div className="min-h-screen pt-20 px-4 bg-[#0f1218]">
-            <div className="max-w-2xl mx-auto bg-[#1a1f29] p-8 rounded-xl shadow-lg">
-                <h1 className="text-3xl text-white mb-6 text-center">Your Profile</h1>
+        <div className="min-h-screen pt-20 px-4 bg-white">
+            <div className="max-w-2xl mx-auto bg-white p-8 rounded-xl shadow-sm border border-gray-200">
+                <h1 className="text-3xl text-brand-black mb-6 text-center">Your Profile</h1>
 
                 {error && (
-                    <div className="bg-red-500 text-white p-3 rounded-lg mb-4">
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-lg mb-4">
                         {error}
                     </div>
                 )}
 
                 {successMessage && (
-                    <div className="bg-green-500 text-white p-3 rounded-lg mb-4">
+                    <div className="bg-green-50 border border-green-200 text-green-700 p-3 rounded-lg mb-4">
                         {successMessage}
                     </div>
                 )}
 
                 <div className="flex justify-center mb-6">
-                    <div className="w-24 h-24 rounded-full bg-[#8e5fe7] flex items-center justify-center">
-                        <FaUser className="text-white text-4xl" />
+                    <div className="w-24 h-24 rounded-full bg-brand-yellow flex items-center justify-center">
+                        <FaUser className="text-brand-black text-4xl" />
                     </div>
                 </div>
 
                 <div className="mb-6 text-center">
-                    <h2 className="text-xl text-white mb-2">{currentUser?.name || ""}</h2>
-                    <p className="text-gray-400">{currentUser?.email || ""}</p>
+                    <h2 className="text-xl text-brand-black mb-2">{currentUser?.name || ""}</h2>
+                    <p className="text-brand-gray">{currentUser?.email || ""}</p>
                 </div>
 
-                <div className="flex border-b border-gray-700 mb-6">
+                <div className="flex border-b border-gray-200 mb-6">
                     <button
-                        className={`px-4 py-2 font-medium ${activeTab === 'preferences' ? 'text-[#8e5fe7] border-b-2 border-[#8e5fe7]' : 'text-gray-400 hover:text-gray-300'}`}
+                        className={`px-4 py-2 font-medium ${activeTab === 'preferences' ? 'text-brand-yellow border-b-2 border-brand-yellow' : 'text-brand-gray hover:text-brand-black'}`}
                         onClick={() => setActiveTab('preferences')}
                     >
-                        Learning Preferences
+                        Preferences
                     </button>
                     <button
-                        className={`px-4 py-2 font-medium ${activeTab === 'profile' ? 'text-[#8e5fe7] border-b-2 border-[#8e5fe7]' : 'text-gray-400 hover:text-gray-300'}`}
+                        className={`px-4 py-2 font-medium ${activeTab === 'profile' ? 'text-brand-yellow border-b-2 border-brand-yellow' : 'text-brand-gray hover:text-brand-black'}`}
                         onClick={() => setActiveTab('profile')}
                     >
                         Account
                     </button>
-
                 </div>
 
                 {activeTab === 'profile' ? renderProfileTab() : renderPreferencesTab()}
             </div>
 
             {deleteConfirm && (
-                <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-                    <div className="bg-[#1a1f29] p-6 rounded-xl max-w-md w-full">
-                        <h2 className="text-2xl font-bold text-white mb-4">Confirm Account Deletion</h2>
-                        <p className="text-gray-300 mb-6">
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white p-6 rounded-xl max-w-md w-full">
+                        <h2 className="text-2xl font-bold text-brand-black mb-4">Confirm Account Deletion</h2>
+                        <p className="text-brand-gray mb-6">
                             Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost.
                         </p>
                         <div className="flex justify-end space-x-4">
                             <button
                                 onClick={() => setDeleteConfirm(false)}
-                                className="px-4 py-2 bg-gray-700 text-white rounded-lg"
+                                className="px-4 py-2 bg-white border border-gray-200 text-brand-gray rounded-lg hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDeleteAccount}
-                                className="px-4 py-2 bg-red-600 text-white rounded-lg flex items-center"
+                                className="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center hover:bg-red-600"
                                 disabled={loading}
                             >
                                 {loading ? "Deleting..." : "Delete Account"}

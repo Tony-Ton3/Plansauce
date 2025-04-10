@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { signInStart, signInSuccess, signInFailure } from "../redux/userSlice";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaArrowRight, FaCheck } from "react-icons/fa";
 import { motion } from "framer-motion";
 
 export default function SignUp() {
@@ -114,66 +114,91 @@ export default function SignUp() {
     }
   };
 
+  const getPasswordStrengthColor = () => {
+    switch (passwordStrength) {
+      case 0:
+        return "bg-red-500";
+      case 1:
+        return "bg-orange-500";
+      case 2:
+        return "bg-yellow-500";
+      case 3:
+        return "bg-brand-yellow";
+      case 4:
+        return "bg-green-500";
+      default:
+        return "bg-gray-200";
+    }
+  };
+
   const navigateToSignIn = () => {
     navigate("/sign-in", { state: { from: "signup" } });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-cover bg-center relative"
-      style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')" }}>
-      {/* Blur overlay */}
-      <div className="absolute inset-0 backdrop-blur-md bg-black/30"></div>
+      style={{ backgroundImage: "url('https://t3.ftcdn.net/jpg/05/89/17/46/360_F_589174607_FhKaLYCvij9WOjlECojcmypeIfwRU3OZ.jpg')" }}>
+      {/* Blur overlay with gradient */}
+      <div className="absolute inset-0 backdrop-blur-[2px] bg-gradient-to-br from-blue-900/30 via-black/20 to-brand-pink/10"></div>
 
       <motion.div
         initial={{ opacity: 0, x: animationDirection === "right" ? 20 : -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.5 }}
-        className="flex w-full max-w-5xl h-[500px] rounded-xl overflow-hidden shadow-2xl relative z-10"
+        className="flex w-full max-w-5xl h-[750px] rounded-xl overflow-hidden shadow-2xl relative z-10"
       >
         {/* Left side - Sign In CTA */}
         <div className="w-1/2 bg-cover bg-center flex flex-col items-center justify-center text-white p-10 relative"
-          style={{ backgroundImage: "url('https://images.unsplash.com/photo-1519681393784-d120267933ba?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80')" }}>
-          <div className="absolute inset-0 bg-black/20 backdrop-blur-sm"></div>
+          style={{ backgroundImage: "url('https://t3.ftcdn.net/jpg/05/89/17/46/360_F_589174607_FhKaLYCvij9WOjlECojcmypeIfwRU3OZ.jpg')" }}>
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-black/70 to-black/80 backdrop-blur-sm"></div>
           <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
-            <h3 className="text-2xl font-semibold mb-4 text-white text-center">Already have an account?</h3>
-            <p className="text-white/90 text-center mb-8 max-w-xs">
+            <h3 className="text-3xl font-bold mb-4 text-white text-center">Already have an account?</h3>
+            <p className="text-white/90 text-center mb-8 max-w-xs text-lg">
               Sign in to continue your learning journey
             </p>
-            <button
-              onClick={navigateToSignIn}
-              className="mt-auto py-2 px-8 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 transform hover:scale-105"
-            >
-              SIGN IN
-            </button>
+            <div className="space-y-4 w-full max-w-xs">
+              <button
+                onClick={navigateToSignIn}
+                className="w-full py-3 px-6 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg transition duration-200 backdrop-blur-sm border border-white/20 hover:border-white/30 transform hover:scale-105"
+              >
+                Sign In
+              </button>
+              <p className="text-white/70 text-center text-sm">
+                Join thousands of learners already on LearnStack
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Right side - Sign Up Form */}
         <div className="w-1/2 bg-white p-10 flex flex-col justify-center">
-          <h2 className="text-3xl font-semibold mb-6 text-center text-gray-800">
-            Sign Up
-          </h2>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="mb-8 text-center">
+            <h2 className="text-3xl font-bold text-brand-black mb-2">
+              Create Your Account
+            </h2>
+            <p className="text-brand-gray">Start your personalized learning journey today</p>
+          </div>
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
               <label
                 htmlFor="name"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-brand-black"
               >
-                Name
+                Full Name
               </label>
               <input
                 id="name"
                 type="text"
                 value={formData.name}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                placeholder="Your name"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent transition duration-200"
+                placeholder="Enter your full name"
               />
             </div>
             <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-brand-black"
               >
                 Email
               </label>
@@ -182,14 +207,14 @@ export default function SignUp() {
                 type="email"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                placeholder="Email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent transition duration-200"
+                placeholder="Enter your email"
               />
             </div>
             <div className="space-y-2">
               <label
                 htmlFor="password"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-brand-black"
               >
                 Password
               </label>
@@ -199,60 +224,139 @@ export default function SignUp() {
                   type={showPassword ? "text" : "password"}
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200"
-                  placeholder="Password"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent transition duration-200"
+                  placeholder="Create a strong password"
                 />
                 <button
                   type="button"
                   onClick={toggleShowPassword}
-                  className="absolute top-3 right-3 flex items-center text-sm"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-brand-gray hover:text-brand-black transition-colors"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
-                    <FaEyeSlash className="text-gray-500" />
+                    <FaEyeSlash className="text-lg" />
                   ) : (
-                    <FaEye className="text-gray-500" />
+                    <FaEye className="text-lg" />
                   )}
                 </button>
               </div>
-              <div className="mt-2">
-                <div className="flex justify-between items-center mb-1">
-                  <span className="text-sm text-gray-500">
-                    Password strength:
-                  </span>
-                  <span className="text-sm font-medium text-gray-700">
-                    {getPasswordStrengthText()}
-                  </span>
+              
+              {/* Password strength indicator */}
+              {formData.password && (
+                <div className="mt-3 space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-brand-gray">
+                      Password strength:
+                    </span>
+                    <span className="text-sm font-medium text-brand-black">
+                      {getPasswordStrengthText()}
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${getPasswordStrengthColor()}`}
+                      style={{ width: `${(passwordStrength / 4) * 100}%` }}
+                    ></div>
+                  </div>
+                  
+                  {/* Password requirements */}
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm">
+                      <span className={`mr-2 ${formData.password.length >= 8 ? 'text-green-500' : 'text-brand-gray'}`}>
+                        {formData.password.length >= 8 ? <FaCheck size={12} /> : '○'}
+                      </span>
+                      <span className={formData.password.length >= 8 ? 'text-brand-black' : 'text-brand-gray'}>
+                        At least 8 characters
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <span className={`mr-2 ${formData.password.match(/[A-Z]/) && formData.password.match(/[a-z]/) ? 'text-green-500' : 'text-brand-gray'}`}>
+                        {formData.password.match(/[A-Z]/) && formData.password.match(/[a-z]/) ? <FaCheck size={12} /> : '○'}
+                      </span>
+                      <span className={formData.password.match(/[A-Z]/) && formData.password.match(/[a-z]/) ? 'text-brand-black' : 'text-brand-gray'}>
+                        Mix of uppercase and lowercase
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <span className={`mr-2 ${formData.password.match(/[0-9]/) ? 'text-green-500' : 'text-brand-gray'}`}>
+                        {formData.password.match(/[0-9]/) ? <FaCheck size={12} /> : '○'}
+                      </span>
+                      <span className={formData.password.match(/[0-9]/) ? 'text-brand-black' : 'text-brand-gray'}>
+                        At least one number
+                      </span>
+                    </div>
+                    <div className="flex items-center text-sm">
+                      <span className={`mr-2 ${formData.password.match(/[^A-Za-z0-9]/) ? 'text-green-500' : 'text-brand-gray'}`}>
+                        {formData.password.match(/[^A-Za-z0-9]/) ? <FaCheck size={12} /> : '○'}
+                      </span>
+                      <span className={formData.password.match(/[^A-Za-z0-9]/) ? 'text-brand-black' : 'text-brand-gray'}>
+                        At least one special character
+                      </span>
+                    </div>
+                  </div>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full">
-                  <div
-                    className={`h-full rounded-full transition-all duration-300 ${passwordStrength === 0
-                      ? "w-0"
-                      : passwordStrength === 1
-                        ? "w-1/4 bg-red-500"
-                        : passwordStrength === 2
-                          ? "w-2/4 bg-yellow-500"
-                          : passwordStrength === 3
-                            ? "w-3/4 bg-blue-500"
-                            : "w-full bg-green-500"
-                      }`}
-                  ></div>
-                </div>
-              </div>
+              )}
             </div>
+            
+            <div className="flex items-center">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                className="h-4 w-4 text-brand-yellow focus:ring-brand-yellow border-gray-300 rounded"
+              />
+              <label htmlFor="terms" className="ml-2 block text-sm text-brand-gray">
+                I agree to the <Link to="/terms" className="text-brand-yellow hover:text-brand-yellow/80 font-medium">Terms of Service</Link> and <Link to="/privacy" className="text-brand-yellow hover:text-brand-yellow/80 font-medium">Privacy Policy</Link>
+              </label>
+            </div>
+            
             {errorMessage && (
-              <p className="text-red-500 text-sm mt-2">{errorMessage}</p>
+              <div className="bg-brand-pink/10 border border-brand-pink/30 rounded-lg p-3 text-brand-pink text-sm">
+                {errorMessage}
+              </div>
             )}
+            
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md transition duration-200 ${loading ? "opacity-70 cursor-not-allowed" : ""
-                }`}
+              className={`w-full py-3 px-4 bg-brand-yellow hover:bg-brand-yellow/90 text-brand-black font-medium rounded-lg transition duration-200 flex items-center justify-center ${
+                loading ? "opacity-70 cursor-not-allowed" : "hover:shadow-lg hover:shadow-brand-yellow/20"
+              }`}
             >
-              {loading ? "Signing up..." : "SIGN UP"}
+              {loading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-brand-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Creating account...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  Create Account <FaArrowRight className="ml-2" />
+                </span>
+              )}
             </button>
           </form>
         </div>
       </motion.div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #f1f1f1;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #ddd;
+          border-radius: 3px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #ccc;
+        }
+      `}</style>
     </div>
   );
 }

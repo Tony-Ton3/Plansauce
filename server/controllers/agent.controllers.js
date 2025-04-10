@@ -24,7 +24,6 @@ export const generateTasks = async (req, res, next) => {
       });
     }
 
-    let techStack = [];
     let userBackground = {};
 
     if (req.user) {

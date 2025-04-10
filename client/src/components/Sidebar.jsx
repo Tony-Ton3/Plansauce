@@ -105,15 +105,15 @@ function Sidebar() {
   return (
     <div
       ref={sidebarRef}
-      className="fixed left-0 top-0 h-screen w-[70px] bg-[#1a1a1a] text-white z-40 flex flex-col transition-all duration-300 ease-out hover:w-[250px] group overflow-hidden"
-      style={{ borderRight: "1px solid rgba(255,255,255,0.1)" }}
+      className="fixed left-0 top-0 h-screen w-[70px] bg-white text-brand-black z-40 flex flex-col transition-all duration-300 ease-out hover:w-[250px] group overflow-hidden"
+      style={{ borderRight: "1px solid rgba(0,0,0,0.1)" }}
       onClick={handleClickOutside}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center ml-1 p-4 border-b border-gray-800">
+      <div className="flex items-center ml-1 p-4">
         <div className="min-w-[30px] flex justify-center">
-          <TbStack3Filled className="text-2xl text-white" />
+          <TbStack3Filled className="text-2xl text-brand-yellow" />
         </div>
         <div className="ml-3 text-xl whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           LearnStack
@@ -122,13 +122,13 @@ function Sidebar() {
 
       <div className="px-2 mt-4">
         <div
-          className="flex items-center my-2 p-3 rounded-xl cursor-pointer transition-colors hover:bg-[#2a2a2a]"
+          className="flex items-center my-2 p-3 rounded-xl cursor-pointer transition-colors hover:bg-gray-100"
           onClick={() => navigate("/projectinput")}
         >
-          <div className="min-w-[30px] flex justify-center text-gray-400">
+          <div className="min-w-[30px] flex justify-center text-brand-gray">
             <FaPlus className="text-xl" />
           </div>
-          <div className="ml-3 whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-gray-400">
+          <div className="ml-3 whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-brand-gray">
             New Idea
           </div>
         </div>
@@ -136,36 +136,36 @@ function Sidebar() {
 
       <div className="flex-1 overflow-y-auto overflow-x-hidden px-2">
         <div className="mt-6 mb-2 hidden group-hover:block">
-          <div className="text-xs text-gray-400 px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          <div className="text-xs text-brand-gray px-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
             Created
           </div>
 
           <div className="mt-2">
             {isLoadingProjects ? (
               <div className="flex justify-center py-3">
-                <div className="w-5 h-5 border-t-2 border-blue-500 rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-t-2 border-brand-yellow rounded-full animate-spin"></div>
               </div>
             ) : userProjects.length > 0 ? (
               userProjects.map((project) => (
                 <div
                   key={project._id}
-                  className={`flex items-center py-2 px-3 rounded-lg cursor-pointer hover:bg-[#2a2a2a] transition-colors mb-1 ${
-                    currentProject?._id === project._id ? "bg-[#202020]" : ""
+                  className={`flex items-center py-2 px-3 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors mb-1 ${
+                    currentProject?._id === project._id ? "bg-gray-100" : ""
                   }`}
                   onClick={() => handleProjectSelect(project._id)}
                 >
                   <div className="flex-1 min-w-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <div className="text-sm text-gray-300 truncate">
+                    <div className="text-sm text-brand-black truncate">
                       {project.name}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-brand-gray">
                       {formatDate(project.createdAt)}
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="px-3 py-2 text-sm text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="px-3 py-2 text-sm text-brand-gray opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                 No projects yet. Create one!
               </div>
             )}
@@ -173,7 +173,7 @@ function Sidebar() {
         </div>
       </div>
 
-      <div className="mt-auto p-3 border-t border-gray-800 flex items-center relative">
+      <div className="mt-auto p-3 border-t border-gray-200 flex items-center relative">
         <div
           className="flex items-center cursor-pointer w-full"
           onClick={(e) => {
@@ -184,28 +184,28 @@ function Sidebar() {
           }}
         >
           <div className="min-w-[30px] flex justify-center">
-            <div className="w-8 h-8 rounded-md bg-gray-600 flex items-center justify-center text-sm font-medium">
-              TF
+            <div className="w-8 h-8 rounded-md bg-brand-yellow flex items-center justify-center text-sm font-medium text-brand-black">
+              {currentUser?.name?.charAt(0).toUpperCase()}
             </div>
           </div>
           <div className="ml-3 whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="text-sm font-normal truncate">Tony Ferriera</div>
+            <div className="text-sm font-normal truncate text-brand-black">{currentUser?.name}</div>
           </div>
         </div>
 
         {showPopup && isHovered && (
           <div
-            className="absolute bottom-16 left-1 bg-[#2a2a2a] rounded-md shadow-lg p-1 min-w-[150px] z-50"
+            className="absolute bottom-16 left-1 bg-white rounded-md shadow-lg p-1 min-w-[150px] z-50 border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="flex items-center px-3 py-1 text-gray-300 hover:bg-[#333] hover:text-white rounded cursor-pointer transition-colors"
+              className="flex items-center px-3 py-1 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
               onClick={() => navigate("/profile")}
             >
               <span>Profile</span>
             </div>
             <div
-              className="flex items-center px-3 py-1 text-gray-300 hover:bg-[#333] hover:text-white rounded cursor-pointer transition-colors"
+              className="flex items-center px-3 py-1 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
               onClick={handleSignOut}
             >
               <span>Sign out</span>

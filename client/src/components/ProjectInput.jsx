@@ -235,10 +235,10 @@ const ProjectInput = () => {
   }
 
   return (
-    <div className="bg-neutral-900 min-h-screen flex justify-center p-10">
+    <div className="bg-white min-h-screen flex justify-center p-10">
       <div className="w-full max-w-lg rounded-lg overflow-hidden">
         <div className="p-6">
-          <h1 className="text-2xl font-bold text-neutral-100 mb-6">
+          <h1 className="text-2xl font-bold text-brand-black mb-6">
             Create a personal project
           </h1>
 
@@ -247,9 +247,9 @@ const ProjectInput = () => {
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-neutral-300 mb-1"
+                  className="block text-sm font-medium text-brand-gray mb-1"
                 >
-                  What are you working on?
+                Name your project
                 </label>
                 <input
                   id="name"
@@ -257,9 +257,9 @@ const ProjectInput = () => {
                   value={form.name}
                   onChange={(e) => handleInputChange("name", e.target.value)}
                   className={`w-full max-h-[15vh] px-4 py-3 border ${
-                    formErrors.name ? "border-red-500" : "border-neutral-600"
-                  } rounded-lg bg-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500 text-neutral-100 shadow-inner transition-colors`}
-                  placeholder="Name your project"
+                    formErrors.name ? "border-red-500" : "border-gray-300"
+                  } rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-brand-yellow text-brand-black shadow-inner transition-colors`}
+                  placeholder="Project name"
                 />
                 {formErrors.name && (
                   <p className="mt-1 text-xs text-red-500">{formErrors.name}</p>
@@ -271,14 +271,14 @@ const ProjectInput = () => {
                   <div className="flex items-center">
                     <label
                       htmlFor="description"
-                      className="block text-sm font-medium text-neutral-300"
+                      className="block text-sm font-medium text-brand-gray"
                     >
                       What are you trying to achieve?
                     </label>
                     <button
                       type="button"
                       onClick={toggleExamples}
-                      className="ml-2 text-neutral-400 hover:text-neutral-200 focus:outline-none"
+                      className="ml-2 text-brand-gray hover:text-brand-black focus:outline-none"
                       aria-label="Show examples"
                     >
                       <FaInfoCircle className="h-4 w-4" />
@@ -290,16 +290,16 @@ const ProjectInput = () => {
                     disabled={enhancingIdea || form.description.length < 50}
                     className={`px-3 py-1 ${
                       enhancingIdea
-                        ? "bg-blue-500"
+                        ? "bg-gray-500"
                         : form.description.length < 50
-                        ? "bg-blue-400 cursor-not-allowed opacity-70"
-                        : "bg-blue-600 hover:bg-blue-700"
-                    } text-white text-xs font-medium rounded flex items-center group relative`}
+                        ? "bg-gray-400 cursor-not-allowed opacity-70"
+                        : "bg-brand-yellow hover:bg-brand-yellow/80"
+                    } text-brand-black text-xs font-medium rounded flex items-center group relative`}
                   >
                     {enhancingIdea ? (
                       <>
                         <div className="animate-spin -ml-1 mr-2 h-4 w-4">
-                          <div className="h-full w-full rounded-full border-2 border-b-transparent border-white"></div>
+                          <div className="h-full w-full rounded-full border-2 border-b-transparent border-brand-black"></div>
                         </div>
                         Enhancing...
                       </>
@@ -309,9 +309,9 @@ const ProjectInput = () => {
                         Enhance My Idea
                       </>
                     )}
-                    {form.description.length < 50 && !enhancingIdea && (
-                      <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-40 bg-neutral-800 text-xs text-neutral-300 px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-                        Min. 50 characters needed ({form.description.length}/50)
+                    {form.description.length < 40 && !enhancingIdea && (
+                      <span className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 w-40 bg-white text-xs text-brand-gray px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
+                        Min. 40 characters needed ({form.description.length}/40)
                       </span>
                     )}
                   </button>
@@ -325,8 +325,8 @@ const ProjectInput = () => {
                   className={`w-full px-4 py-3 border ${
                     formErrors.description
                       ? "border-red-500"
-                      : "border-neutral-600"
-                  } rounded-lg bg-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500 text-neutral-100 min-h-[15vh] max-h-[30vh] resize-none shadow-inner transition-colors`}
+                      : "border-gray-300"
+                  } rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-brand-yellow text-brand-black min-h-[15vh] max-h-[30vh] resize-none shadow-inner transition-colors`}
                   placeholder="Describe your project idea in detail (e.g., what it does, type of project, key features)"
                 />
                 {formErrors.description ? (
@@ -334,20 +334,20 @@ const ProjectInput = () => {
                     {formErrors.description}
                   </p>
                 ) : promptMessage ? (
-                  <p className="mt-1 text-xs text-amber-400 italic">
+                  <p className="mt-1 text-xs text-brand-gray italic">
                     {promptMessage}
                   </p>
                 ) : null}
 
                 {showExamples && (
-                  <div className="mt-2 mb-4 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm animate-fadeIn">
+                  <div className="mt-2 mb-4 bg-white border border-gray-200 rounded-lg p-3 text-sm animate-fadeIn">
                     <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-xs font-semibold text-neutral-200 uppercase tracking-wider">
+                      <h4 className="text-xs font-semibold text-brand-black uppercase tracking-wider">
                         Examples
                       </h4>
                       <button
                         onClick={toggleExamples}
-                        className="text-neutral-400 hover:text-neutral-200 focus:outline-none"
+                        className="text-brand-gray hover:text-brand-black focus:outline-none"
                         aria-label="Close examples"
                       >
                         <FaTimes className="h-4 w-4" />
@@ -356,19 +356,19 @@ const ProjectInput = () => {
 
                     <div className="space-y-3">
                       <div>
-                        <p className="text-neutral-400 text-xs font-medium mb-1">
+                        <p className="text-brand-gray text-xs font-medium mb-1">
                           Basic (Not recommended):
                         </p>
-                        <div className="p-2 bg-neutral-700 rounded border border-neutral-600 text-neutral-300 text-xs">
+                        <div className="p-2 bg-gray-100 rounded border border-gray-200 text-brand-gray text-xs">
                           "A workout tracker app"
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-neutral-400 text-xs font-medium mb-1">
+                        <p className="text-brand-gray text-xs font-medium mb-1">
                           Good (Recommended):
                         </p>
-                        <div className="p-2 bg-neutral-700 rounded border border-neutral-600 text-neutral-300 text-xs">
+                        <div className="p-2 bg-gray-100 rounded border border-gray-200 text-brand-gray text-xs">
                           "A mobile workout tracker app where users can log
                           exercises, track progress over time, and get
                           recommendations for new routines based on their goals.
@@ -382,14 +382,14 @@ const ProjectInput = () => {
 
                 {/* Enhanced Idea Section - Expandable */}
                 {showEnhancer && (
-                  <div className="mt-2 mb-4 bg-neutral-800 border border-neutral-700 rounded-lg p-3 text-sm animate-fadeIn">
+                  <div className="mt-2 mb-4 bg-white border border-gray-200 rounded-lg p-3 text-sm animate-fadeIn">
                     <div className="flex justify-between items-center mb-2">
-                      <h4 className="text-xs font-semibold text-neutral-200 uppercase tracking-wider">
+                      <h4 className="text-xs font-semibold text-brand-black uppercase tracking-wider">
                         Enhanced Project Idea
                       </h4>
                       <button
                         onClick={() => setShowEnhancer(false)}
-                        className="text-neutral-400 hover:text-neutral-200 focus:outline-none"
+                        className="text-brand-gray hover:text-brand-black focus:outline-none"
                         aria-label="Close enhancer"
                       >
                         <FaTimes className="h-4 w-4" />
@@ -399,27 +399,27 @@ const ProjectInput = () => {
                     <div className="space-y-3">
                       {enhancedIdea ? (
                         <>
-                          <div className="p-2 bg-neutral-700 rounded border border-neutral-600 text-neutral-300 text-xs">
+                          <div className="p-2 bg-gray-100 rounded border border-gray-200 text-brand-gray text-xs">
                             <textarea
                               value={editableEnhancedIdea || ""}
                               onChange={(e) =>
                                 setEditableEnhancedIdea(e.target.value)
                               }
-                              className="w-full bg-neutral-700 text-neutral-300 text-xs border-none focus:outline-none focus:ring-0 min-h-[30vh] max-h-[30vh] resize-none"
+                              className="w-full bg-gray-100 text-brand-gray text-xs border-none focus:outline-none focus:ring-0 min-h-[30vh] max-h-[30vh] resize-none"
                             />
                           </div>
 
                           <button
                             type="button"
                             onClick={acceptEnhancedIdea}
-                            className="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-medium rounded"
+                            className="w-full py-1.5 bg-brand-yellow hover:bg-brand-yellow/80 text-brand-black text-xs font-medium rounded"
                           >
                             Use This Enhanced Description
                           </button>
                         </>
                       ) : (
                         <div className="p-4 text-center">
-                          <p className="text-neutral-400 text-xs">
+                          <p className="text-brand-gray text-xs">
                             Generating enhanced description...
                           </p>
                         </div>
@@ -432,20 +432,20 @@ const ProjectInput = () => {
               <div>
                 <label
                   htmlFor="priority"
-                  className="block text-sm font-medium text-neutral-300 mb-1"
+                  className="block text-sm font-medium text-brand-gray mb-1"
                 >
                   What's your priority for this project?
                 </label>
                 <div className="relative" ref={searchInputRef}>
                   <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                     {form.priority?.startsWith("Speed") && (
-                      <BsLightningChargeFill className="h-4 w-4 text-amber-500" />
+                      <BsLightningChargeFill className="h-4 w-4 text-brand-yellow" />
                     )}
                     {form.priority?.startsWith("Scalability") && (
-                      <RiScalesFill className="h-4 w-4 text-amber-500" />
+                      <RiScalesFill className="h-4 w-4 text-brand-yellow" />
                     )}
                     {form.priority?.startsWith("Learning") && (
-                      <PiBookFill className="h-4 w-4 text-amber-500" />
+                      <PiBookFill className="h-4 w-4 text-brand-yellow" />
                     )}
                   </div>
                   <input
@@ -463,15 +463,15 @@ const ProjectInput = () => {
                     } pr-4 py-2.5 cursor-pointer ${
                       formErrors.priority
                         ? "border-red-500"
-                        : "border-neutral-600"
-                    } border rounded-lg bg-neutral-700 focus:outline-none focus:ring-1 focus:ring-amber-500 text-neutral-100 shadow-inner transition-colors`}
+                        : "border-gray-300"
+                    } border rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-brand-yellow text-brand-black shadow-inner transition-colors`}
                   />
 
                   {showPriorityDropdown && (
-                    <div className="absolute z-10 mt-1 w-full bg-neutral-800 border border-neutral-700 rounded-lg shadow-lg overflow-hidden">
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
                       <ul>
                         <li
-                          className="px-4 py-2.5 hover:bg-neutral-700 cursor-pointer text-sm text-neutral-300 flex items-center justify-between"
+                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray flex items-center justify-between"
                           onClick={() =>
                             handlePriorityChange(
                               "Speed (Ship fast, even if basic)"
@@ -479,21 +479,21 @@ const ProjectInput = () => {
                           }
                         >
                           <div className="flex items-center">
-                            <BsLightningChargeFill className="h-3.5 w-3.5 mr-3 text-amber-500" />
+                            <BsLightningChargeFill className="h-3.5 w-3.5 mr-3 text-brand-yellow" />
                             <div>
-                              <div className="font-medium">Speed</div>
-                              <div className="text-xs text-neutral-400">
+                              <div className="font-medium text-brand-black">Speed</div>
+                              <div className="text-xs text-brand-gray">
                                 Ship fast, even if basic
                               </div>
                             </div>
                           </div>
                           {form.priority ===
                             "Speed (Ship fast, even if basic)" && (
-                            <FaCheck className="text-amber-500" size={12} />
+                            <FaCheck className="text-brand-yellow" size={12} />
                           )}
                         </li>
                         <li
-                          className="px-4 py-2.5 hover:bg-neutral-700 cursor-pointer text-sm text-neutral-300 flex items-center justify-between border-t border-neutral-700"
+                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray flex items-center justify-between border-t border-gray-200"
                           onClick={() =>
                             handlePriorityChange(
                               "Scalability (Build for future growth)"
@@ -501,21 +501,21 @@ const ProjectInput = () => {
                           }
                         >
                           <div className="flex items-center">
-                            <RiScalesFill className="h-3.5 w-3.5 mr-3 text-amber-500" />
+                            <RiScalesFill className="h-3.5 w-3.5 mr-3 text-brand-yellow" />
                             <div>
-                              <div className="font-medium">Scalability</div>
-                              <div className="text-xs text-neutral-400">
+                              <div className="font-medium text-brand-black">Scalability</div>
+                              <div className="text-xs text-brand-gray">
                                 Build for future growth
                               </div>
                             </div>
                           </div>
                           {form.priority ===
                             "Scalability (Build for future growth)" && (
-                            <FaCheck className="text-amber-500" size={12} />
+                            <FaCheck className="text-brand-yellow" size={12} />
                           )}
                         </li>
                         <li
-                          className="px-4 py-2.5 hover:bg-neutral-700 cursor-pointer text-sm text-neutral-300 flex items-center justify-between border-t border-neutral-700"
+                          className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray flex items-center justify-between border-t border-gray-200"
                           onClick={() =>
                             handlePriorityChange(
                               "Learning (Optimize for skill development)"
@@ -523,17 +523,17 @@ const ProjectInput = () => {
                           }
                         >
                           <div className="flex items-center">
-                            <PiBookFill className="h-3.5 w-3.5 mr-3 text-amber-500" />
+                            <PiBookFill className="h-3.5 w-3.5 mr-3 text-brand-yellow" />
                             <div>
-                              <div className="font-medium">Learning</div>
-                              <div className="text-xs text-neutral-400">
+                              <div className="font-medium text-brand-black">Learning</div>
+                              <div className="text-xs text-brand-gray">
                                 Optimize for skill development
                               </div>
                             </div>
                           </div>
                           {form.priority ===
                             "Learning (Optimize for skill development)" && (
-                            <FaCheck className="text-amber-500" size={12} />
+                            <FaCheck className="text-brand-yellow" size={12} />
                           )}
                         </li>
                       </ul>
@@ -552,13 +552,13 @@ const ProjectInput = () => {
               <button
                 type="button"
                 onClick={() => navigate("/tasks")}
-                className="mr-2 px-4 py-2 text-neutral-300 hover:text-white font-medium rounded-lg transition-colors"
+                className="mr-2 px-4 py-2 text-brand-gray hover:text-brand-black font-medium rounded-lg transition-colors"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium rounded-lg shadow-lg transition-colors"
+                className="px-4 py-2 bg-brand-yellow hover:bg-brand-yellow/80 text-brand-black font-medium rounded-lg shadow-lg transition-colors"
               >
                 {isSubmitting ? "Saving..." : "Create project"}
               </button>

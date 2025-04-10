@@ -4,16 +4,16 @@ import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
 
 const PROJECT_CATEGORIES = [
+  { id: "all", name: "All", description: "All tasks" },
   { id: 'plan', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
   { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
-  { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
   { id: 'frontend', name: 'Frontend', description: 'User interface development, client-side logic' },
+  { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
   { id: 'testing', name: 'Testing', description: 'Writing tests, quality assurance checks' },
   { id: 'deploy', name: 'Deploy', description: 'Infrastructure setup, deployment process, going live' },
   { id: 'maintain', name: 'Maintain', description: 'Monitoring, updates, bug fixes after launch' },
 ];
 
-//subtask component
 const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSelectSubtask }) => {
   const handleActionClick = (e, action) => {
     e.stopPropagation();
@@ -34,37 +34,32 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
       className="flex items-center gap-3 py-2 pl-8 relative group hover:bg-gray-800/30 rounded-md transition-colors cursor-pointer"
       onClick={handleSubtaskClick}
     >
-      {/* github-like branch line */}
       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
-      
-      {/* horizontal connector line */}
       <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
-      
-      {/* improved checkbox with larger hit area - now requires double click */}
       <div
         onDoubleClick={handleSubtaskCompletion}
-        onClick={(e) => e.stopPropagation()} // Prevent triggering parent click handler
+        onClick={(e) => e.stopPropagation()}
         className="flex-shrink-0 h-7 w-7 flex items-center justify-center cursor-pointer hover:bg-gray-800/50 rounded-full transition-colors"
         role="button"
         aria-label={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
         title={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
       >
         {subtask.completed ? (
-          <FaCheckCircle className="text-blue-500" />
+          <FaCheckCircle className="text-brand-yellow" />
         ) : (
-          <FaRegCircle className="text-gray-600 hover:text-gray-400" />
+          <FaRegCircle className="hover:text-gray-200" />
         )}
       </div>
       
       <div 
         className="flex-grow flex items-center justify-between cursor-pointer"
       >
-        <p className={`${subtask.completed ? 'line-through text-gray-500' : 'text-gray-300'} text-sm`}>
+        <p className={`${subtask.completed ? 'line-through' : ''} text-sm`}>
           {subtask.text}
         </p>
         
         {/* subtask action buttons - Implementation Guide, Technical Prompt, Development Resources */}
-        <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2" onClick={e => e.stopPropagation()}>
+        {/* <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2" onClick={e => e.stopPropagation()}>
           <button 
             onClick={(e) => handleActionClick(e, 'implementation')}
             className="text-xs text-gray-400 hover:text-blue-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
@@ -89,7 +84,7 @@ const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSel
           >
             <FaLink />
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );
@@ -723,7 +718,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
           <FaGripLines className="size-3" />
         </div>
         <button
-          className="w-4 h-4 bg-blue-500/20 rounded-full flex items-center justify-center text-blue-400 hover:text-blue-300 hover:bg-blue-500/30 transition-colors"
+          className="w-4 h-4 bg-brand-yellow/20 rounded-full flex items-center justify-center text-brand-yellow hover:text-brand-yellow hover:bg-brand-yellow/30 transition-colors"
           title="Add subtask"
           aria-label="Add subtask"
           onClick={(e) => {
@@ -735,15 +730,14 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         </button>
       </div>
 
-      {/* main task row - notion-style */}
       <div 
         ref={ref}
         draggable="true"
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
-        className={`bg-gray-900 border ${deleteConfirm ? 'border-red-500/50' : 'border-gray-800'} rounded-lg p-3 mb-1 flex items-center gap-3 ${
-          isDragging ? 'shadow-lg shadow-blue-500/10 cursor-grabbing' : (deleteConfirm ? 'shadow-md shadow-red-500/10' : 'hover:shadow-md hover:shadow-blue-500/5 cursor-grab')
-        } transition-all duration-200 hover:border-gray-700 group`}
+        className={`bg-white border ${deleteConfirm ? 'border-brand-pink/50' : 'border-gray-300'} rounded-lg p-3 mb-1 flex items-center gap-3 ${
+          isDragging ? 'shadow-lg shadow-brand-yellow/10 cursor-grabbing' : (deleteConfirm ? 'shadow-md shadow-brand-pink/10' : 'hover:shadow-md hover:shadow-brand-yellow/5 cursor-grab')
+        } transition-all duration-200 hover:border-gray-400 group`}
         onClick={handleTaskClick}
       >
         {/* task checkbox - very explicitly use the task ID */}
@@ -753,7 +747,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
             handleTaskCompletion(e);
           }}
           className={`flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
-            ${checkAnimation ? 'scale-110 bg-blue-500/20' : 'hover:bg-gray-800/50'}`}
+            ${checkAnimation ? 'scale-110 bg-brand-yellow/20' : 'hover:bg-gray-100'}`}
           role="button"
           aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
           title={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
@@ -761,14 +755,14 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         >
           {task.completed ? (
             <div className="relative">
-              <FaCheckCircle className="text-xl text-blue-500" />
+              <FaCheckCircle className="text-xl text-brand-yellow" />
               <span className={`absolute inset-0 flex items-center justify-center transition-opacity ${checkAnimation ? 'opacity-100' : 'opacity-0'}`}>
-                <span className="animate-ping absolute h-4 w-4 rounded-full bg-blue-400 opacity-75"></span>
+                <span className="animate-ping absolute h-4 w-4 rounded-full bg-brand-yellow opacity-75"></span>
               </span>
             </div>
           ) : (
             <div className="relative">
-              <FaRegCircle className="text-xl text-gray-600 hover:text-gray-400 transition-colors" />
+              <FaRegCircle className="text-xl text-brand-gray hover:text-gray-400 transition-colors" />
               <span className={`absolute inset-0 flex items-center justify-center text-white transition-transform origin-center ${checkAnimation ? 'scale-100' : 'scale-0'} duration-300`}>
                 <FiCheck className="text-sm" />
               </span>
@@ -778,16 +772,16 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         
         {/* task name - no longer toggles task completion on click */}
         <div className="flex-grow flex items-center py-1.5 cursor-pointer">
-          <p className={`${task.completed ? 'line-through text-gray-500' : 'text-gray-100'} text-base mr-2 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
+          <p className={`${task.completed ? 'line-through text-brand-gray' : 'text-brand-black'} text-base mr-2 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
             {task.text}
           </p>
           
           {/* completion confetti effect - only shows during animation */}
           {checkAnimation && !task.completed && (
             <div className="absolute left-8 -top-1 overflow-hidden h-8">
-              <div className="animate-confetti-1 absolute w-1.5 h-1.5 rounded-full bg-blue-500"></div>
-              <div className="animate-confetti-2 absolute w-1.5 h-1.5 rounded-full bg-green-400 delay-75"></div>
-              <div className="animate-confetti-3 absolute w-1.5 h-1.5 rounded-full bg-purple-400 delay-150"></div>
+              <div className="animate-confetti-1 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow"></div>
+              <div className="animate-confetti-2 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow delay-75"></div>
+              <div className="animate-confetti-3 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow delay-150"></div>
             </div>
           )}
         </div>
@@ -801,7 +795,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
                 e.stopPropagation();
                 handleActionButton('breakdown');
               }}
-              className="p-1.5 text-xs bg-blue-500/10 text-blue-400 rounded-full hover:bg-blue-500/20 transition-colors group/tooltip relative"
+              className="p-1.5 text-xs bg-brand-yellow/10 text-brand-yellow rounded-full hover:bg-brand-yellow/20 transition-colors group/tooltip relative"
               aria-label="Task Breakdown"
               title="Task Breakdown"
             >
@@ -813,7 +807,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
                 e.stopPropagation();
                 handleActionButton('prompt');
               }}
-              className="p-1.5 text-xs bg-purple-500/10 text-purple-400 rounded-full hover:bg-purple-500/20 transition-colors group/tooltip relative"
+              className="p-1.5 text-xs bg-brand-pink/10 text-brand-pink rounded-full hover:bg-brand-pink/20 transition-colors group/tooltip relative"
               aria-label="Smart Prompt"
               title="Smart Prompt"
             >
@@ -825,7 +819,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
                 e.stopPropagation();
                 handleActionButton('resources');
               }}
-              className="p-1.5 text-xs bg-green-500/10 text-green-400 rounded-full hover:bg-green-500/20 transition-colors group/tooltip relative"
+              className="p-1.5 text-xs bg-brand-yellow/10 text-brand-yellow rounded-full hover:bg-brand-yellow/20 transition-colors group/tooltip relative"
               aria-label="Resources"
               title="Resources"
             >
@@ -838,7 +832,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
           {task.subtasks && task.subtasks.length > 0 && (
             <button 
               onClick={toggleExpand}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-300 transition-colors group/tooltip relative"
+              className="flex items-center gap-1 text-xs text-brand-gray hover:text-brand-black transition-colors group/tooltip relative"
               title={expanded ? "Hide subtasks" : "Show subtasks"}
             >
               <span>{completedSubtasks}/{totalSubtasks}</span>
@@ -857,7 +851,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
             <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
               <button 
                 onClick={handleDeleteClick}
-                className="text-gray-500 hover:text-red-400 transition-colors group/tooltip relative"
+                className="text-brand-gray hover:text-brand-pink transition-colors group/tooltip relative"
                 aria-label="Delete task"
                 title="Delete task"
               >
@@ -869,13 +863,13 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
             <div className="flex items-center gap-2 animate-pulse">
               <button
                 onClick={cancelDelete}
-                className="px-2 py-1 text-xs font-medium text-gray-300 bg-gray-800 rounded hover:bg-gray-700"
+                className="px-2 py-1 text-xs font-medium text-brand-black bg-gray-100 rounded hover:bg-gray-200"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleDeleteClick}
-                className="px-2 py-1 text-xs font-medium text-white bg-red-600 rounded hover:bg-red-500 shadow-sm shadow-red-500/20"
+                className="px-2 py-1 text-xs font-medium text-white bg-brand-pink rounded hover:bg-brand-pink/90 shadow-sm shadow-brand-pink/20"
               >
                 Delete
               </button>
@@ -886,14 +880,14 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
 
       {/* bottom drop indicator line */}
       {showDropIndicator && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-blue-500 translate-y-0.5 rounded-full shadow-[0_0_8px_rgba(59,130,246,0.5)] z-10" />
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-yellow translate-y-0.5 rounded-full shadow-[0_0_8px_rgba(255,200,0,0.5)] z-10" />
       )}
       
       {/* subtasks accordion panel */}
       {task.subtasks && task.subtasks.length > 0 && (
         <div 
           ref={contentRef}
-          className={`overflow-hidden transition-all duration-300 mb-3 ml-6 pl-4 border-l border-gray-800 ${
+          className={`overflow-hidden transition-all duration-300 mb-3 ml-6 pl-4 border-l border-gray-300 ${
             expanded ? 'max-h-96 py-2' : 'max-h-0 py-0 border-l-transparent'
           }`}
         >
@@ -926,41 +920,31 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
 // Phase Navigation component with counts - rename to CategoryNavigation
 const CategoryNavigationWithCounts = ({ categories, currentCategory, onChange, categoryTaskCounts }) => {
   return (
-    <div className="fixed right-6 top-1/2 -translate-y-1/2 z-10">
-      <div className="flex flex-col gap-2 bg-gray-900/70 backdrop-blur-md rounded-2xl p-3 border border-gray-800 shadow-lg shadow-blue-500/5">
-        {categories.map((category) => {
-          const count = categoryTaskCounts[category.id] || { total: 0, completed: 0 };
-          
-          return (
-            <button
-              key={category.id}
-              onClick={() => onChange(category.id)}
-              className={`relative group flex items-center justify-between px-4 py-3 rounded-xl text-sm font-medium transition-all
-                ${currentCategory === category.id 
-                  ? 'bg-gray-800 text-white shadow-inner' 
-                  : 'bg-transparent text-gray-400 hover:bg-gray-800/40 hover:text-gray-300'}`}
-              title={category.description}
-            >
-              {/* Active indicator */}
-              {currentCategory === category.id && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1/2 bg-blue-500 rounded-full"></div>
-              )}
-              
-              <span className="ml-2">{category.name}</span>
-              
-              {/* Task count badge */}
-              {count.total > 0 && (
-                <span className={`ml-3 px-2 py-0.5 rounded-full text-xs ${
-                  currentCategory === category.id 
-                    ? 'bg-blue-900/50 text-blue-300 border border-blue-800' 
-                    : 'bg-gray-900/50 text-gray-400 border border-gray-800'
-                }`}>
-                  {count.completed}/{count.total}
-                </span>
-              )}
-            </button>
-          );
-        })}
+    <div className="w-full bg-white">
+      <div className="max-w-3xl mx-auto flex items-center gap-6 overflow-x-auto px-4 relative">
+        {/* Top border that spans full width */}
+        <div className="absolute top-0 inset-x-0 h-px bg-gray-200" />
+        {/* Bottom border that spans full width */}
+        <div className="absolute bottom-0 inset-x-0 h-px bg-gray-200" />
+        
+        {categories.map((category) => (
+          <button
+            key={category.id}
+            onClick={() => onChange(category.id)}
+            className={`relative py-2 text-sm font-medium transition-colors whitespace-nowrap ${
+              currentCategory === category.id 
+                ? 'text-gray-900'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+            title={category.description}
+          >
+            <span>{category.name}</span>
+            {/* Active indicator line */}
+            <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 transition-opacity ${
+              currentCategory === category.id ? 'opacity-100' : 'opacity-0'
+            }`} />
+          </button>
+        ))}
       </div>
     </div>
   );
@@ -971,12 +955,12 @@ const CategoryEmptyState = ({ category, setIsComposing }) => {
   const currentCategory = PROJECT_CATEGORIES.find(c => c.id === category);
   
   return (
-    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-6 text-center">
-      <h3 className="text-lg font-medium text-gray-200 mb-2">No tasks in {currentCategory.name}</h3>
-      <p className="text-gray-400 mb-4">{currentCategory.description}</p>
+    <div className="bg-white/50 border border-gray-300 rounded-lg p-6 text-center">
+      <h3 className="text-lg font-medium text-brand-black mb-2">No tasks in {currentCategory.name}</h3>
+      <p className="text-brand-gray mb-4">{currentCategory.description}</p>
       <button 
         onClick={() => setIsComposing(true)}
-        className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white rounded-full px-4 py-2 transition-colors shadow-lg shadow-blue-500/20"
+        className="inline-flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellow/90 text-brand-black rounded-full px-4 py-2 transition-colors shadow-lg shadow-brand-yellow/20"
       >
         <FaPlus size={12} />
         <span>Add a task to this category</span>
@@ -996,6 +980,7 @@ function Tasks() {
   const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   
   const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
+  const { currentProject } = useSelector((state) => state.projects);
   const dispatch = useDispatch();
   
   // Setup initial tasks
@@ -1132,19 +1117,21 @@ function Tasks() {
   };
 
   // Filter tasks by current category
-  const currentCategoryTasks = tasks.filter(task => task.category === currentCategory);
+  const currentCategoryTasks = currentCategory === 'all' 
+    ? tasks 
+    : tasks.filter(task => task.category === currentCategory);
   
   // Count completed tasks in current category
   const completedTasksCount = currentCategoryTasks.filter(task => task.completed).length;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-white text-brand-black">
         <div className="max-w-4xl mx-auto pt-12 px-4">
           <div className="flex justify-center items-center h-64">
             <div className="animate-pulse flex flex-col items-center">
-              <div className="h-10 w-10 rounded-full bg-blue-500/20 mb-4"></div>
-              <div className="text-blue-500 font-medium">Loading tasks...</div>
+              <div className="h-10 w-10 rounded-full bg-brand-yellow/20 mb-4"></div>
+              <div className="text-brand-yellow font-medium">Loading tasks...</div>
             </div>
           </div>
         </div>
@@ -1154,15 +1141,15 @@ function Tasks() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-950 text-white">
+      <div className="min-h-screen bg-white text-brand-black">
         <div className="max-w-4xl mx-auto pt-12 px-4">
-          <div className="bg-red-900/20 border border-red-800 rounded-lg p-4 mb-8">
-            <h2 className="text-red-400 font-medium mb-2">Error Loading Tasks</h2>
-            <p className="text-gray-300">{error}</p>
+          <div className="bg-brand-pink/20 border border-brand-pink rounded-lg p-4 mb-8">
+            <h2 className="text-brand-pink font-medium mb-2">Error Loading Tasks</h2>
+            <p className="text-brand-black">{error}</p>
           </div>
           <button 
             onClick={() => window.location.href = '/projectinput'} 
-            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg"
+            className="bg-brand-yellow hover:bg-brand-yellow/90 text-brand-black px-4 py-2 rounded-lg"
           >
             Return to Project Input
           </button>
@@ -1177,22 +1164,18 @@ function Tasks() {
   // We'll render the UI even if there are no tasks, as we want to show category navigation
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-950">
-      <header className="sticky top-0 z-20 bg-gray-900/70 border-b border-gray-800 p-4 backdrop-blur-xl">
-        <div className="max-w-4xl mx-auto">
+    <div className="flex flex-col min-h-screen bg-white">
+      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-xl">
+        <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-bold text-gray-50">Project Tasks</h1>
-            <div className="text-sm text-gray-400">
-              {loading ? "Loading..." : 
-                (tasks && tasks.filter ? 
-                  `${tasks.filter(t => t.completed).length}/${tasks.length} completed` : 
-                  "0/0 completed")}
-            </div>
+            <h1 className="text-4xl font-bold text-brand-black">
+              {currentProject?.name}
+            </h1>
           </div>
         </div>
       </header>
       
-      {/* Category navigation on the right side */}
+      {/* Category navigation */}
       {!loading && !error && (
         <CategoryNavigationWithCounts
           categories={PROJECT_CATEGORIES} 
@@ -1202,52 +1185,31 @@ function Tasks() {
         />
       )}
         
-      {/* main content - adjusted to make room for side navigation */}
+      {/* main content */}
       <main className="flex-grow w-full max-w-3xl mx-auto px-4 py-6 pb-16">
         {loading ? (
           <div className="flex items-center justify-center h-64">
-            <div className="text-blue-500 animate-spin mr-2">
+            <div className="text-brand-yellow animate-spin mr-2">
               <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             </div>
-            <span className="text-gray-400">Loading tasks...</span>
+            <span className="text-brand-gray">Loading tasks...</span>
           </div>
         ) : error ? (
-          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-red-400">
+          <div className="bg-brand-pink/10 border border-brand-pink/30 rounded-lg p-4 text-brand-pink">
             <p>Error: {error}</p>
             <button 
               onClick={() => window.location.reload()}
-              className="mt-2 text-sm bg-red-500/20 hover:bg-red-500/30 px-3 py-1 rounded"
+              className="mt-2 text-sm bg-brand-pink/20 hover:bg-brand-pink/30 px-3 py-1 rounded"
             >
               Try Again
             </button>
           </div>
         ) : (
           <>
-            {/* Category title and info */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-medium text-gray-100 mb-1">
-                {PROJECT_CATEGORIES.find(c => c.id === currentCategory)?.name}
-              </h2>
-              <p className="text-gray-400 text-sm">
-                {PROJECT_CATEGORIES.find(c => c.id === currentCategory)?.description}
-              </p>
-            </div>
-            
-            {/* Task counter - simplified without progress bar */}
-            <div className="mb-6 flex justify-between items-center text-sm">
-              <span className="text-gray-400">
-                {currentCategoryTasks.length} {currentCategoryTasks.length === 1 ? 'task' : 'tasks'}
-              </span>
-              <span className="text-gray-400">
-                {completedTasksCount}/{currentCategoryTasks.length} completed
-              </span>
-            </div>
-            
-            {/* Task area with frame-like border */}
-            <div className="bg-gray-900/30 border border-gray-800 rounded-lg p-4 mb-6 min-h-[400px]">
+            <div className="bg-white/30 border border-gray-100 rounded-md p-2 mb-6 min-h-[400px]">
               {currentCategoryTasks.length > 0 ? (
                 <div className="space-y-1">
                   {currentCategoryTasks.map((task) => (
@@ -1273,13 +1235,13 @@ function Tasks() {
       {/* Compose area - Add task dialog */}
       {isComposing && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-xl w-full max-w-lg animate-fadeIn">
+          <div className="bg-white border border-gray-300 rounded-xl shadow-xl w-full max-w-lg animate-fadeIn">
             <form onSubmit={addNewTask}>
               <div className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold text-gray-100">Create New Task</h2>
+                <h2 className="text-xl font-semibold text-brand-black">Create New Task</h2>
                 
                 <div>
-                  <label htmlFor="taskTitle" className="block text-sm font-medium text-gray-400 mb-1">
+                  <label htmlFor="taskTitle" className="block text-sm font-medium text-brand-gray mb-1">
                     Task Title
                   </label>
                   <input
@@ -1288,20 +1250,20 @@ function Tasks() {
                     value={newTask}
                     onChange={(e) => setNewTask(e.target.value)}
                     placeholder="What needs to be done?"
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-brand-black placeholder-brand-gray focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent"
                     autoFocus
                   />
                 </div>
                 
                 <div>
-                  <label htmlFor="taskCategory" className="block text-sm font-medium text-gray-400 mb-1">
+                  <label htmlFor="taskCategory" className="block text-sm font-medium text-brand-gray mb-1">
                     Task Category
                   </label>
                   <select
                     id="taskCategory"
                     value={newTaskCategory}
                     onChange={(e) => setNewTaskCategory(e.target.value)}
-                    className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent"
                   >
                     {PROJECT_CATEGORIES.map((category) => (
                       <option key={category.id} value={category.id}>
@@ -1309,17 +1271,17 @@ function Tasks() {
                       </option>
                     ))}
                   </select>
-                  <p className="mt-1 text-sm text-gray-500">
+                  <p className="mt-1 text-sm text-brand-gray">
                     {PROJECT_CATEGORIES.find(c => c.id === newTaskCategory)?.description}
                   </p>
                 </div>
               </div>
               
-              <div className="border-t border-gray-800 px-6 py-4 flex justify-end space-x-3">
+              <div className="border-t border-gray-300 px-6 py-4 flex justify-end space-x-3">
                 <button 
                   type="button" 
                   onClick={() => setIsComposing(false)}
-                  className="px-4 py-2 text-gray-400 hover:text-gray-300 transition-colors"
+                  className="px-4 py-2 text-brand-gray hover:text-brand-black transition-colors"
                 >
                   Cancel
                 </button>
@@ -1328,8 +1290,8 @@ function Tasks() {
                   disabled={!newTask.trim()}
                   className={`px-4 py-2 rounded-lg font-medium ${
                     newTask.trim() 
-                      ? 'bg-blue-600 text-white hover:bg-blue-500 shadow-lg shadow-blue-500/20' 
-                      : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      ? 'bg-brand-yellow text-brand-black hover:bg-brand-yellow/90 shadow-lg shadow-brand-yellow/20' 
+                      : 'bg-gray-200 text-brand-gray cursor-not-allowed'
                   }`}
                 >
                   Create Task
@@ -1346,7 +1308,7 @@ function Tasks() {
             setNewTaskCategory(currentCategory); // Set the default category to current category
             setIsComposing(true);
           }}
-          className="fixed right-6 bottom-6 bg-blue-600 text-white p-4 rounded-full shadow-lg shadow-blue-500/30 hover:bg-blue-500 transition-colors z-10"
+          className="fixed right-6 bottom-6 bg-brand-yellow text-brand-black p-4 rounded-full shadow-lg shadow-brand-yellow/30 hover:bg-brand-yellow/90 transition-colors z-10"
           aria-label="Add new task"
         >
           <FaPlus />
