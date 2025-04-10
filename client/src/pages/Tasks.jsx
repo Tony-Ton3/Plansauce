@@ -970,7 +970,168 @@ const CategoryEmptyState = ({ category, setIsComposing }) => {
   );
 };
 
-// Add the TechStackModal component before the Tasks component
+// Add these before the TechnologyCard component
+const renderVideoTutorials = (tutorials) => (
+  <div className="mt-4 space-y-2">
+    <h5 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+      <FaYoutube className="text-red-600" />
+      <span>Video Tutorials</span>
+    </h5>
+    <ul className="space-y-2">
+      {tutorials.map((tutorial, index) => (
+        <li key={index}>
+          <a
+            href={tutorial.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
+          >
+            <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+              {index + 1}
+            </span>
+            <span className="flex-grow line-clamp-1">{tutorial.title}</span>
+            <span className="text-xs text-gray-500">{tutorial.duration}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+const mockTutorials = {
+  vite: [
+    {
+      title: "Vite Crash Course - Build faster with Vite",
+      url: "https://youtube.com/watch?v=mock-vite-1",
+      duration: "15:24"
+    },
+    {
+      title: "Why Vite? Vite vs Create React App",
+      url: "https://youtube.com/watch?v=mock-vite-2",
+      duration: "10:15"
+    }
+  ],
+  react: [
+    {
+      title: "React Full Course 2024 - From Zero to Hero",
+      url: "https://youtube.com/watch?v=mock-react-1",
+      duration: "2:45:30"
+    },
+    {
+      title: "React Hooks Explained - useState and useEffect",
+      url: "https://youtube.com/watch?v=mock-react-2",
+      duration: "20:15"
+    },
+    {
+      title: "Building a Real App with React",
+      url: "https://youtube.com/watch?v=mock-react-3",
+      duration: "1:30:00"
+    }
+  ],
+  typescript: [
+    {
+      title: "TypeScript Tutorial for Beginners",
+      url: "https://youtube.com/watch?v=mock-ts-1",
+      duration: "1:15:00"
+    },
+    {
+      title: "TypeScript with React - Best Practices",
+      url: "https://youtube.com/watch?v=mock-ts-2",
+      duration: "45:30"
+    }
+  ],
+  redux: [
+    {
+      title: "Redux Toolkit Complete Guide",
+      url: "https://youtube.com/watch?v=mock-redux-1",
+      duration: "1:00:00"
+    },
+    {
+      title: "State Management in React with Redux Toolkit",
+      url: "https://youtube.com/watch?v=mock-redux-2",
+      duration: "35:45"
+    }
+  ],
+  tailwind: [
+    {
+      title: "Tailwind CSS Crash Course",
+      url: "https://youtube.com/watch?v=mock-tailwind-1",
+      duration: "45:20"
+    },
+    {
+      title: "Building a Responsive Website with Tailwind CSS",
+      url: "https://youtube.com/watch?v=mock-tailwind-2",
+      duration: "1:15:00"
+    }
+  ],
+  node: [
+    {
+      title: "Node.js Crash Course",
+      url: "https://youtube.com/watch?v=mock-node-1",
+      duration: "1:30:00"
+    },
+    {
+      title: "Building REST APIs with Node.js",
+      url: "https://youtube.com/watch?v=mock-node-2",
+      duration: "55:15"
+    }
+  ],
+  prisma: [
+    {
+      title: "Prisma from Scratch - Complete Guide",
+      url: "https://youtube.com/watch?v=mock-prisma-1",
+      duration: "1:20:00"
+    },
+    {
+      title: "Building a Backend with Prisma and TypeScript",
+      url: "https://youtube.com/watch?v=mock-prisma-2",
+      duration: "45:30"
+    }
+  ],
+  mongodb: [
+    {
+      title: "MongoDB Complete Course",
+      url: "https://youtube.com/watch?v=mock-mongo-1",
+      duration: "2:00:00"
+    },
+    {
+      title: "MongoDB with Node.js Tutorial",
+      url: "https://youtube.com/watch?v=mock-mongo-2",
+      duration: "1:15:30"
+    }
+  ]
+};
+
+// Add this component before the TechStackModal component
+const TechnologyCard = ({ icon, name, description, docLink, tutorials }) => (
+  <div className="bg-gray-50 rounded-lg p-4">
+    <div className="flex items-start gap-3">
+      <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+        {icon}
+      </div>
+      <div className="flex-grow">
+        <h4 className="text-base font-medium text-gray-900">{name}</h4>
+        <p className="text-sm text-gray-600 mt-1">{description}</p>
+        
+        <div className="mt-3 space-y-2">
+          <a 
+            href={docLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
+          >
+            <FaBook className="text-xs" />
+            <span>Official Documentation</span>
+          </a>
+        </div>
+
+        {renderVideoTutorials(tutorials)}
+      </div>
+    </div>
+  </div>
+);
+
+// Update the TechStackModal component to use the new TechnologyCard
 const TechStackModal = ({ isOpen, onClose }) => {
   const modalRef = useRef(null);
 
@@ -992,149 +1153,22 @@ const TechStackModal = ({ isOpen, onClose }) => {
 
   if (!isOpen) return null;
 
-  const renderVideoTutorials = (tutorials) => (
-    <div className="mt-4 space-y-2">
-      <h5 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-        <FaYoutube className="text-red-600" />
-        <span>Video Tutorials</span>
-      </h5>
-      <ul className="space-y-2">
-        {tutorials.map((tutorial, index) => (
-          <li key={index}>
-            <a
-              href={tutorial.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
-            >
-              <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
-                {index + 1}
-              </span>
-              <span className="flex-grow line-clamp-1">{tutorial.title}</span>
-              <span className="text-xs text-gray-500">{tutorial.duration}</span>
-            </a>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-
-  // Mock video tutorial data
-  const mockTutorials = {
-    vite: [
-      {
-        title: "Vite Crash Course - Build faster with Vite",
-        url: "https://youtube.com/watch?v=mock-vite-1",
-        duration: "15:24"
-      },
-      {
-        title: "Why Vite? Vite vs Create React App",
-        url: "https://youtube.com/watch?v=mock-vite-2",
-        duration: "10:15"
-      }
-    ],
-    react: [
-      {
-        title: "React Full Course 2024 - From Zero to Hero",
-        url: "https://youtube.com/watch?v=mock-react-1",
-        duration: "2:45:30"
-      },
-      {
-        title: "React Hooks Explained - useState and useEffect",
-        url: "https://youtube.com/watch?v=mock-react-2",
-        duration: "20:15"
-      },
-      {
-        title: "Building a Real App with React",
-        url: "https://youtube.com/watch?v=mock-react-3",
-        duration: "1:30:00"
-      }
-    ],
-    typescript: [
-      {
-        title: "TypeScript Tutorial for Beginners",
-        url: "https://youtube.com/watch?v=mock-ts-1",
-        duration: "1:15:00"
-      },
-      {
-        title: "TypeScript with React - Best Practices",
-        url: "https://youtube.com/watch?v=mock-ts-2",
-        duration: "45:30"
-      }
-    ],
-    redux: [
-      {
-        title: "Redux Toolkit Complete Guide",
-        url: "https://youtube.com/watch?v=mock-redux-1",
-        duration: "1:00:00"
-      },
-      {
-        title: "State Management in React with Redux Toolkit",
-        url: "https://youtube.com/watch?v=mock-redux-2",
-        duration: "35:45"
-      }
-    ],
-    tailwind: [
-      {
-        title: "Tailwind CSS Crash Course",
-        url: "https://youtube.com/watch?v=mock-tailwind-1",
-        duration: "45:20"
-      },
-      {
-        title: "Building a Responsive Website with Tailwind CSS",
-        url: "https://youtube.com/watch?v=mock-tailwind-2",
-        duration: "1:15:00"
-      }
-    ],
-    node: [
-      {
-        title: "Node.js Crash Course",
-        url: "https://youtube.com/watch?v=mock-node-1",
-        duration: "1:30:00"
-      },
-      {
-        title: "Building REST APIs with Node.js",
-        url: "https://youtube.com/watch?v=mock-node-2",
-        duration: "55:15"
-      }
-    ],
-    prisma: [
-      {
-        title: "Prisma from Scratch - Complete Guide",
-        url: "https://youtube.com/watch?v=mock-prisma-1",
-        duration: "1:20:00"
-      },
-      {
-        title: "Building a Backend with Prisma and TypeScript",
-        url: "https://youtube.com/watch?v=mock-prisma-2",
-        duration: "45:30"
-      }
-    ],
-    mongodb: [
-      {
-        title: "MongoDB Complete Course",
-        url: "https://youtube.com/watch?v=mock-mongo-1",
-        duration: "2:00:00"
-      },
-      {
-        title: "MongoDB with Node.js Tutorial",
-        url: "https://youtube.com/watch?v=mock-mongo-2",
-        duration: "1:15:30"
-      }
-    ]
-  };
-
-  // Update each technology card to include video tutorials
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div ref={modalRef} className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-2xl animate-fadeIn overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-900">Recommended Tech Stack</h2>
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">Recommended Tech Stack</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              Optimized for Task Management App with focus on Developer Productivity
+            </p>
+          </div>
           <button 
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100"
+            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            aria-label="Close modal"
           >
-            <FaClose />
+            <FaTimes />
           </button>
         </div>
         
@@ -1145,168 +1179,45 @@ const TechStackModal = ({ isOpen, onClose }) => {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Frontend Technologies</h3>
               
               <div className="space-y-4">
-                {/* Vite */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                      <SiVite className="text-purple-500 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">Vite</h4>
-                      <p className="text-sm text-gray-600 mt-1">Next Generation Frontend Tooling</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://vitejs.dev" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
+                <TechnologyCard
+                  icon={<SiVite className="text-purple-500 text-xl" />}
+                  name="Vite"
+                  description="Next Generation Frontend Tooling. Perfect for rapid development with instant server start and lightning-fast HMR, significantly speeding up your development workflow."
+                  docLink="https://vitejs.dev"
+                  tutorials={mockTutorials.vite}
+                />
 
-                      {renderVideoTutorials(mockTutorials.vite)}
-                    </div>
-                  </div>
-                </div>
+                <TechnologyCard
+                  icon={<FaReact className="text-blue-500 text-xl" />}
+                  name="React"
+                  description="A JavaScript library for building user interfaces. Its component-based architecture is ideal for building a modular task management interface with a robust ecosystem and developer tools."
+                  docLink="https://react.dev"
+                  tutorials={mockTutorials.react}
+                />
 
-                {/* React */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                      <FaReact className="text-blue-500 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">React</h4>
-                      <p className="text-sm text-gray-600 mt-1">A JavaScript library for building user interfaces</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://react.dev" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                        
-                        <div className="border-t border-gray-200 my-3"></div>
-                        
-                        <h5 className="text-sm font-medium text-gray-900">Learning Resources</h5>
-                        <ul className="mt-2 space-y-2">
-                          <li>
-                            <a 
-                              href="https://react.dev/learn" 
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
-                            >
-                              <FaLink className="text-xs" />
-                              <span>React Quick Start Guide</span>
-                            </a>
-                          </li>
-                          <li>
-                            <a 
-                              href="https://react.dev/learn/thinking-in-react" 
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2"
-                            >
-                              <FaLink className="text-xs" />
-                              <span>Thinking in React</span>
-                            </a>
-                          </li>
-                        </ul>
-                      </div>
+                <TechnologyCard
+                  icon={<SiTypescript className="text-blue-600 text-xl" />}
+                  name="TypeScript"
+                  description="JavaScript with syntax for types. Adds type safety to your development process, catching errors early and improving code maintainability for a more reliable application."
+                  docLink="https://www.typescriptlang.org/docs/"
+                  tutorials={mockTutorials.typescript}
+                />
 
-                      {renderVideoTutorials(mockTutorials.react)}
-                    </div>
-                  </div>
-                </div>
+                <TechnologyCard
+                  icon={<SiRedux className="text-purple-500 text-xl" />}
+                  name="Redux Toolkit"
+                  description="The official, opinionated, batteries-included toolset for Redux. Provides robust state management with built-in best practices, making it easier to handle complex task data and updates."
+                  docLink="https://redux-toolkit.js.org"
+                  tutorials={mockTutorials.redux}
+                />
 
-                {/* TypeScript */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                      <SiTypescript className="text-blue-600 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">TypeScript</h4>
-                      <p className="text-sm text-gray-600 mt-1">JavaScript with syntax for types</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://www.typescriptlang.org/docs/" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
-
-                      {renderVideoTutorials(mockTutorials.typescript)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Redux Toolkit */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-purple-500/10 rounded-lg flex items-center justify-center">
-                      <SiRedux className="text-purple-500 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">Redux Toolkit</h4>
-                      <p className="text-sm text-gray-600 mt-1">The official, opinionated, batteries-included toolset for Redux</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://redux-toolkit.js.org" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
-
-                      {renderVideoTutorials(mockTutorials.redux)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* TailwindCSS */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-teal-500/10 rounded-lg flex items-center justify-center">
-                      <img src="https://tailwindcss.com/favicons/favicon-32x32.png" alt="Tailwind" className="w-5 h-5" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">TailwindCSS</h4>
-                      <p className="text-sm text-gray-600 mt-1">A utility-first CSS framework for rapid UI development</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://tailwindcss.com/docs" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
-
-                      {renderVideoTutorials(mockTutorials.tailwind)}
-                    </div>
-                  </div>
-                </div>
+                <TechnologyCard
+                  icon={<img src="https://tailwindcss.com/favicons/favicon-32x32.png" alt="Tailwind" className="w-5 h-5" />}
+                  name="TailwindCSS"
+                  description="A utility-first CSS framework for rapid UI development. Accelerates UI development with its utility-first approach, perfect for quickly building and iterating on task management interfaces."
+                  docLink="https://tailwindcss.com/docs"
+                  tutorials={mockTutorials.tailwind}
+                />
               </div>
             </div>
 
@@ -1315,86 +1226,29 @@ const TechStackModal = ({ isOpen, onClose }) => {
               <h3 className="text-lg font-medium text-gray-900 mb-4">Backend Technologies</h3>
               
               <div className="space-y-4">
-                {/* Node.js */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                      <FaNode className="text-green-600 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">Node.js</h4>
-                      <p className="text-sm text-gray-600 mt-1">JavaScript runtime built on Chrome's V8 JavaScript engine</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://nodejs.org/docs/latest/api/" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
+                <TechnologyCard
+                  icon={<FaNode className="text-green-600 text-xl" />}
+                  name="Node.js"
+                  description="JavaScript runtime built on Chrome's V8 JavaScript engine. Enables JavaScript across the full stack, streamlining development and maintaining code consistency."
+                  docLink="https://nodejs.org/docs/latest/api/"
+                  tutorials={mockTutorials.node}
+                />
 
-                      {renderVideoTutorials(mockTutorials.node)}
-                    </div>
-                  </div>
-                </div>
+                <TechnologyCard
+                  icon={<SiPrisma className="text-gray-600 text-xl" />}
+                  name="Prisma"
+                  description="Next-generation Node.js and TypeScript ORM. Provides type-safe database access and automatic migrations, ideal for managing task data with confidence and minimal boilerplate code."
+                  docLink="https://www.prisma.io/docs"
+                  tutorials={mockTutorials.prisma}
+                />
 
-                {/* Prisma */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-                      <SiPrisma className="text-gray-600 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">Prisma</h4>
-                      <p className="text-sm text-gray-600 mt-1">Next-generation Node.js and TypeScript ORM</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://www.prisma.io/docs" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
-
-                      {renderVideoTutorials(mockTutorials.prisma)}
-                    </div>
-                  </div>
-                </div>
-
-                {/* MongoDB */}
-                <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="flex-shrink-0 w-8 h-8 bg-green-500/10 rounded-lg flex items-center justify-center">
-                      <FaDatabase className="text-green-600 text-xl" />
-                    </div>
-                    <div className="flex-grow">
-                      <h4 className="text-base font-medium text-gray-900">MongoDB</h4>
-                      <p className="text-sm text-gray-600 mt-1">Document-based, distributed database</p>
-                      
-                      <div className="mt-3 space-y-2">
-                        <a 
-                          href="https://www.mongodb.com/docs/" 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                          <FaBook className="text-xs" />
-                          <span>Official Documentation</span>
-                        </a>
-                      </div>
-
-                      {renderVideoTutorials(mockTutorials.mongodb)}
-                    </div>
-                  </div>
-                </div>
+                <TechnologyCard
+                  icon={<FaDatabase className="text-green-600 text-xl" />}
+                  name="MongoDB"
+                  description="Document-based, distributed database. Its flexible document model is perfect for storing varied task data, while its scalability ensures your app can grow without performance issues."
+                  docLink="https://www.mongodb.com/docs/"
+                  tutorials={mockTutorials.mongodb}
+                />
               </div>
             </div>
           </div>
