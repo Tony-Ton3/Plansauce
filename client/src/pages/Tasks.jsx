@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown, FaChevronRight, FaCode, FaBook, FaLink, FaTimes as FaClose, FaRocket, FaReact, FaNode, FaDatabase, FaYoutube } from "react-icons/fa";
+import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown, FaChevronRight, FaCode, FaBook, FaLink, FaTimes as FaClose, FaRocket, FaReact, FaNode, FaDatabase, FaChartLine, FaGraduationCap, FaCog } from "react-icons/fa";
 import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
 import { SiVite, SiTypescript, SiRedux, SiPrisma } from "react-icons/si";
@@ -971,139 +971,40 @@ const CategoryEmptyState = ({ category, setIsComposing }) => {
 };
 
 // Add these before the TechnologyCard component
-const renderVideoTutorials = (tutorials) => (
-  <div className="mt-4 space-y-2">
-    <h5 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-      <FaYoutube className="text-red-600" />
-      <span>Video Tutorials</span>
-    </h5>
-    <ul className="space-y-2">
-      {tutorials.map((tutorial, index) => (
-        <li key={index}>
-          <a
-            href={tutorial.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
-          >
-            <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
-              {index + 1}
-            </span>
-            <span className="flex-grow line-clamp-1">{tutorial.title}</span>
-            <span className="text-xs text-gray-500">{tutorial.duration}</span>
-          </a>
-        </li>
-      ))}
-    </ul>
-  </div>
-);
+// const renderVideoTutorials = (tutorials) => {
+//   if (!tutorials || !Array.isArray(tutorials) || tutorials.length === 0) {
+//     return null;
+//   }
 
-const mockTutorials = {
-  vite: [
-    {
-      title: "Vite Crash Course - Build faster with Vite",
-      url: "https://youtube.com/watch?v=mock-vite-1",
-      duration: "15:24"
-    },
-    {
-      title: "Why Vite? Vite vs Create React App",
-      url: "https://youtube.com/watch?v=mock-vite-2",
-      duration: "10:15"
-    }
-  ],
-  react: [
-    {
-      title: "React Full Course 2024 - From Zero to Hero",
-      url: "https://youtube.com/watch?v=mock-react-1",
-      duration: "2:45:30"
-    },
-    {
-      title: "React Hooks Explained - useState and useEffect",
-      url: "https://youtube.com/watch?v=mock-react-2",
-      duration: "20:15"
-    },
-    {
-      title: "Building a Real App with React",
-      url: "https://youtube.com/watch?v=mock-react-3",
-      duration: "1:30:00"
-    }
-  ],
-  typescript: [
-    {
-      title: "TypeScript Tutorial for Beginners",
-      url: "https://youtube.com/watch?v=mock-ts-1",
-      duration: "1:15:00"
-    },
-    {
-      title: "TypeScript with React - Best Practices",
-      url: "https://youtube.com/watch?v=mock-ts-2",
-      duration: "45:30"
-    }
-  ],
-  redux: [
-    {
-      title: "Redux Toolkit Complete Guide",
-      url: "https://youtube.com/watch?v=mock-redux-1",
-      duration: "1:00:00"
-    },
-    {
-      title: "State Management in React with Redux Toolkit",
-      url: "https://youtube.com/watch?v=mock-redux-2",
-      duration: "35:45"
-    }
-  ],
-  tailwind: [
-    {
-      title: "Tailwind CSS Crash Course",
-      url: "https://youtube.com/watch?v=mock-tailwind-1",
-      duration: "45:20"
-    },
-    {
-      title: "Building a Responsive Website with Tailwind CSS",
-      url: "https://youtube.com/watch?v=mock-tailwind-2",
-      duration: "1:15:00"
-    }
-  ],
-  node: [
-    {
-      title: "Node.js Crash Course",
-      url: "https://youtube.com/watch?v=mock-node-1",
-      duration: "1:30:00"
-    },
-    {
-      title: "Building REST APIs with Node.js",
-      url: "https://youtube.com/watch?v=mock-node-2",
-      duration: "55:15"
-    }
-  ],
-  prisma: [
-    {
-      title: "Prisma from Scratch - Complete Guide",
-      url: "https://youtube.com/watch?v=mock-prisma-1",
-      duration: "1:20:00"
-    },
-    {
-      title: "Building a Backend with Prisma and TypeScript",
-      url: "https://youtube.com/watch?v=mock-prisma-2",
-      duration: "45:30"
-    }
-  ],
-  mongodb: [
-    {
-      title: "MongoDB Complete Course",
-      url: "https://youtube.com/watch?v=mock-mongo-1",
-      duration: "2:00:00"
-    },
-    {
-      title: "MongoDB with Node.js Tutorial",
-      url: "https://youtube.com/watch?v=mock-mongo-2",
-      duration: "1:15:30"
-    }
-  ]
-};
+//   return (
+//     <div className="mt-4 space-y-2">
+//       <h5 className="text-sm font-medium text-gray-900 flex items-center gap-2">
+//         <FaYoutube className="text-red-600" />
+//         <span>Video Tutorials</span>
+//       </h5>
+//       <ul className="space-y-2">
+//         {tutorials.map((tutorial, index) => (
+//           <li key={index}>
+//             <a
+//               href={tutorial.url}
+//               target="_blank"
+//               rel="noopener noreferrer"
+//               className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
+//             >
+//               <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
+//                 {index + 1}
+//               </span>
+//               <span className="flex-grow line-clamp-1">{tutorial.title}</span>
+//               <span className="text-xs text-gray-500">{tutorial.duration}</span>
+//             </a>
+//           </li>
+//         ))}
+//       </ul>
+//     </div>
+//   );
+// };
 
-// Add this component before the TechStackModal component
-const TechnologyCard = ({ icon, name, description, docLink, tutorials }) => (
+const TechnologyCard = ({ icon, name, description, docLink, category }) => (
   <div className="bg-gray-50 rounded-lg p-4">
     <div className="flex items-start gap-3">
       <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
@@ -1114,24 +1015,24 @@ const TechnologyCard = ({ icon, name, description, docLink, tutorials }) => (
         <p className="text-sm text-gray-600 mt-1">{description}</p>
         
         <div className="mt-3 space-y-2">
-          <a 
-            href={docLink} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-          >
-            <FaBook className="text-xs" />
-            <span>Official Documentation</span>
-          </a>
+          {docLink && (
+            <a 
+              href={docLink} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
+            >
+              <FaBook className="text-xs" />
+              <span>Official Documentation</span>
+            </a>
+          )}
         </div>
-
-        {renderVideoTutorials(tutorials)}
       </div>
     </div>
   </div>
 );
 
-// Update the TechStackModal component to accept techStackData
+// Update the TechStackModal component to display all tech stack categories and improve priority-specific information display
 const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProject }) => {
   const modalRef = useRef(null);
 
@@ -1172,26 +1073,56 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
       );
     }
     
-    if (!techStackData.frontend && !techStackData.backend) {
-      return (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          <p className="text-sm">Tech stack data is missing frontend and backend: {JSON.stringify(techStackData)}</p>
-        </div>
-      );
-    }
-    
     return null;
+  };
+
+  const renderTechSection = (title, techs, category) => {
+    if (!techs || techs.length === 0) return null;
+
+    return (
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
+        <div className="space-y-4">
+          {techs.map((tech, index) => (
+            <TechnologyCard
+              key={`${category}-${index}`}
+              icon={getTechIcon(tech.name)}
+              name={tech.name}
+              description={tech.description}
+              docLink={tech.documentationUrl || tech.docLink}
+              category={category}
+            />
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  const getPriorityIcon = (priority) => {
+    switch (priority) {
+      case 'speed':
+        return <FaRocket className="text-blue-500" />;
+      case 'scalability':
+        return <FaChartLine className="text-green-500" />;
+      case 'learning':
+        return <FaGraduationCap className="text-purple-500" />;
+      default:
+        return <FaCog className="text-gray-500" />;
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div ref={modalRef} className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-2xl animate-fadeIn overflow-hidden">
+      <div ref={modalRef} className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Recommended Tech Stack</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              Optimized for {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
-            </p>
+            <h2 className="text-xl font-semibold text-gray-900">Your Personalized Tech Stack</h2>
+            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+              {getPriorityIcon(currentProject?.priority)}
+              <p>
+                Optimized for {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
+              </p>
+            </div>
           </div>
           <button 
             onClick={onClose}
@@ -1214,51 +1145,13 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
               
               {techStackData && typeof techStackData === 'object' ? (
                 <div className="space-y-8">
-                  {/* Frontend Section */}
-                  {techStackData.frontend && techStackData.frontend.length > 0 ? (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Frontend Technologies</h3>
-                      <div className="space-y-4">
-                        {techStackData.frontend.map((tech, index) => (
-                          <TechnologyCard
-                            key={index}
-                            icon={getTechIcon(tech.name)}
-                            name={tech.name}
-                            description={tech.description}
-                            docLink={tech.docLink}
-                            tutorials={tech.tutorials}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      No frontend technologies recommended
-                    </div>
-                  )}
-
-                  {/* Backend Section */}
-                  {techStackData.backend && techStackData.backend.length > 0 ? (
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-4">Backend Technologies</h3>
-                      <div className="space-y-4">
-                        {techStackData.backend.map((tech, index) => (
-                          <TechnologyCard
-                            key={index}
-                            icon={getTechIcon(tech.name)}
-                            name={tech.name}
-                            description={tech.description}
-                            docLink={tech.docLink}
-                            tutorials={tech.tutorials}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="text-center py-4 text-gray-500">
-                      No backend technologies recommended
-                    </div>
-                  )}
+                  {renderTechSection('Planning Tools', techStackData.planning, 'planning')}
+                  {renderTechSection('Setup Tools', techStackData.setup, 'setup')}
+                  {renderTechSection('Frontend Technologies', techStackData.frontend, 'frontend')}
+                  {renderTechSection('Backend Technologies', techStackData.backend, 'backend')}
+                  {renderTechSection('Testing Tools', techStackData.testing, 'testing')}
+                  {renderTechSection('Deployment Solutions', techStackData.deploy, 'deploy')}
+                  {renderTechSection('Maintenance Tools', techStackData.maintain, 'maintain')}
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-500">

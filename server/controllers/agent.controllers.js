@@ -42,6 +42,7 @@ export const generateTasks = async (req, res, next) => {
         background: {
           known_tech: userBackground?.known_tech || [],
           disliked_tech: userBackground?.disliked_tech || [],
+          starred_tech: userBackground?.starred_tech || [],
         },
       }),
     });
@@ -51,7 +52,33 @@ export const generateTasks = async (req, res, next) => {
     }
 
     const result = await response.json();
-    const tasks = result.data || [];
+    
+    // Validate and extract tasks
+    if (!Array.isArray(result.data)) {
+      throw new Error("Invalid tasks data received from server");
+    }
+    const tasks = result.data;
+
+    // Validate and extract tech stack
+    let tech_stack = {};
+    try {
+      tech_stack = result.tech_stack_recommendation || {};
+      if (typeof tech_stack === 'string') {
+        tech_stack = JSON.parse(tech_stack);
+      }
+    } catch (error) {
+      console.error("Error parsing tech stack:", error);
+      tech_stack = {
+        type: "Web Application",
+        planning: [],
+        setup: [],
+        frontend: [],
+        backend: [],
+        testing: [],
+        deploy: [],
+        maintain: []
+      };
+    }
 
     if (tasks.length > 0) {
       const projectName =
@@ -67,8 +94,17 @@ export const generateTasks = async (req, res, next) => {
         userId: req.user.id,
         name: projectName,
         description,
-        projectType: "web",
+        projectType: tech_stack?.type || "Web Application",
         priority: normalizedPriority,
+        techStack: {
+          planning: tech_stack?.planning || [],
+          setup: tech_stack?.setup || [],
+          frontend: tech_stack?.frontend || [],
+          backend: tech_stack?.backend || [],
+          testing: tech_stack?.testing || [],
+          deploy: tech_stack?.deploy || [],
+          maintain: tech_stack?.maintain || []
+        }
       });
 
       const savedProject = await project.save();
@@ -122,13 +158,37 @@ export const enhanceProjectIdea = async (req, res, next) => {
       });
     }
 
-    const prompt = `Enhance the following project idea by adding more details and specifics: "${description}". 
-    Return a concise description (3-4 sentences) followed by:
-    
+    const prompt = `Analyze and enhance the following project idea: "${description}"
+
+    First, determine ONE of these project types based on the description:
+    - Web Application
+    - Mobile App
+    - Browser Extension
+    - CLI Tool
+    - API/Backend Service
+    - Data Analysis/ML Project
+    - Game
+    - Desktop Application
+    - DevOps/Infrastructure Tool
+    - Educational/Tutorial Project
+
+    Provide your response in this exact format:
+
+    Project Type: [EXACTLY ONE type from the list above, no extensions or notes]
+
+    Enhanced Description: Write 3-4 sentences that expand on the original idea. Focus on the core purpose, 
+    target users, and main value proposition. Be specific about the type of application and its primary interface.
+
     Key Features:
-    - 3-4 bullet points (short phrases, not paragraphs)
+    - List 6-8 core features (not technical requirements)
+    - Each feature should be a clear user-facing capability
+    - Focus on MVP features first, then nice-to-haves
+    - Keep each point brief (5-8 words)
+
+    Keep the total response under 250 words and focus on clarity over comprehensiveness. 
+    Do not include arbitrary names or technical implementation details.
     
-    Keep the total response under 250 words and focus on clarity over comprehensiveness.`;
+    IMPORTANT: The Project Type MUST be exactly one of the types listed above, with no additional notes, extensions, or variations.`;
 
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",

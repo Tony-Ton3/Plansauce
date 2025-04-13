@@ -1,5 +1,20 @@
 import mongoose from "mongoose";
 
+const TechnologySchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  description: {
+    type: String,
+    required: true
+  },
+  docLink: {
+    type: String,
+    required: true
+  }
+}, { _id: false });
+
 const ProjectSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -17,12 +32,21 @@ const ProjectSchema = new mongoose.Schema({
   },
   projectType: {
     type: String,
-    default: 'web'
+    required: true
   },
   priority: {
     type: String,
     enum: ['Speed', 'Scalability', 'Learning'],
-    default: 'Speed'
+    required: true
+  },
+  techStack: {
+    planning: [TechnologySchema],
+    setup: [TechnologySchema],
+    frontend: [TechnologySchema],
+    backend: [TechnologySchema],
+    testing: [TechnologySchema],
+    deploy: [TechnologySchema],
+    maintain: [TechnologySchema]
   }
 }, { timestamps: true });
 

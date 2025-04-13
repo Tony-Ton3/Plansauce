@@ -1,12 +1,11 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector, useDispatch } from "react-redux";
-import { FaSearch, FaArrowRight, FaTimes, FaCheck } from "react-icons/fa";
+import { useDispatch } from "react-redux";
+import { FaSearch, FaArrowRight, FaTimes, FaCheck, FaStar } from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
 import { updateUserBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
 
-// Define styles outside the component to avoid re-creation on each render
 const scrollbarStyles = `
   .custom-scrollbar::-webkit-scrollbar {
     width: 6px;
@@ -24,7 +23,6 @@ const scrollbarStyles = `
   }
 `;
 
-// Add scrollbar styles once to document head
 const styleEl = document.createElement("style");
 styleEl.textContent = scrollbarStyles;
 document.head.appendChild(styleEl);
@@ -32,29 +30,30 @@ document.head.appendChild(styleEl);
 export default function Quiz() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { currentUser } = useSelector((state) => state.user);
   const [answers, setAnswers] = useState({
     known_tech: [],
     disliked_tech: [],
+    starred_tech: [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [searchText, setSearchText] = useState("");
   const [quickSuggestions, setQuickSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [showDislikedSection, setShowDislikedSection] = useState(false);
   const [activeField, setActiveField] = useState("known_tech");
   const searchInputRef = useRef(null);
+  const [lastClickTime, setLastClickTime] = useState(0);
+  const DOUBLE_CLICK_DELAY = 250; // milliseconds
 
-  // Filter to only show the known_tech question
+  // Filter to only show the known_tech question, we'll improve this later
   const techQuestion = backgroundQuestions.find((q) => q.id === "known_tech");
 
-  // Get common and remaining skills to display
-  const commonSkills = techQuestion ? techQuestion.options.slice(0, 18) : [];
+  // Get all skills to display
+  const allSkills = techQuestion ? techQuestion.options : [];
 
   // Update quick suggestions whenever the search text changes or input is focused
   useEffect(() => {
-    if (!techQuestion || !techQuestion.suggestions) {
+    if (!techQuestion) {
       setQuickSuggestions([]);
       return;
     }
@@ -65,11 +64,10 @@ export default function Quiz() {
     const unavailableTechs = [
       ...selectedTechs,
       ...dislikedTechs,
-      ...commonSkills,
     ];
 
-    // Filter out suggestions that are already in options or selected
-    let availableSuggestions = techQuestion.suggestions.filter(
+    // Filter out suggestions that are already selected
+    let availableSuggestions = allSkills.filter(
       (tech) => !unavailableTechs.includes(tech)
     );
 
@@ -80,14 +78,10 @@ export default function Quiz() {
       );
     }
 
-    // Limit to 8 suggestions
     setQuickSuggestions(availableSuggestions.slice(0, 8));
 
-    // Don't automatically show suggestions - only update the available ones
-    // The showSuggestions state will be controlled by focus events instead
-  }, [searchText, answers.known_tech, answers.disliked_tech, commonSkills]);
+  }, [searchText, answers.known_tech, answers.disliked_tech, allSkills]);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -106,47 +100,60 @@ export default function Quiz() {
 
   const handleOptionSelect = (questionId, optionValue) => {
     const currentSelections = answers[questionId] || [];
-    if (currentSelections.includes(optionValue)) {
-      // removal
+    const lowerCaseOption = optionValue.toLowerCase();
+    
+    // If adding to known_tech, remove from disliked_tech
+    if (questionId === "known_tech" && !currentSelections.includes(lowerCaseOption)) {
       setAnswers({
         ...answers,
-        [questionId]: currentSelections.filter(
-          (value) => value !== optionValue
-        ),
+        [questionId]: [...currentSelections, lowerCaseOption],
+        disliked_tech: answers.disliked_tech.filter(tech => tech !== lowerCaseOption)
       });
-    } else {
-      // addition
-      setAnswers({
-        ...answers,
-        [questionId]: [...currentSelections, optionValue],
-      });
+      return;
     }
-  };
 
-  const handleSuggestionClick = (suggestion) => {
-    handleOptionSelect(activeField, suggestion);
-    setSearchText("");
+    // If adding to disliked_tech, remove from known_tech and starred_tech
+    if (questionId === "disliked_tech" && !currentSelections.includes(lowerCaseOption)) {
+      setAnswers({
+        ...answers,
+        [questionId]: [...currentSelections, lowerCaseOption],
+        known_tech: answers.known_tech.filter(tech => tech !== lowerCaseOption),
+        starred_tech: answers.starred_tech.filter(tech => tech !== lowerCaseOption)
+      });
+      return;
+    }
+
+    // If removing from either list, just remove it
+    setAnswers({
+      ...answers,
+      [questionId]: currentSelections.filter((value) => value !== lowerCaseOption)
+    });
   };
 
   const handleCustomTechKeyDown = (e) => {
     if (e.key === "Enter" && searchText.trim() !== "") {
       e.preventDefault();
-      // Add the entered text as a custom technology
-      handleOptionSelect(activeField, searchText.trim());
+      const enteredTech = searchText.trim().toLowerCase();
+      
+      // If there's exactly one suggestion, use that
+      if (quickSuggestions.length === 1) {
+        handleOptionSelect(activeField, quickSuggestions[0].toLowerCase());
+        setSearchText("");
+        return;
+      }
+
+      // Otherwise, check if the entered tech exists in allSkills (case insensitive)
+      const existingTech = allSkills.find(
+        tech => tech.toLowerCase() === enteredTech
+      );
+
+      // If it exists, use the lowercase version, otherwise use the entered text
+      const techToAdd = existingTech ? existingTech.toLowerCase() : enteredTech;
+      
+      // Add the technology
+      handleOptionSelect(activeField, techToAdd);
       setSearchText("");
     }
-  };
-
-  const handleInputFocus = () => {
-    // Only show suggestions when input is focused AND we have suggestions
-    setShowSuggestions(quickSuggestions.length > 0);
-  };
-
-  const handleInputBlur = () => {
-    // Add a slight delay before hiding suggestions to allow for clicks
-    setTimeout(() => {
-      setShowSuggestions(false);
-    }, 150);
   };
 
   const handleSubmit = async () => {
@@ -155,23 +162,16 @@ export default function Quiz() {
 
     try {
       console.log("Submitting background answers:", answers);
-
-      // First, update the user's background information
       const updatedUser = await updateUserBackground(answers);
       console.log("Received updated user:", updatedUser);
 
-      // await setBackground();
-
-      // Update the user object in Redux with the hasFilledBackground flag set to true
       const userWithBackgroundFilled = {
         ...updatedUser,
         hasFilledBackground: true,
       };
 
-      // Update Redux state with the updated user data
       dispatch(updateSuccess(userWithBackgroundFilled));
 
-      // Navigate to project input page after successful submission
       navigate("/projectinput");
     } catch (error) {
       console.error("Error submitting background:", error);
@@ -185,15 +185,11 @@ export default function Quiz() {
 
   const isOptionSelected = (questionId, optionValue) => {
     const answer = answers[questionId];
+    const lowerCaseOption = optionValue.toLowerCase();
     if (Array.isArray(answer)) {
-      return answer.includes(optionValue);
+      return answer.includes(lowerCaseOption);
     }
-    return answer === optionValue;
-  };
-
-  const isReadyToSubmit = () => {
-    // Always allow submission, regardless of whether skills are selected
-    return true;
+    return answer === lowerCaseOption;
   };
 
   const toggleActiveField = () => {
@@ -204,34 +200,60 @@ export default function Quiz() {
     setShowSuggestions(false);
   };
 
+  const handleStarTech = (tech) => {
+    const lowerCaseTech = tech.toLowerCase();
+    setAnswers(prev => ({
+      ...prev,
+      starred_tech: prev.starred_tech.includes(lowerCaseTech)
+        ? prev.starred_tech.filter(t => t !== lowerCaseTech)
+        : [...prev.starred_tech, lowerCaseTech]
+    }));
+  };
+
+  const handleTechClick = (tech, field = "known_tech") => {
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+    const lowerCaseTech = tech.toLowerCase();
+
+    if (timeDiff < DOUBLE_CLICK_DELAY) {
+      // Double click - toggle star (only for known_tech)
+      if (field === "known_tech") {
+        if (!answers.known_tech.includes(lowerCaseTech)) {
+          // If not selected, select it first
+          handleOptionSelect("known_tech", lowerCaseTech);
+        }
+        handleStarTech(lowerCaseTech);
+      }
+    } else {
+      // Single click - toggle selection
+      handleOptionSelect(field, lowerCaseTech);
+    }
+    setLastClickTime(currentTime);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
-      <div
-        className="w-full max-w-2xl px-5 py-6 flex flex-col"
-        style={{ height: "600px" }}
-      >
-        {/* Main content */}
-        <div className="mb-4">
+      <div className="w-full max-w-2xl px-5 py-6 flex flex-col h-[600px]">
+        <div className="w-full mb-4 bg-white p-4 rounded-lg relative z-10">
           <h1 className="text-2xl font-bold text-brand-black mb-1">
             What skills do you have or enjoy working with?
           </h1>
-          <p className="text-brand-gray text-sm">Select all that apply</p>
+          <p className="text-brand-gray text-sm flex items-center">
+            Double-click to star a tool <FaStar className="mx-1 text-brand-yellow" size={10} /> to always include it in recommendations
+          </p>
         </div>
 
-        {/* Error display */}
         {error && (
-          <div className="mb-4 p-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg">
+          <div className="w-full mb-4 p-2 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg relative z-10">
             <p>{error}</p>
           </div>
         )}
 
-        {/* Skills Section - with fixed height and flex-grow */}
-        <div className="bg-white rounded-lg mb-3 flex-grow flex flex-col overflow-hidden">
-          {/* Mode toggle buttons */}
-          <div className="mx-1 mb-2">
-            <div className="inline-flex rounded-md border border-gray-300 overflow-hidden">
+        <div className="w-full bg-white rounded-lg mb-3 flex-grow flex flex-col overflow-hidden relative z-0">
+          <div className="w-full px-1 mb-2">
+            <div className="w-full flex rounded-md border border-gray-300 overflow-hidden">
               <button
-                className={`px-5 py-2 text-sm ${
+                className={`flex-1 px-5 py-2 text-sm ${
                   activeField === "known_tech"
                     ? "bg-brand-yellow text-brand-black font-medium"
                     : "bg-white text-brand-gray"
@@ -243,7 +265,7 @@ export default function Quiz() {
                 Skills I enjoy
               </button>
               <button
-                className={`px-5 py-2 text-sm border-l ${
+                className={`flex-1 px-5 py-2 text-sm border-l ${
                   activeField === "disliked_tech"
                     ? "bg-brand-pink text-white font-medium"
                     : "bg-white text-brand-gray"
@@ -257,9 +279,8 @@ export default function Quiz() {
             </div>
           </div>
 
-          {/* Search input */}
-          <div className="mb-4 mx-1 relative" ref={searchInputRef}>
-            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+          <div className="w-full px-1 mb-4 relative" ref={searchInputRef}>
+            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
               <FaSearch className="text-brand-gray" />
             </div>
             <input
@@ -271,35 +292,38 @@ export default function Quiz() {
                   setShowSuggestions(quickSuggestions.length > 0);
                 }
               }}
-              onFocus={handleInputFocus}
-              onBlur={handleInputBlur}
+              onFocus={() => setShowSuggestions(quickSuggestions.length > 0)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               onKeyDown={handleCustomTechKeyDown}
-              placeholder={
-                activeField === "known_tech"
-                  ? "Search all skills..."
-                  : "Skills to filter out..."
-              }
+              placeholder={activeField === "known_tech" ? "Search all skills..." : "Skills to filter out..."}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none"
             />
 
-            {/* Suggestions dropdown */}
             {showSuggestions && (
-              <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg">
-                <ul className="py-1 max-h-40 overflow-auto">
+              <div className="absolute z-10 mt-1 w-[calc(100%-10px)] bg-white border border-gray-200 rounded-md shadow-lg">
+                <ul className="w-full py-1 max-h-40 overflow-auto">
                   {quickSuggestions.length > 0 ? (
                     quickSuggestions.map((suggestion) => (
                       <li
                         key={suggestion}
-                        className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray"
-                        onClick={() => handleSuggestionClick(suggestion)}
+                        onClick={() => {
+                          handleOptionSelect(activeField, suggestion.toLowerCase());
+                          setSearchText("");
+                          setShowSuggestions(false);
+                        }}
+                        className="w-full px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray group"
                       >
-                        {suggestion}
+                        <div className="w-full flex items-center justify-between">
+                          <span>{suggestion}</span>
+                          <span className="text-xs text-brand-gray opacity-0 group-hover:opacity-100">
+                            double-click to star
+                          </span>
+                        </div>
                       </li>
                     ))
                   ) : (
-                    <li className="px-4 py-2 text-gray-500 text-sm italic">
-                      No matching skills found. Press Enter to add a custom
-                      skill.
+                    <li className="w-full px-4 py-2 text-gray-500 text-sm italic">
+                      No matching skills found. Press Enter to add a custom skill.
                     </li>
                   )}
                 </ul>
@@ -307,82 +331,73 @@ export default function Quiz() {
             )}
           </div>
 
-          {/* Skills section container - fixed height with scrolling */}
-          <div className="flex-grow overflow-hidden">
-            {/* Skills section - skills I enjoy */}
+          <div className="w-full flex-grow overflow-hidden rounded-md">
             {activeField === "known_tech" && (
-              <div className="h-full overflow-y-auto p-2 custom-scrollbar">
-                <div className="flex flex-wrap gap-1.5">
-                  {/* Display common skills */}
-                  {commonSkills.map((option) => (
+              <div className="w-full h-full overflow-y-auto shadow-inner shadow-gray-200 p-4 custom-scrollbar">
+                <div className="w-full flex flex-wrap gap-2 justify-center">
+                  {allSkills.map((option) => (
                     <button
                       key={option}
-                      onClick={() => handleOptionSelect("known_tech", option)}
+                      onClick={() => handleTechClick(option, "known_tech")}
                       className={`px-2.5 py-1 text-xs rounded-full flex items-center transition-all hover:scale-110 ${
-                        isOptionSelected("known_tech", option)
+                        isOptionSelected("known_tech", option.toLowerCase())
                           ? "bg-brand-yellow text-brand-black"
                           : "bg-gray-100 text-brand-gray"
                       }`}
                     >
                       {option}
-                      {isOptionSelected("known_tech", option) && (
-                        <FaCheck className="ml-1" size={8} />
+                      {isOptionSelected("known_tech", option.toLowerCase()) && (
+                        answers.starred_tech.includes(option.toLowerCase()) 
+                          ? <FaStar className="ml-1 text-brand-black" size={8} />
+                          : <FaCheck className="ml-1" size={8} />
                       )}
                     </button>
                   ))}
 
-                  {/* Display custom selected skills that aren't in common skills */}
                   {answers.known_tech
-                    .filter((tech) => !commonSkills.includes(tech))
+                    .filter((tech) => !allSkills.includes(tech))
                     .map((tech) => (
                       <button
                         key={tech}
-                        onClick={() => handleOptionSelect("known_tech", tech)}
+                        onClick={() => handleTechClick(tech, "known_tech")}
                         className="px-2.5 py-1 text-xs rounded-full bg-brand-yellow text-brand-black transition-all hover:scale-110 flex items-center"
                       >
                         {tech}
-                        <FaCheck className="ml-1" size={8} />
+                        {answers.starred_tech.includes(tech.toLowerCase()) 
+                          ? <FaStar className="ml-1 text-brand-black" size={8} />
+                          : <FaCheck className="ml-1" size={8} />
+                        }
                       </button>
                     ))}
                 </div>
               </div>
             )}
 
-            {/* Skills section - skills to avoid */}
             {activeField === "disliked_tech" && (
-              <div className="h-full overflow-y-auto p-2 custom-scrollbar">
-                {answers.disliked_tech.length > 0 ? (
-                  <div className="flex flex-wrap gap-1.5">
-                    {answers.disliked_tech.map((tech) => (
-                      <span
-                        key={tech}
-                        className="px-2.5 py-1 bg-brand-pink text-white rounded-full text-xs flex items-center transition-all hover:scale-110 group"
-                      >
-                        {tech}
-                        <button
-                          className="ml-1 text-white transition-colors"
-                          onClick={() =>
-                            handleOptionSelect("disliked_tech", tech)
-                          }
-                          aria-label={`Remove ${tech}`}
-                        >
-                          <FaTimes size={8} />
-                        </button>
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-brand-gray italic">
-                    Search and add skills you'd prefer to avoid
-                  </p>
-                )}
+              <div className="w-full h-full overflow-y-auto shadow-inner shadow-gray-200 p-4 custom-scrollbar">
+                <div className="w-full flex flex-wrap gap-1.5 justify-center">
+                  {answers.disliked_tech.map((tech) => (
+                    <button
+                      key={tech}
+                      onClick={() => handleTechClick(tech, "disliked_tech")}
+                      className="px-2.5 py-1 text-xs rounded-full bg-brand-pink text-white transition-all hover:scale-110 flex items-center"
+                    >
+                      {tech}
+                      <FaTimes className="ml-1" size={8} />
+                    </button>
+                  ))}
+                  {answers.disliked_tech.length === 0 && (
+                    <p className="text-sm text-brand-gray italic text-center">
+                      Search and add skills you'd prefer to avoid
+                    </p>
+                  )}
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Submit button */}
-        <div className="flex justify-end mt-auto">
+        <div className="w-full flex justify-end mt-auto">
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}

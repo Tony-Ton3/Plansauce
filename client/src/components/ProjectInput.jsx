@@ -179,23 +179,25 @@ const ProjectInput = () => {
       setIsSubmitting(true);
       // console.log("Calling getTasks API");
       const response = await getTasks(form);
-      // console.log("API RESPONSE RECEIVED:", response);
+      console.log("API RESPONSE RECEIVED:", response);
 
       const tasks = response.data || [];
       console.log("Tasks from response:", tasks);
       
       let formattedTechStack = {
+        planning: [],
+        setup: [],
         frontend: [],
-        backend: []
+        backend: [],
+        testing: [],
+        deploy: [],
+        maintain: []
       };
       
-      // Try to get tech stack from the response in several possible formats
       if (response.tech_stack_recommendation) {
         if (typeof response.tech_stack_recommendation === 'object') {
-          // Direct object with frontend/backend properties
           formattedTechStack = response.tech_stack_recommendation;
         } else if (typeof response.tech_stack_recommendation === 'string') {
-          // Try to parse string as JSON
           try {
             const parsed = JSON.parse(response.tech_stack_recommendation);
             if (parsed && typeof parsed === 'object') {
@@ -206,14 +208,18 @@ const ProjectInput = () => {
           }
         }
       } else if (response.frontend || response.backend) {
-        // Response directly contains frontend/backend
         formattedTechStack = {
+          planning: response.planning || [],
+          setup: response.setup || [],
           frontend: response.frontend || [],
-          backend: response.backend || []
+          backend: response.backend || [],
+          testing: response.testing || [],
+          deploy: response.deploy || [],
+          maintain: response.maintain || []
         };
       }
       
-      console.log("Formatted tech stack:", formattedTechStack);
+      console.log("Formatted tooling from tech stack curator:", formattedTechStack);
 
       const formattedTasks = tasks.map((task) => ({
         id: task.id || String(Date.now() + Math.random()),

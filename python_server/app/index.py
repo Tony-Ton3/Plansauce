@@ -18,103 +18,137 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def infer_project_type(description: str, known_tech: List[str] = None) -> str:
+def infer_project_type(description: str, known_tech: List[str] = None, starred_tech: List[str] = None) -> str:
     """
     Infer the project type from the project description and known technologies.
     
     Args:
         description: The project description
         known_tech: List of technologies the user is familiar with
-        
+        starred_tech: List of technologies the user is interested in
     Returns:
         str: The inferred project type
     """
     description_lower = description.lower()
     known_tech = known_tech or []
     known_tech_lower = [tech.lower() for tech in known_tech]
+    starred_tech = starred_tech or []
+    starred_tech_lower = [tech.lower() for tech in starred_tech]
     
-    # Check for mobile app indicators
-    mobile_indicators = ["mobile app", "ios app", "android app", "react native", "flutter", "mobile application"]
-    if any(term in description_lower for term in mobile_indicators):
-        return "mobile app"
+    # Web Application indicators
+    web_indicators = ["web app", "website", "web application", "webapp", "web platform", "web service", "browser-based"]
+    web_tech = ["react", "vue.js", "angular", "next.js", "html/css", "tailwind css", "express.js", "netlify", "vercel"]
     
-    # Check for data science indicators
-    data_science_indicators = ["data science", "machine learning", "ml", "ai", "artificial intelligence", "data analysis", "data visualization"]
-    if any(term in description_lower for term in data_science_indicators):
-        return "data science"
+    # Mobile App indicators
+    mobile_indicators = ["mobile app", "ios app", "android app", "mobile application", "smartphone app"]
+    mobile_tech = ["android studio", "xcode", "react native", "flutter", "ionic"]
     
-    # Check for backend service indicators
-    backend_indicators = ["api", "backend", "server", "microservice", "service", "rest api", "graphql"]
-    if any(term in description_lower for term in backend_indicators):
-        return "backend service"
+    # Browser Extension indicators
+    extension_indicators = ["browser extension", "chrome extension", "firefox addon", "browser plugin", "web extension"]
     
-    # Check for desktop app indicators
-    desktop_indicators = ["desktop app", "electron", "windows app", "mac app", "linux app"]
-    if any(term in description_lower for term in desktop_indicators):
-        return "desktop app"
+    # CLI Tool indicators
+    cli_indicators = ["command line", "cli tool", "terminal", "shell script", "command-line interface"]
     
-    # If no clear indicators in description, infer from known technologies
-    if known_tech:
-        # Check for mobile development technologies
-        mobile_tech = ["react native", "flutter", "swift", "kotlin", "android", "ios", "xamarin", "ionic"]
-        if any(tech in known_tech_lower for tech in mobile_tech):
-            return "mobile app"
-            
-        # Check for data science technologies
-        data_tech = ["python", "tensorflow", "pytorch", "scikit-learn", "pandas", "numpy", "jupyter", "r", "matplotlib", "seaborn"]
-        if any(tech in known_tech_lower for tech in data_tech):
-            return "data science"
-            
-        # Check for backend technologies
-        backend_tech = ["node.js", "express", "django", "flask", "spring", "laravel", "rails", "graphql", "postgresql", "mongodb"]
-        if any(tech in known_tech_lower for tech in backend_tech):
-            return "backend service"
-            
-        # Check for desktop technologies
-        desktop_tech = ["electron", "qt", "wxpython", "tkinter", "javafx", "swing", "gtk"]
-        if any(tech in known_tech_lower for tech in desktop_tech):
-            return "desktop app"
+    # API/Backend Service indicators
+    backend_indicators = ["api", "backend", "microservice", "server", "rest api", "graphql", "database service"]
+    backend_tech = ["node.js", "express.js", "django", "spring boot", "postgresql", "mongodb", "graphql"]
     
-    # Default to web app if no specific type is detected
-    return "web app"
+    # Data Analysis/ML Project indicators
+    data_indicators = ["data analysis", "machine learning", "ml", "ai", "data science", "analytics", "prediction", "classification"]
+    data_tech = ["python", "numpy", "pandas", "scikit-learn", "tensorflow", "pytorch", "jupyter notebooks"]
+    
+    # Game indicators
+    game_indicators = ["game", "gaming", "unity", "unreal", "2d game", "3d game", "multiplayer"]
+    game_tech = ["unity", "unreal engine", "godot", "gamemaker studio", "blender"]
+    
+    # Desktop Application indicators
+    desktop_indicators = ["desktop app", "desktop application", "windows app", "mac app", "cross-platform desktop"]
+    
+    # DevOps/Infrastructure Tool indicators
+    devops_indicators = ["devops", "infrastructure", "deployment", "ci/cd", "automation", "monitoring", "containerization"]
+    devops_tech = ["docker", "kubernetes", "aws", "terraform", "ansible", "jenkins", "github actions", "prometheus", "grafana"]
+    
+    # Educational/Tutorial Project indicators
+    educational_indicators = ["learning platform", "tutorial", "course", "educational", "e-learning", "teaching", "interactive learning"]
 
-def infer_experience_level(known_tech: List[str]) -> str:
-    """
-    Infer the user's experience level based on their known technologies.
+    # Check description indicators
+    if any(term in description_lower for term in web_indicators):
+        return "Web Application"
+    if any(term in description_lower for term in mobile_indicators):
+        return "Mobile App"
+    if any(term in description_lower for term in extension_indicators):
+        return "Browser Extension"
+    if any(term in description_lower for term in cli_indicators):
+        return "CLI Tool"
+    if any(term in description_lower for term in backend_indicators):
+        return "API/Backend Service"
+    if any(term in description_lower for term in data_indicators):
+        return "Data Analysis/ML Project"
+    if any(term in description_lower for term in game_indicators):
+        return "Game"
+    if any(term in description_lower for term in desktop_indicators):
+        return "Desktop Application"
+    if any(term in description_lower for term in devops_indicators):
+        return "DevOps/Infrastructure Tool"
+    if any(term in description_lower for term in educational_indicators):
+        return "Educational/Tutorial Project"
+
+    # If no clear indicators in description, check known and starred technologies
+    all_user_tech = known_tech_lower + starred_tech_lower
     
-    Args:
-        known_tech: List of technologies the user is familiar with
+    if any(tech in all_user_tech for tech in mobile_tech):
+        return "Mobile App"
+    if any(tech in all_user_tech for tech in data_tech):
+        return "Data Analysis/ML Project"
+    if any(tech in all_user_tech for tech in backend_tech):
+        return "API/Backend Service"
+    if any(tech in all_user_tech for tech in game_tech):
+        return "Game"
+    if any(tech in all_user_tech for tech in devops_tech):
+        return "DevOps/Infrastructure Tool"
+    if any(tech in all_user_tech for tech in web_tech):
+        return "Web Application"
+
+    # Default to Web Application if no specific type is detected
+    return "Web Application"
+
+# def infer_experience_level(known_tech: List[str]) -> str:
+#     """
+#     Infer the user's experience level based on their known technologies.
+    
+#     Args:
+#         known_tech: List of technologies the user is familiar with
         
-    Returns:
-        str: The inferred experience level
-    """
-    if not known_tech:
-        return "Beginner"
+#     Returns:
+#         str: The inferred experience level
+#     """
+#     if not known_tech:
+#         return "Beginner"
         
-    # Count technologies in different categories
-    frontend_tech = ["html", "css", "javascript", "react", "vue", "angular", "svelte", "next.js", "gatsby"]
-    backend_tech = ["node.js", "express", "django", "flask", "spring", "laravel", "rails", "graphql"]
-    database_tech = ["sql", "postgresql", "mysql", "mongodb", "redis", "firebase", "dynamodb"]
-    devops_tech = ["docker", "kubernetes", "aws", "azure", "gcp", "ci/cd", "jenkins", "github actions"]
+#     # Count technologies in different categories
+#     frontend_tech = ["html", "css", "javascript", "react", "vue", "angular", "svelte", "next.js", "gatsby"]
+#     backend_tech = ["node.js", "express", "django", "flask", "spring", "laravel", "rails", "graphql"]
+#     database_tech = ["sql", "postgresql", "mysql", "mongodb", "redis", "firebase", "dynamodb"]
+#     devops_tech = ["docker", "kubernetes", "aws", "azure", "gcp", "ci/cd", "jenkins", "github actions"]
     
-    known_tech_lower = [tech.lower() for tech in known_tech]
+#     known_tech_lower = [tech.lower() for tech in known_tech]
     
-    # Count technologies in each category
-    frontend_count = sum(1 for tech in frontend_tech if any(tech in kt for kt in known_tech_lower))
-    backend_count = sum(1 for tech in backend_tech if any(tech in kt for kt in known_tech_lower))
-    database_count = sum(1 for tech in database_tech if any(tech in kt for kt in known_tech_lower))
-    devops_count = sum(1 for tech in devops_tech if any(tech in kt for kt in known_tech_lower))
+#     # Count technologies in each category
+#     frontend_count = sum(1 for tech in frontend_tech if any(tech in kt for kt in known_tech_lower))
+#     backend_count = sum(1 for tech in backend_tech if any(tech in kt for kt in known_tech_lower))
+#     database_count = sum(1 for tech in database_tech if any(tech in kt for kt in known_tech_lower))
+#     devops_count = sum(1 for tech in devops_tech if any(tech in kt for kt in known_tech_lower))
     
-    # Calculate total technologies across categories
-    total_tech = frontend_count + backend_count + database_count + devops_count
+#     # Calculate total technologies across categories
+#     total_tech = frontend_count + backend_count + database_count + devops_count
     
-    # Determine experience level
-    if total_tech > 15 or (frontend_count > 5 and backend_count > 5 and database_count > 2):
-        return "Advanced"
-    elif total_tech > 8 or (frontend_count > 3 and backend_count > 3):
-        return "Intermediate"
-    else:
-        return "Beginner"
+#     # Determine experience level
+#     if total_tech > 15 or (frontend_count > 5 and backend_count > 5 and database_count > 2):
+#         return "Advanced"
+#     elif total_tech > 8 or (frontend_count > 3 and backend_count > 3):
+#         return "Intermediate"
+#     else:
+#         return "Beginner"
 
 @app.post("/api/generate-tasks")
 async def generate_tasks(request: Request):
@@ -128,20 +162,22 @@ async def generate_tasks(request: Request):
         background = data.get('background', {})
         known_tech = background.get('known_tech', [])
         disliked_tech = background.get('disliked_tech', [])
+        starred_tech = background.get('starred_tech', [])
         
         # Infer project type from description and known technologies
-        project_type = infer_project_type(description, known_tech)
+        project_type = infer_project_type(description, known_tech, starred_tech)
         print(f"Inferred project type: {project_type}")
         
         # Infer experience level
-        experience_level = infer_experience_level(known_tech)
-        print(f"Inferred experience level: {experience_level}")
+        # experience_level = infer_experience_level(known_tech)
+        # print(f"Inferred experience level: {experience_level}")
         
         # First, curate the tech stack based on user preferences and project priority
         tech_stack_curator = TechStackCuratorCrew(api_key=os.getenv("BRAVE_API_KEY"))
         tech_stack_recommendation = tech_stack_curator.curate_tech_stack(
             known_tech=known_tech,
             disliked_tech=disliked_tech,
+            starred_tech=starred_tech,
             project_type=project_type,
             priority=priority
         )
@@ -161,6 +197,7 @@ async def generate_tasks(request: Request):
             tech_context += f"\nPreferred technologies: {', '.join(known_tech)}"
         if disliked_tech:
             tech_context += f"\nTechnologies to avoid: {', '.join(disliked_tech)}"
+
         if recommended_tech:
             tech_context += f"\nRecommended technologies: {', '.join(recommended_tech)}"
             
@@ -175,17 +212,15 @@ async def generate_tasks(request: Request):
                 priority_context = "\nPriority: Learning - Focus on educational value and skill development"
         
         # Add user experience context
-        experience_context = f"\nUser Experience Level: {experience_level} (based on {len(known_tech)} known technologies)"
+        # experience_context = f"\nUser Experience Level: {experience_level} (based on {len(known_tech)} known technologies)"
         
         enhanced_description = f"""
         Project Description: {description}
         Project Type: {project_type}
         {priority_context}
         {tech_context}
-        {experience_context}
         
         TASK GENERATION INSTRUCTIONS:
-        - Create tasks that are appropriate for the user's experience level ({experience_level})
         - Prioritize tasks based on the specified priority (Speed/Scalability/Learning)
         - Use the recommended technologies in your task generation
         - When suggesting new technologies, provide clear learning resources and documentation links

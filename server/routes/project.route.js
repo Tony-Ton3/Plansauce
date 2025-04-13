@@ -5,7 +5,7 @@ import {
   getProjectWithTasks,
   updateTaskStatus,
   updateSubtaskStatus,
-  setCurrentProject
+  setCurrentProject,
 } from "../controllers/project.controllers.js";
 
 const router = express.Router();
