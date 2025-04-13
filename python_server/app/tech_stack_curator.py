@@ -20,11 +20,9 @@ class BraveSearchTool(BaseTool):
     
     def _run(self, query: str) -> str:
         if not self.api_key:
-            print("\n=== Brave Search: No API key provided ===")
             return "Brave Search API key not provided. Using internal knowledge only."
         
         try:
-            print(f"\n=== Brave Search Query: {query} ===")
             import requests
             url = "https://api.search.brave.com/res/v1/web/search"
             params = {
@@ -33,27 +31,20 @@ class BraveSearchTool(BaseTool):
             }
             headers = {
                 "Accept": "application/json",
-                "X-Subscription-Token": self.api_key.replace("brave_", "")  # Remove the prefix
+                "X-Subscription-Token": self.api_key.replace("brave_", "")
             }
             response = requests.get(url, params=params, headers=headers)
             results = response.json()
             
-            # Format the results
             formatted_results = []
-            print("\n=== Brave Search Results ===")
             for result in results.get("web", {}).get("results", []):
                 title = result.get('title', 'No title')
                 url = result.get('url', 'No URL')
                 description = result.get('description', 'No description')
-                print(f"\nTitle: {title}")
-                print(f"URL: {url}")
-                print(f"Description: {description}")
                 formatted_results.append(f"Title: {title}\nLink: {url}\nDescription: {description}\n")
             
-            print("\n=== End of Brave Search Results ===")
             return "\n".join(formatted_results)
         except Exception as e:
-            print(f"\n=== Brave Search Error: {str(e)} ===")
             return "Error performing web search. Using internal knowledge only."
 
 class TechStackCuratorCrew:
@@ -74,27 +65,23 @@ class TechStackCuratorCrew:
         self.agents = self._create_agents()
         
     def _create_agents(self) -> Dict[str, Agent]:
-        # Research agent to gather information about technologies
         research_agent = Agent(
             role="Technology Research Specialist",
-            goal="Research and gather detailed information about modern development technologies using Brave Search API",
-            backstory="""You are an expert development technology researcher with deep knowledge of the software development ecosystem.
-            You have years of experience tracking emerging technologies, frameworks, and tools.
-            You know how to find the most relevant and up-to-date information about any development technology.
-            You are skilled at using the search_web method to gather comprehensive information about technologies.
-            When you see a search_web command in the task description, you execute it to gather real-time information.""",
+            goal="Research modern technologies and find relevant documentation and tutorials",
+            backstory="""You are an expert in researching development technologies and finding high-quality learning resources.
+            You excel at using search tools to find official documentation.""",
             verbose=True,
             allow_delegation=False,
             llm=self.llm,
-            tools=[self.search_tool]  # Use the tool instance instead of the method
+            tools=[self.search_tool]
         )
         
         curator_agent = Agent(
             role="Tech Stack Curator",
-            goal="Create a comprehensive and well-balanced tech stack recommendation",
-            backstory="""You are a tech stack curator with years of experience designing optimal development technology stacks.
-            You understand the strengths and weaknesses of different technologies and how they complement each other.
-            You can create tech stacks that are tailored to specific project needs and user preferences.""",
+            goal="Create a well-reasoned tech stack recommendation based on project context",
+            backstory="""You are a tech stack curator who excels at matching technologies to project needs.
+            You understand how different technologies complement each other and can explain your choices clearly.
+            You focus on developer productivity and project success.""",
             verbose=True,
             allow_delegation=False,
             llm=self.llm
@@ -106,148 +93,212 @@ class TechStackCuratorCrew:
         }
     
     def curate_tech_stack(
-        self, 
-        known_tech: List[str], 
-        disliked_tech: List[str], 
+        self,
         project_type: str,
-        priority: str
+        priority: str,
+        known_tech: List[str] = None,
+        disliked_tech: List[str] = None
     ) -> Dict[str, Any]:
-        print("\n=== Starting Tech Stack Curation ===")
-        print(f"Project Type: {project_type}")
-        print(f"Priority: {priority}")
-        print(f"Known Technologies: {', '.join(known_tech) if known_tech else 'None'}")
-        print(f"Technologies to Avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}")
-        
-        # Create tasks for the crew
         research_task = Task(
             description=f"""
-            Research modern development technologies for a {project_type} project with {priority} priority.
+            Research modern development technologies for a {project_type} with focus on {priority}.
+            Consider the user's background:
+            - Known technologies: {', '.join(known_tech) if known_tech else 'None'}
+            - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
             
-            User's known technologies: {', '.join(known_tech) if known_tech else 'None specified'}
-            Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None specified'}
+            For each technology category (Frontend, Backend), search for:
+            1. Official documentation links
+            2. Key features and benefits
             
-            For each technology category (frontend, backend, database, deployment), follow these steps:
+            Use the Brave Search API to find:
+            - Documentation: search_web("{project_type} [technology] documentation")
             
-            1. First, search for relevant technologies using the Brave Search API:
-               - For frontend: search_web("best frontend frameworks for {project_type} {priority}")
-               - For backend: search_web("best backend technologies for {project_type} {priority}")
-               - For database: search_web("best databases for {project_type} {priority}")
-               - For deployment: search_web("best deployment solutions for {project_type} {priority}")
+            Focus on technologies that are:
+            - Well-documented
+            - Suitable for {project_type}
+            - Support {priority}
+            - Compatible with user's known technologies
+            - NOT including any disliked technologies
             
-            2. Analyze the search results to:
-               - Find technologies that complement the user's known technologies
-               - Identify options that align with the project's {priority} priority
-               - Select technologies well-suited for a {project_type} project
-               - Evaluate documentation and community support
-            
-            3. For each selected technology, gather:
-               - Description and purpose
-               - Key features and capabilities
-               - Pros and cons
-               - Learning resources and documentation
-               - Community size and activity
-               - Integration with other technologies
-            
-            Return your findings as a structured list of technologies with detailed information.
+            Return findings in a structured format with documentation links.
             """,
-            expected_output="A structured list of technologies with detailed information about each technology's features, pros, cons, and learning resources.",
+            expected_output="A structured list of technology research findings including documentation links and curated tutorials.",
             agent=self.agents["research"]
         )
         
         curation_task = Task(
             description=f"""
-            Create a comprehensive tech stack recommendation based on the research findings.
+            Create a tech stack recommendation for a {project_type} with {priority} as the main priority.
             
-            User's known technologies: {', '.join(known_tech) if known_tech else 'None specified'}
-            Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None specified'}
-            Project type: {project_type}
-            Priority: {priority}
+            Consider the user's background:
+            - Known technologies: {', '.join(known_tech) if known_tech else 'None'}
+            - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
             
-            The tech stack should:
-            1. Build on the user's known technologies when possible
-            2. Avoid technologies the user dislikes
-            3. Optimize for the project's {priority} priority
-            4. Be well-suited for a {project_type} project
+            Based on the research findings, create a recommendation that:
+            1. Leverages the user's existing knowledge of {', '.join(known_tech) if known_tech else 'no specific technologies'}
+            2. Completely avoids {', '.join(disliked_tech) if disliked_tech else 'no specific technologies'}
+            3. Explains why each technology was chosen
+            4. Shows how it supports the project type and priority
+            5. Demonstrates how technologies work together
+            6. For known technologies, focus on advanced features and integration patterns
+            7. For new technologies, explain why they're worth learning
             
-            For each recommended technology, provide:
-            - Why it's a good fit for this project and user
-            - How it complements the user's existing knowledge
-            - Learning resources for technologies new to the user
-            - Integration approach with other recommended technologies
+            IMPORTANT: Respond with ONLY a valid JSON object. Do NOT include any markdown formatting, code blocks (```), or any text before or after the JSON.
             
-            Format your recommendation as a structured JSON object with the following structure:
+            The JSON object MUST follow this exact structure:
             {{
                 "frontend": [
                     {{
                         "name": "Technology name",
-                        "description": "Brief description",
-                        "key_features": ["Feature 1", "Feature 2", ...],
-                        "pros": ["Pro 1", "Pro 2", ...],
-                        "cons": ["Con 1", "Con 2", ...],
-                        "learning_resources": ["Resource 1", "Resource 2", ...],
-                        "complements": ["Technology 1", "Technology 2", ...]
-                    }},
-                    ...
+                        "description": "What it is and why it was chosen for this project, including how it relates to user's experience",
+                        "docLink": "URL to official documentation"
+                    }}
                 ],
-                "backend": [...],
-                "database": [...],
-                "deployment": [...],
-                "summary": "Overall recommendation summary"
+                "backend": [
+                    {{
+                        "name": "Technology name",
+                        "description": "What it is and why it was chosen for this project, including how it relates to user's experience",
+                        "docLink": "URL to official documentation"
+                    }}
+                ]
             }}
+            
+            Your response should be ONLY the JSON object above without any additional text, explanation, or formatting.
             """,
-            expected_output="A comprehensive tech stack recommendation in JSON format with detailed explanations for each technology choice.",
+            expected_output="A clean JSON object containing the curated tech stack with detailed explanations.",
             agent=self.agents["curator"]
         )
         
-        # Create and run the crew
-        print("\n=== Creating Research and Curation Crew ===")
         crew = Crew(
             agents=list(self.agents.values()),
             tasks=[research_task, curation_task],
-            process=Process.sequential  # Run tasks in sequence
+            process=Process.sequential
         )
         
-        print("\n=== Starting Tech Stack Research ===")
         result = crew.kickoff()
-        print("\n=== Research Complete, Processing Results ===")
         
-        # Extract the JSON from the result
         try:
-            # Find JSON in the result string
-            json_start = result.find('{')
-            json_end = result.rfind('}') + 1
-            if json_start >= 0 and json_end > json_start:
-                json_str = result[json_start:json_end]
-                tech_stack = json.loads(json_str)
-                
-                print("\n=== Tech Stack Recommendation ===")
-                print(f"Summary: {tech_stack.get('summary', 'No summary provided')}")
-                
-                for category in ["frontend", "backend", "database", "deployment"]:
-                    if category in tech_stack:
-                        print(f"\n{category.upper()}:")
-                        for tech in tech_stack[category]:
-                            print(f"\n  {tech.get('name', 'Unnamed Technology')}:")
-                            print(f"    Description: {tech.get('description', 'No description')}")
-                            print(f"    Key Features: {', '.join(tech.get('key_features', []))}")
-                            print(f"    Pros: {', '.join(tech.get('pros', []))}")
-                            print(f"    Cons: {', '.join(tech.get('cons', []))}")
-                            print(f"    Learning Resources: {', '.join(tech.get('learning_resources', []))}")
-                            print(f"    Complements: {', '.join(tech.get('complements', []))}")
-                
-                print("\n=== Tech Stack Curation Complete ===")
-                return tech_stack
+            # Extract the tech stack data from any format it might be in
+            extracted_data = self._extract_tech_stack_data(result)
+
+            print(f"Extracted tech stack data: {extracted_data}")
+
+            if extracted_data:
+                return extracted_data
             else:
-                print("\n=== Error: No JSON found in result ===")
-                print("Raw result:", result)
                 return {
-                    "error": "Could not extract JSON from result",
-                    "raw_result": result
+                    "error": "Could not extract tech stack recommendation",
+                    "raw_result": str(result)
                 }
         except Exception as e:
-            print(f"\n=== Error parsing tech stack JSON: {str(e)} ===")
-            print("Raw result:", result)
             return {
-                "error": f"Error parsing tech stack JSON: {str(e)}",
-                "raw_result": result
-            } 
+                "error": f"Error processing tech stack data: {str(e)}",
+                "raw_result": str(result)
+            }
+    
+    def _extract_tech_stack_data(self, result):
+        """Extract tech stack data from any format of result."""
+        # Try to get from tasks_output if available
+        if hasattr(result, 'tasks_output') and result.tasks_output and len(result.tasks_output) > 1:
+            raw_data = result.tasks_output[1].raw
+            # Try to parse from JSON code block
+            json_data = self._extract_json_from_markdown(raw_data)
+            if json_data:
+                return json_data
+        
+        # If we couldn't get from tasks_output, try the raw attribute
+        if hasattr(result, 'raw'):
+            raw_data = result.raw
+            json_data = self._extract_json_from_markdown(raw_data)
+            if json_data:
+                return json_data
+        
+        # If we have a string representation, try to parse it
+        raw_str = str(result)
+        json_data = self._extract_json_from_markdown(raw_str)
+        if json_data:
+            return json_data
+            
+        # If all else fails, look for JSON in the error message if it exists
+        if isinstance(result, dict) and 'raw_result' in result:
+            raw_result = result['raw_result']
+            if isinstance(raw_result, str):
+                json_data = self._extract_json_from_string(raw_result)
+                if json_data:
+                    return json_data
+            elif isinstance(raw_result, dict) and 'raw' in raw_result:
+                raw_data = raw_result['raw']
+                json_data = self._extract_json_from_markdown(raw_data)
+                if json_data:
+                    return json_data
+        
+        # No JSON found
+        return None
+    
+    def _extract_json_from_markdown(self, text):
+        """Extract JSON from markdown code blocks or plain text."""
+        if not text:
+            return None
+            
+        # Try to extract from code blocks
+        json_start = text.find('```json')
+        if json_start >= 0:
+            json_start += 7  # Skip ```json and potential newline
+            json_end = text.find('```', json_start)
+            if json_end > json_start:
+                json_str = text[json_start:json_end].strip()
+                return self._extract_json_from_string(json_str)
+        
+        # If no code blocks, try to extract from plain text
+        return self._extract_json_from_string(text)
+    
+    def _extract_json_from_string(self, text):
+        """Parse JSON from a string, handling common issues."""
+        if not text:
+            return None
+            
+        # Clean the string
+        text = self._clean_json_string(text)
+        
+        # Try to parse
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            # Try more aggressive cleaning
+            lines = text.split('\n')
+            cleaned_lines = []
+            for line in lines:
+                line = line.strip()
+                if line and not line.startswith('//') and not line.startswith('#'):
+                    cleaned_lines.append(line)
+            
+            cleaned_text = ' '.join(cleaned_lines)
+            try:
+                return json.loads(cleaned_text)
+            except json.JSONDecodeError:
+                return None
+    
+    def _clean_json_string(self, json_str):
+        """Cleans and prepares a JSON string for parsing."""
+        if not json_str:
+            return "{}"
+            
+        # Convert to string if not already
+        if not isinstance(json_str, str):
+            json_str = str(json_str)
+        
+        # Remove the 'n\n' prefix if present
+        if json_str.startswith('n\n'):
+            json_str = json_str[2:]
+            
+        # Find first '{' character
+        first_brace = json_str.find('{')
+        if first_brace >= 0:
+            json_str = json_str[first_brace:]
+            
+        # Find last '}' character
+        last_brace = json_str.rfind('}')
+        if last_brace >= 0:
+            json_str = json_str[:last_brace+1]
+            
+        return json_str 

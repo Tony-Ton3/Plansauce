@@ -162,6 +162,7 @@ const ProjectInput = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log("Form submission started");
     const errors = validateForm();
 
     if (Object.keys(errors).length > 0) {
@@ -174,9 +175,45 @@ const ProjectInput = () => {
     }
 
     try {
+      // console.log("Setting isSubmitting to true");
       setIsSubmitting(true);
+      // console.log("Calling getTasks API");
       const response = await getTasks(form);
+      // console.log("API RESPONSE RECEIVED:", response);
+
       const tasks = response.data || [];
+      console.log("Tasks from response:", tasks);
+      
+      let formattedTechStack = {
+        frontend: [],
+        backend: []
+      };
+      
+      // Try to get tech stack from the response in several possible formats
+      if (response.tech_stack_recommendation) {
+        if (typeof response.tech_stack_recommendation === 'object') {
+          // Direct object with frontend/backend properties
+          formattedTechStack = response.tech_stack_recommendation;
+        } else if (typeof response.tech_stack_recommendation === 'string') {
+          // Try to parse string as JSON
+          try {
+            const parsed = JSON.parse(response.tech_stack_recommendation);
+            if (parsed && typeof parsed === 'object') {
+              formattedTechStack = parsed;
+            }
+          } catch (e) {
+            console.error("Error parsing tech stack string:", e);
+          }
+        }
+      } else if (response.frontend || response.backend) {
+        // Response directly contains frontend/backend
+        formattedTechStack = {
+          frontend: response.frontend || [],
+          backend: response.backend || []
+        };
+      }
+      
+      console.log("Formatted tech stack:", formattedTechStack);
 
       const formattedTasks = tasks.map((task) => ({
         id: task.id || String(Date.now() + Math.random()),
@@ -191,33 +228,47 @@ const ProjectInput = () => {
           })) || [],
       }));
 
+      console.log("Dispatching setTasksSuccess");
       dispatch(setTasksSuccess(formattedTasks));
 
       if (response.projectId && response.projectName) {
+        console.log("Creating project data");
+        
         const projectData = {
           _id: response.projectId,
           name: form.name || response.projectName,
           description: form.description,
           priority: form.priority,
+          type: response.project_type || "Web Application",
           createdAt: new Date().toISOString(),
+          techStack: formattedTechStack
         };
 
+        console.log("Project data created:", projectData);
+
+        console.log("Dispatching setCurrentProject");
         dispatch(setCurrentProject(projectData));
+        console.log("Dispatching setProjectsSuccess");
         dispatch(setProjectsSuccess([...projects, projectData]));
 
+        console.log("Getting user projects");
         const projectsResponse = await getUserProjects();
         if (projectsResponse?.projects) {
+          console.log("Updating projects in Redux");
           dispatch(setProjectsSuccess(projectsResponse.projects));
         }
       }
 
+      console.log("Resetting form");
       resetForm();
+      console.log("Navigating to tasks page");
       navigate("/tasks");
     } catch (error) {
       console.error("Error getting tasks:", error);
       dispatch(setTasksFailure(error.message || "Failed to get tasks"));
       alert("Failed to generate tasks. Please try again later.");
     } finally {
+      console.log("Setting isSubmitting to false");
       setIsSubmitting(false);
     }
   };

@@ -155,56 +155,56 @@ async def generate_tasks(request: Request):
                         if "name" in tech:
                             recommended_tech.append(tech["name"])
         
-        # # Create enhanced description with tech context
-        # tech_context = ""
-        # if known_tech:
-        #     tech_context += f"\nPreferred technologies: {', '.join(known_tech)}"
-        # if disliked_tech:
-        #     tech_context += f"\nTechnologies to avoid: {', '.join(disliked_tech)}"
-        # if recommended_tech:
-        #     tech_context += f"\nRecommended technologies: {', '.join(recommended_tech)}"
+        # Create enhanced description with tech context
+        tech_context = ""
+        if known_tech:
+            tech_context += f"\nPreferred technologies: {', '.join(known_tech)}"
+        if disliked_tech:
+            tech_context += f"\nTechnologies to avoid: {', '.join(disliked_tech)}"
+        if recommended_tech:
+            tech_context += f"\nRecommended technologies: {', '.join(recommended_tech)}"
             
-        # # Add priority context
-        # priority_context = ""
-        # if priority:
-        #     if "Speed" in priority:
-        #         priority_context = "\nPriority: Speed - Focus on rapid development and MVP approach"
-        #     elif "Scalability" in priority:
-        #         priority_context = "\nPriority: Scalability - Focus on architecture and future-proofing"
-        #     else:
-        #         priority_context = "\nPriority: Learning - Focus on educational value and skill development"
+        # Add priority context
+        priority_context = ""
+        if priority:
+            if "Speed" in priority:
+                priority_context = "\nPriority: Speed - Focus on rapid development and MVP approach"
+            elif "Scalability" in priority:
+                priority_context = "\nPriority: Scalability - Focus on architecture and future-proofing"
+            else:
+                priority_context = "\nPriority: Learning - Focus on educational value and skill development"
         
-        # # Add user experience context
-        # experience_context = f"\nUser Experience Level: {experience_level} (based on {len(known_tech)} known technologies)"
+        # Add user experience context
+        experience_context = f"\nUser Experience Level: {experience_level} (based on {len(known_tech)} known technologies)"
         
-        # enhanced_description = f"""
-        # Project Description: {description}
-        # Project Type: {project_type}
-        # {priority_context}
-        # {tech_context}
-        # {experience_context}
+        enhanced_description = f"""
+        Project Description: {description}
+        Project Type: {project_type}
+        {priority_context}
+        {tech_context}
+        {experience_context}
         
-        # TASK GENERATION INSTRUCTIONS:
-        # - Create tasks that are appropriate for the user's experience level ({experience_level})
-        # - Prioritize tasks based on the specified priority (Speed/Scalability/Learning)
-        # - Use the recommended technologies in your task generation
-        # - When suggesting new technologies, provide clear learning resources and documentation links
-        # - If the user has preferred technologies, incorporate them when they're a good fit
-        # - If the user has technologies to avoid, ensure they are not included in recommendations
-        # - Make each task and subtask highly actionable with specific instructions
-        # - Ensure tasks are well-scoped and don't require additional clarification
-        # """
+        TASK GENERATION INSTRUCTIONS:
+        - Create tasks that are appropriate for the user's experience level ({experience_level})
+        - Prioritize tasks based on the specified priority (Speed/Scalability/Learning)
+        - Use the recommended technologies in your task generation
+        - When suggesting new technologies, provide clear learning resources and documentation links
+        - If the user has preferred technologies, incorporate them when they're a good fit
+        - If the user has technologies to avoid, ensure they are not included in recommendations
+        - Make each task and subtask highly actionable with specific instructions
+        - Ensure tasks are well-scoped and don't require additional clarification
+        """
         
-        # print(f"Enhanced description: {enhanced_description}")
+        print(f"Enhanced description: {enhanced_description}")
         
-        # # Generate tasks
-        # crew = TaskGenerationCrew()
-        # result = crew.generate_tasks(
-        #     project_description=enhanced_description,
-        #     priority=priority
-        # )
+        # Generate tasks
+        crew = TaskGenerationCrew()
+        result = crew.generate_tasks(
+            project_description=enhanced_description,
+            priority=priority
+        )
         
-        # tasks = result.get("tasks", [])
+        tasks = result.get("tasks", [])
         
         # Generate prompts for each task
         # prompt_crew = PromptGenerationCrew()
@@ -233,7 +233,7 @@ async def generate_tasks(request: Request):
         
         return {
             "success": True,
-            "data": tasks,
+            "data": tasks,  
             "tech_stack_recommendation": tech_stack_recommendation
         }
         

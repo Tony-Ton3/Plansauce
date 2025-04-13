@@ -1131,8 +1131,8 @@ const TechnologyCard = ({ icon, name, description, docLink, tutorials }) => (
   </div>
 );
 
-// Update the TechStackModal component to use the new TechnologyCard
-const TechStackModal = ({ isOpen, onClose }) => {
+// Update the TechStackModal component to accept techStackData
+const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProject }) => {
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -1144,14 +1144,44 @@ const TechStackModal = ({ isOpen, onClose }) => {
 
     if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
+      console.log("TechStackModal opened with data:", techStackData);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, techStackData]);
 
   if (!isOpen) return null;
+
+  // Debug output for tech stack data
+  const debugOutput = () => {
+    if (!techStackData) {
+      return (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+          <p className="text-sm">Tech stack data is undefined or null</p>
+        </div>
+      );
+    }
+    
+    if (typeof techStackData !== 'object') {
+      return (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+          <p className="text-sm">Tech stack data is not an object: {typeof techStackData}</p>
+        </div>
+      );
+    }
+    
+    if (!techStackData.frontend && !techStackData.backend) {
+      return (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+          <p className="text-sm">Tech stack data is missing frontend and backend: {JSON.stringify(techStackData)}</p>
+        </div>
+      );
+    }
+    
+    return null;
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1160,7 +1190,7 @@ const TechStackModal = ({ isOpen, onClose }) => {
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Recommended Tech Stack</h2>
             <p className="text-sm text-gray-600 mt-1">
-              Optimized for Task Management App with focus on Developer Productivity
+              Optimized for {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
             </p>
           </div>
           <button 
@@ -1173,89 +1203,91 @@ const TechStackModal = ({ isOpen, onClose }) => {
         </div>
         
         <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
-          <div className="space-y-8">
-            {/* Frontend Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Frontend Technologies</h3>
-              
-              <div className="space-y-4">
-                <TechnologyCard
-                  icon={<SiVite className="text-purple-500 text-xl" />}
-                  name="Vite"
-                  description="Next Generation Frontend Tooling. Perfect for rapid development with instant server start and lightning-fast HMR, significantly speeding up your development workflow."
-                  docLink="https://vitejs.dev"
-                  tutorials={mockTutorials.vite}
-                />
-
-                <TechnologyCard
-                  icon={<FaReact className="text-blue-500 text-xl" />}
-                  name="React"
-                  description="A JavaScript library for building user interfaces. Its component-based architecture is ideal for building a modular task management interface with a robust ecosystem and developer tools."
-                  docLink="https://react.dev"
-                  tutorials={mockTutorials.react}
-                />
-
-                <TechnologyCard
-                  icon={<SiTypescript className="text-blue-600 text-xl" />}
-                  name="TypeScript"
-                  description="JavaScript with syntax for types. Adds type safety to your development process, catching errors early and improving code maintainability for a more reliable application."
-                  docLink="https://www.typescriptlang.org/docs/"
-                  tutorials={mockTutorials.typescript}
-                />
-
-                <TechnologyCard
-                  icon={<SiRedux className="text-purple-500 text-xl" />}
-                  name="Redux Toolkit"
-                  description="The official, opinionated, batteries-included toolset for Redux. Provides robust state management with built-in best practices, making it easier to handle complex task data and updates."
-                  docLink="https://redux-toolkit.js.org"
-                  tutorials={mockTutorials.redux}
-                />
-
-                <TechnologyCard
-                  icon={<img src="https://tailwindcss.com/favicons/favicon-32x32.png" alt="Tailwind" className="w-5 h-5" />}
-                  name="TailwindCSS"
-                  description="A utility-first CSS framework for rapid UI development. Accelerates UI development with its utility-first approach, perfect for quickly building and iterating on task management interfaces."
-                  docLink="https://tailwindcss.com/docs"
-                  tutorials={mockTutorials.tailwind}
-                />
-              </div>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
             </div>
-
-            {/* Backend Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Backend Technologies</h3>
+          ) : (
+            <>
+              {/* Debug information */}
+              {debugOutput()}
               
-              <div className="space-y-4">
-                <TechnologyCard
-                  icon={<FaNode className="text-green-600 text-xl" />}
-                  name="Node.js"
-                  description="JavaScript runtime built on Chrome's V8 JavaScript engine. Enables JavaScript across the full stack, streamlining development and maintaining code consistency."
-                  docLink="https://nodejs.org/docs/latest/api/"
-                  tutorials={mockTutorials.node}
-                />
+              {techStackData && typeof techStackData === 'object' ? (
+                <div className="space-y-8">
+                  {/* Frontend Section */}
+                  {techStackData.frontend && techStackData.frontend.length > 0 ? (
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Frontend Technologies</h3>
+                      <div className="space-y-4">
+                        {techStackData.frontend.map((tech, index) => (
+                          <TechnologyCard
+                            key={index}
+                            icon={getTechIcon(tech.name)}
+                            name={tech.name}
+                            description={tech.description}
+                            docLink={tech.docLink}
+                            tutorials={tech.tutorials}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      No frontend technologies recommended
+                    </div>
+                  )}
 
-                <TechnologyCard
-                  icon={<SiPrisma className="text-gray-600 text-xl" />}
-                  name="Prisma"
-                  description="Next-generation Node.js and TypeScript ORM. Provides type-safe database access and automatic migrations, ideal for managing task data with confidence and minimal boilerplate code."
-                  docLink="https://www.prisma.io/docs"
-                  tutorials={mockTutorials.prisma}
-                />
-
-                <TechnologyCard
-                  icon={<FaDatabase className="text-green-600 text-xl" />}
-                  name="MongoDB"
-                  description="Document-based, distributed database. Its flexible document model is perfect for storing varied task data, while its scalability ensures your app can grow without performance issues."
-                  docLink="https://www.mongodb.com/docs/"
-                  tutorials={mockTutorials.mongodb}
-                />
-              </div>
-            </div>
-          </div>
+                  {/* Backend Section */}
+                  {techStackData.backend && techStackData.backend.length > 0 ? (
+                    <div>
+                      <h3 className="text-lg font-medium text-gray-900 mb-4">Backend Technologies</h3>
+                      <div className="space-y-4">
+                        {techStackData.backend.map((tech, index) => (
+                          <TechnologyCard
+                            key={index}
+                            icon={getTechIcon(tech.name)}
+                            name={tech.name}
+                            description={tech.description}
+                            docLink={tech.docLink}
+                            tutorials={tech.tutorials}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-center py-4 text-gray-500">
+                      No backend technologies recommended
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <p>No tech stack data available</p>
+                  <p className="text-xs mt-2">Please create a new project to get tech stack recommendations</p>
+                </div>
+              )}
+            </>
+          )}
         </div>
       </div>
     </div>
   );
+};
+
+// Helper function to get the appropriate icon for each technology
+const getTechIcon = (techName) => {
+  const techIcons = {
+    'Vite': <SiVite className="text-purple-500 text-xl" />,
+    'React': <FaReact className="text-blue-500 text-xl" />,
+    'TypeScript': <SiTypescript className="text-blue-600 text-xl" />,
+    'Redux Toolkit': <SiRedux className="text-purple-500 text-xl" />,
+    'TailwindCSS': <img src="https://tailwindcss.com/favicons/favicon-32x32.png" alt="Tailwind" className="w-5 h-5" />,
+    'Node.js': <FaNode className="text-green-600 text-xl" />,
+    'Prisma': <SiPrisma className="text-gray-600 text-xl" />,
+    'MongoDB': <FaDatabase className="text-green-600 text-xl" />,
+  };
+
+  return techIcons[techName] || <FaCode className="text-gray-500 text-xl" />;
 };
 
 function Tasks() {
@@ -1273,6 +1305,23 @@ function Tasks() {
   const { currentProject } = useSelector((state) => state.projects);
   const dispatch = useDispatch();
   
+  // Add detailed logging for currentProject
+  useEffect(() => {
+    console.log("Full Current Project:", currentProject);
+    console.log("Project Tech Stack:", currentProject?.techStack);
+    console.log("Project Priority:", currentProject?.priority);
+    console.log("Project Description:", currentProject?.description);
+  }, [currentProject]);
+
+  // Add logging for modal state
+  useEffect(() => {
+    if (showTechStack) {
+      console.log("Modal State - Show Tech Stack:", showTechStack);
+      console.log("Modal State - Current Project:", currentProject);
+      console.log("Modal State - Tech Stack Data:", currentProject?.techStack);
+    }
+  }, [showTechStack, currentProject]);
+
   // Setup initial tasks
   useEffect(() => {
     if (currentTasks) {
@@ -1472,10 +1521,16 @@ function Tasks() {
         </div>
       </header>
       
-      {/* Add TechStack Modal */}
+      {/* Update TechStack Modal to use currentProject.techStack */}
       <TechStackModal 
         isOpen={showTechStack} 
-        onClose={() => setShowTechStack(false)} 
+        onClose={() => setShowTechStack(false)}
+        techStackData={currentProject?.techStack || {
+          frontend: [],
+          backend: []
+        }}
+        isLoading={false}
+        currentProject={currentProject}
       />
       
       {/* Category navigation */}
