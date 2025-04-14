@@ -165,38 +165,28 @@ class TechStackCuratorCrew:
         self,
         project_type: str,
         priority: str,
+        experience_level: str,
         known_tech: List[str] = None,
         disliked_tech: List[str] = None,
-        starred_tech: List[str] = None
+        starred_tech: List[str] = None,
     ) -> Dict[str, Any]:
         try:
-            # Ensure lists are initialized
             known_tech = known_tech or []
             disliked_tech = disliked_tech or []
             starred_tech = starred_tech or []
 
-            # Convert all tech lists to lowercase for consistency
-            known_tech = [tech.lower() for tech in known_tech]
-            disliked_tech = [tech.lower() for tech in disliked_tech]
-            starred_tech = [tech.lower() for tech in starred_tech]
-            
-            # Normalize project type to ensure consistency
-            normalized_project_type = self._normalize_project_type(project_type)
-            print(f"Original project type: {project_type}, Normalized: {normalized_project_type}")
-
-            research_task = Task(
+            research_tech = Task(
                 description=f"""
-                Research modern development technologies for a {normalized_project_type} with focus on {priority}.
                 Consider the user's background:
-                - Known technologies: {', '.join(known_tech) if known_tech else 'None'}
-                - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                - Known/liked technologies: {', '.join(known_tech) if known_tech else 'None'}
+                - Technologies to avoid (must exclude): {', '.join(disliked_tech) if disliked_tech else 'None'}
                 - Priority technologies (must include): {', '.join(starred_tech) if starred_tech else 'None'}
                 
                 IMPORTANT RULES:
                 1. Always include and research integration patterns for starred technologies: {', '.join(starred_tech) if starred_tech else 'None'}
-                2. Never recommend technologies from the disliked list: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                2. Never recommend technologies from the technologies to avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
                 3. When a starred technology serves a specific purpose (e.g., Vercel for deployment), DO NOT recommend additional tools for the same purpose
-                4. Prioritize known technologies that align with project goals
+                4. Prioritize known/liked technologies that align with project goals
                 5. Only recommend new technologies when they fill a gap not covered by starred or known technologies
                 6. AVOID FRAMEWORK REDUNDANCY: Do not include React if recommending Next.js, do not include Express if recommending NestJS, etc.
                 
@@ -223,14 +213,15 @@ class TechStackCuratorCrew:
                 PRIORITY SPECIFIC GUIDELINES:
                 For Learning Priority:
                 1. Start with familiar technologies from known_tech list
-                2. Add maximum 1-2 new technologies that are:
+                2. Add maximum 1-2 (if needed) new technologies that are:
                    - Well-documented with clear tutorials
                    - Have strong community support
                    - Integrate well with known technologies
                 3. Focus on fundamentals over cutting-edge features
-                4. Choose stable, mature technologies over trending ones
+                4. Choose stable, mature technologies over trending ones unless it aligns with what the user is trying to achieve
                 5. Prefer technologies with good learning resources
-                
+                6. If the user is trying to achieve something specific, recommend technologies that are known to be good at that
+
                 For Speed Priority:
                 1. Minimize the number of new technologies
                 2. Choose tools with quick setup and minimal config
@@ -244,7 +235,7 @@ class TechStackCuratorCrew:
                 TOOL SELECTION RULES:
                 1. Mobile Apps:
                    - ONE primary mobile framework (e.g., React Native)
-                   - ONE UI component library maximum
+                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI) since they're built on top of TailwindCSS
                    - ONE state management solution
                    - Minimal backend services unless required
                    - For deployment, use mobile-specific CI/CD like Expo, Fastlane, or App Center
@@ -252,38 +243,38 @@ class TechStackCuratorCrew:
                 2. Each Category Should Have:
                    - Planning: ONE project management tool
                    - Setup: Minimal development environment
-                   - Frontend: Core framework + essential utilities only (no redundant frameworks)
+                   - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
                    - Backend: Simplest architecture that meets requirements
-                   - Testing: ONE primary testing framework
+                   - Testing: ONE primary testing framework if priority is scalability otherwise none
                    - Deploy: ONE deployment platform
-                   - Maintain: Essential monitoring only
+                   - Maintain: Essential monitoring only if priority is scalability otherwise none
                 
                 3. Integration Requirements:
-                   - All tools must work well together
+                   - All tools must work well together ideally taking insprition from MERN, MEVN, T3, LAMP, LEMP, JAM, PERN, ELK, etc.
                    - Prefer tools from the same ecosystem
                    - Minimize cross-platform complexity
                 
-                IMPORTANT: Return findings in a structured format with documentation links.
-                Focus on technologies specific to {normalized_project_type}, not general web technologies unless they directly support this project type.
+                IMPORTANT: Return findings in a structured format with documentation, if documentation isn't relevant(e.g. github documentation we should return the link to the github itself instead of github documentation link, or Figma documentation we should return the link to the figma itself instead of figma documentation link).
+                Focus on technologies specific to {project_type}, not general web technologies unless they directly support this project type.
                 """,
                 expected_output="A structured list of technology research findings including documentation links and priority-specific features.",
                 agent=self.agents["research"]
             )
             
-            curation_task = Task(
+            curation_tech = Task(
                 description=f"""
-                Create a tech stack recommendation for a {normalized_project_type} with {priority} as the main priority.
+                Create a tech stack recommendation for a {project_type} with {priority} as the main priority.
                 
                 Consider the user's background:
-                - Known technologies: {', '.join(known_tech) if known_tech else 'None'}
-                - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                - Known/liked technologies: {', '.join(known_tech) if known_tech else 'None'}
+                - Technologies to avoid (must exclude): {', '.join(disliked_tech) if disliked_tech else 'None'}
                 - Priority technologies (must include): {', '.join(starred_tech) if starred_tech else 'None'}
                 
                 CRITICAL REQUIREMENTS:
                 1. MUST include ALL starred technologies: {', '.join(starred_tech) if starred_tech else 'None'}
-                2. NEVER include technologies from disliked list: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                2. NEVER include technologies from the technologies to avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
                 3. When a starred technology serves a specific purpose (e.g., Vercel for deployment), DO NOT recommend additional tools for the same purpose
-                4. Prioritize known technologies that align with project goals
+                4. Prioritize known/liked technologies that align with project goals
                 5. Only recommend new technologies when they fill a gap not covered by starred or known technologies
                 6. AVOID REDUNDANT FRAMEWORKS: Do not recommend technologies that are already included in other recommended frameworks
                    - If you recommend Next.js, DO NOT also include React
@@ -334,7 +325,7 @@ class TechStackCuratorCrew:
                 TOOL SELECTION RULES:
                 1. Mobile Apps:
                    - ONE primary mobile framework (e.g., React Native)
-                   - ONE UI component library maximum
+                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI) since they're built on top of TailwindCSS
                    - ONE state management solution
                    - Minimal backend services unless required
                    - For deployment, use mobile-specific CI/CD like Expo, Fastlane, or App Center
@@ -342,7 +333,7 @@ class TechStackCuratorCrew:
                 2. Each Category Should Have:
                    - Planning: ONE project management tool
                    - Setup: Minimal development environment
-                   - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks)
+                   - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
                    - Backend: Simplest architecture that meets requirements
                    - Testing: ONE primary testing framework
                    - Deploy: ONE deployment platform
@@ -360,18 +351,16 @@ class TechStackCuratorCrew:
                    - Prefer tools from the same ecosystem
                    - Minimize cross-platform complexity
                 
-                IMPORTANT: Your response MUST explicitly include "type": "{normalized_project_type}" in the JSON response.
-                
                 IMPORTANT: Respond with ONLY a valid JSON object following the specified structure.
                 
                 The JSON object MUST follow this exact structure:
                 {{
-                    "type": "{normalized_project_type}",
+                    "type": "{project_type}",
                     "planning": [
                         {{
                             "name": "Technology name",
-                            "description": "What it is and why it was chosen for this project, including how it relates to project planning",
-                            "docLink": "URL to official documentation"
+                            "description": "Brief explanation (50-75 words max) of what this technology does and why it fits this specific project's requirements, priority, and user background",
+                            "docLink": "URL to official documentation, if documentation isn't relevant(e.g. github documentation we should return the link to the github itself instead of github documentation link, or Figma documentation we should return the link to the figma itself instead of figma documentation link)"
                         }}
                     ],
                     "setup": [...],
@@ -390,7 +379,7 @@ class TechStackCuratorCrew:
 
             crew = Crew(
                 agents=list(self.agents.values()),
-                tasks=[research_task, curation_task],
+                tasks=[research_tech, curation_tech],
                 process=Process.sequential,
                 verbose=True
             )
@@ -404,9 +393,9 @@ class TechStackCuratorCrew:
             # Ensure project type is correctly set in the result
             if "error" not in validated_data:
                 if "type" not in validated_data or not validated_data["type"]:
-                    validated_data["type"] = normalized_project_type
+                    validated_data["type"] = project_type
                 # Double-check mobile app specific recommendations
-                if self._is_mobile_project(normalized_project_type):
+                if self._is_mobile_project(project_type):
                     validated_data = self._validate_mobile_recommendations(validated_data)
 
             if "error" in validated_data:
@@ -429,66 +418,7 @@ class TechStackCuratorCrew:
                 "maintain": []
             }
             
-    def _normalize_project_type(self, project_type: str) -> str:
-        """Normalize project type to ensure consistency."""
-        project_type = project_type.lower().strip()
-        
-        # Mobile app variants
-        if any(term in project_type for term in ["mobile app", "ios app", "android app", "phone app"]):
-            return "Mobile App"
-            
-        # Web app variants
-        if any(term in project_type for term in ["web app", "website", "web application", "webapp"]):
-            return "Web Application"
-            
-        # Map other common types to standard formats
-        type_mapping = {
-            "api": "API/Backend Service",
-            "backend": "API/Backend Service",
-            "microservice": "API/Backend Service",
-            "browser extension": "Browser Extension",
-            "chrome extension": "Browser Extension",
-            "firefox addon": "Browser Extension",
-            "cli": "CLI Tool",
-            "command line": "CLI Tool",
-            "desktop": "Desktop Application",
-            "electron": "Desktop Application",
-            "data science": "Data Analysis/ML Project",
-            "machine learning": "Data Analysis/ML Project",
-            "ml": "Data Analysis/ML Project",
-            "ai": "Data Analysis/ML Project",
-            "game": "Game",
-            "devops": "DevOps/Infrastructure Tool",
-            "infrastructure": "DevOps/Infrastructure Tool",
-            "educational": "Educational/Tutorial Project",
-            "tutorial": "Educational/Tutorial Project",
-            "learning": "Educational/Tutorial Project"
-        }
-        
-        for key, value in type_mapping.items():
-            if key in project_type:
-                return value
-                
-        # Check for capitalization variants of standard types
-        standard_types = [
-            "Mobile App",
-            "Web Application",
-            "Browser Extension",
-            "CLI Tool",
-            "API/Backend Service",
-            "Data Analysis/ML Project",
-            "Game",
-            "Desktop Application",
-            "DevOps/Infrastructure Tool",
-            "Educational/Tutorial Project"
-        ]
-        
-        for std_type in standard_types:
-            if project_type.lower() == std_type.lower():
-                return std_type
-                
-        # Return the original if no match is found, but with proper capitalization
-        return project_type.capitalize()
+    
         
     def _is_mobile_project(self, project_type: str) -> bool:
         """Check if the project type is mobile-related."""

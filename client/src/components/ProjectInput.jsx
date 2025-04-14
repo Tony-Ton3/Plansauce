@@ -12,6 +12,7 @@ import { FaCheck, FaSearch, FaTimes, FaInfoCircle } from "react-icons/fa";
 import { BsLightningChargeFill } from "react-icons/bs";
 import { RiRobot2Fill, RiScalesFill } from "react-icons/ri";
 import { PiBookFill } from "react-icons/pi";
+import { RotateSpinner } from "react-spinners-kit";
 
 const ProjectInput = () => {
   const [form, setForm] = useState(() => {
@@ -281,12 +282,21 @@ const ProjectInput = () => {
 
   if (isSubmitting) {
     return (
-      <div className="fixed inset-0 bg-gray-900 bg-opacity-75 flex items-center justify-center z-50">
-        <div className="flex flex-col justify-center items-center bg-gray-600 rounded-lg p-6 text-center">
-          <h2 className="px-3 py-1 text-xl font-bold text-background flex">
-            Thinking<span className="dots-loading">...</span>
+      <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
+        <div className="flex flex-col justify-center items-center bg-brand-wite rounded-lg p-8 text-center max-w-md">
+          <RotateSpinner size={50} color="#fcc700" loading={isSubmitting} />
+          <h2 className="px-3 py-2 text-xl font-bold text-brand-black mt-4">
+            Creating your project...
           </h2>
-        </div>
+          <p className="text-brand-gray text-sm mt-2">
+            We're breaking down your project into actionable tasks. This might take up to a minute.
+          </p>
+          {/* <div className="mt-4 text-xs text-brand-gray">
+            <p>Analyzing requirements...</p>
+            <p>Generating project structure...</p>
+            <p>Creating task breakdown...</p>
+          </div> */}
+        </div> 
       </div>
     );
   }

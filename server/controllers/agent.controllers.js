@@ -1,8 +1,6 @@
 // import AgentInteraction from "../models/agent.model.js";
 import Task from "../models/task.model.js";
 import Project from "../models/project.model.js";
-import UserProject from "../models/userProject.model.js";
-import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import dotenv from "dotenv";
 
@@ -10,8 +8,7 @@ dotenv.config();
 
 const apiBaseUrl = "http://localhost:8000/api";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_API_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
+const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
 export const generateTasks = async (req, res, next) => {
   try {
@@ -62,7 +59,7 @@ export const generateTasks = async (req, res, next) => {
     // Validate and extract tech stack
     let tech_stack = {};
     try {
-      tech_stack = result.tech_stack_recommendation || {};
+      tech_stack = result.tech_stack || {};
       if (typeof tech_stack === 'string') {
         tech_stack = JSON.parse(tech_stack);
       }
