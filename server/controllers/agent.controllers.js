@@ -185,7 +185,8 @@ export const enhanceProjectIdea = async (req, res, next) => {
     Keep the total response under 250 words and focus on clarity over comprehensiveness. 
     Do not include arbitrary names or technical implementation details.
     
-    IMPORTANT: The Project Type MUST be exactly one of the types listed above, with no additional notes, extensions, or variations.`;
+    IMPORTANT: The Project Type MUST be exactly one of the types listed above, with no additional notes, extensions, or variations.
+    IMPORTANT: If description is random gibberish return "Try again, e.g. "A mobile workout tracker app where users can log exercises, track progress over time, and get recommendations for new routines based on their goals. Should include a calendar view and achievement badges.""`
 
     const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
       method: "POST",

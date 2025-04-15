@@ -1,9 +1,10 @@
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Dict, List, Any, Optional
-from .crew import TaskGenerationCrew
 from .tech_stack_curator import TechStackCuratorCrew
-from .prompt_engineer import PromptGenerationCrew
+from .task_curator import TaskGenerationCrew
+
+#from .prompt_engineer import PromptGenerationCrew
 import os
 
 app = FastAPI()
@@ -105,31 +106,17 @@ async def generate_tasks(request: Request):
         recommended_tech = [] #array of the curated tech stack to be used in task generation
         tech_by_category = {} #structured categorization of the curated tech stack
         
-        # Extract recommended technologies for task generation
         if isinstance(tech_stack_recommendation, dict) and "error" not in tech_stack_recommendation:
-            # Create a structured categorization of all recommended technologies
             for category in ["planning", "setup", "frontend", "backend", "testing", "deploy", "maintain"]:
                 if category in tech_stack_recommendation:
                     tech_by_category[category] = tech_stack_recommendation[category]
-                    # Add all tech names to the flat list for backwards compatibility
                     for tech in tech_stack_recommendation[category]:
                         if "name" in tech:
                             recommended_tech.append(tech["name"])
         
         if recommended_tech:
             tech_context = f"\nRecommended technologies: {', '.join(recommended_tech)}"
-            
-        # Add priority context
-        priority_context = ""
-        if priority:
-            if "Speed" in priority:
-                priority_context = "\nSpeed - Focus on rapid development and MVP approach"
-            elif "Scalability" in priority:
-                priority_context = "\nScalability - Focus on architecture and future-proofing"
-            else:
-                priority_context = "\nLearning - Focus on educational value and skill development"
         
-        # Build a more detailed tech context that preserves category information
         tech_context = ""
         if tech_by_category:
             tech_context += "\nTECH STACK BY CATEGORY:"
@@ -145,32 +132,30 @@ async def generate_tasks(request: Request):
         print(f"Techstack by category: {tech_by_category}")
         
         # Enhanced description with detailed tech stack
-        enhanced_description = f"""
-        Project Description: {description}
-        Project Type: {project_type}
-        Priority: {priority_context}
-        {tech_context}
+        # enhanced_description = f"""
+        # Project Description: {description}
+        # Project Type: {project_type}
+        # {tech_context}
         
-        TASK GENERATION INSTRUCTIONS:
-        - Prioritize tasks based on the specified priority ({priority})
-        - Use the recommended technologies in your task generation
-        - When suggesting new technologies, provide clear learning resources and documentation links
-        - If the user has preferred technologies, incorporate them when they're a good fit
-        - If the user has technologies to avoid, ensure they are not included in recommendations
-        - Make each task and subtask highly actionable with specific instructions
-        - Ensure tasks are well-scoped and don't require additional clarification
-        - Map tasks to appropriate tech stack categories (planning, setup, frontend, backend, testing, deploy, maintain)
-        - IMPORTANT: For each task, assign a category field that corresponds to one of the tech stack categories
-        - Make sure each task uses the specific technologies mentioned in the corresponding category
-        """
+        # TASK GENERATION INSTRUCTIONS:
+        # - Prioritize tasks based on the specified priority ({priority})
+        # - Use the recommended technologies in your task generation
+        # - Make each task and subtask highly actionable with specific instructions
+        # - Ensure tasks are well-scoped and don't require additional clarification
+        # - Map tasks to appropriate tech stack categories (planning, setup, frontend, backend, testing, deploy, maintain)
+        # - IMPORTANT: For each task, assign a category field that corresponds to one of the tech stack categories
+        # - Make sure each task uses the specific technologies mentioned in the corresponding category
+        # """
         
         print(f"Enhanced description: {enhanced_description}")
         
         # Generate tasks
         crew = TaskGenerationCrew()
         result = crew.generate_tasks(
-            project_description=enhanced_description,
-            priority=priority
+            project_description = description,
+            priority = priority,
+            tech_context = tech_context,
+            project_type = project_type
         )
         
         tasks = result.get("tasks", [])

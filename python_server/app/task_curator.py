@@ -16,7 +16,7 @@ class TaskGenerationCrew:
             api_key=os.getenv("GEMINI_API_KEY")
         )
 
-    def generate_tasks(self, project_description, priority) -> Dict[str, Any]:
+    def generate_tasks(self, project_description, priority, tech_context, project_type) -> Dict[str, Any]:
         
         try:
             # Create specialized agent based on priority
@@ -29,6 +29,16 @@ class TaskGenerationCrew:
             else:
                 agent = self._create_learning_agent()
                 task_description = self._create_learning_task_description(project_description)
+            
+             # Add priority context
+            # priority_context = ""
+            # if priority:
+            #     if "Speed" in priority:
+            #         priority_context = "\nSpeed - Focus on rapid development and MVP approach"
+            #     elif "Scalability" in priority:
+            #         priority_context = "\nScalability - Focus on architecture and future-proofing"
+            #     else:
+            #         priority_context = "\nLearning - Focus on educational value and skill development"
             
             task = Task(
                 description=task_description,
@@ -83,7 +93,7 @@ class TaskGenerationCrew:
     def _create_speed_agent(self) -> Agent:
         return Agent(
             role='Speed-Oriented Task Planner',
-            goal='Create rapid development task breakdowns for software projects',
+            goal='Create rapid development task breakdowns for software project',
             backstory=dedent("""
                 You are an expert at rapid prototyping and MVP development.
                 You prioritize essential features and quick implementation over perfection.

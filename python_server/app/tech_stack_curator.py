@@ -226,6 +226,12 @@ class TechStackCuratorCrew:
                 1. Minimize the number of new technologies
                 2. Choose tools with quick setup and minimal config
                 3. Prefer integrated solutions
+                4. Avoid complex cloud services unless absolutely necessary
+                5. NEVER include multiple IDEs or text editors - choose only ONE development environment
+                6. For web projects, prefer simple deployment options (Vercel, Netlify) over complex cloud services
+                7. Prioritize simpler database solutions (SQLite, MongoDB Atlas) over complex setups
+                8. Only recommend services the user is already familiar with from their known_tech
+                9. For setup, avoid redundancy between Git and GitHub - if both are included, ensure distinct purposes are explained
                 
                 For Scalability Priority:
                 1. Focus on proven, enterprise-ready solutions
@@ -242,15 +248,15 @@ class TechStackCuratorCrew:
                 
                 2. Each Category Should Have:
                    - Planning: ONE project management tool
-                   - Setup: Minimal development environment
+                   - Setup: Minimal development environment (ONE IDE/editor maximum)
                    - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
-                   - Backend: Simplest architecture that meets requirements
-                   - Testing: ONE primary testing framework if priority is scalability otherwise none
-                   - Deploy: ONE deployment platform
-                   - Maintain: Essential monitoring only if priority is scalability otherwise none
+                   - Backend: Simplest architecture that meets requirements (for Speed priority, prefer serverless or BaaS solutions)
+                   - Testing: ONE primary testing framework
+                   - Deploy: ONE deployment platform (prefer simple, integrated platforms for Speed priority)
+                   - Maintain: Essential monitoring only
                 
                 3. Integration Requirements:
-                   - All tools must work well together ideally taking insprition from MERN, MEVN, T3, LAMP, LEMP, JAM, PERN, ELK, etc.
+                   - All tools must work well together ideally taking inspriration from MERN, MEVN, T3, LAMP, LEMP, JAM, PERN, ELK, etc.
                    - Prefer tools from the same ecosystem
                    - Minimize cross-platform complexity
                 
@@ -316,6 +322,12 @@ class TechStackCuratorCrew:
                 1. Minimize the number of new technologies
                 2. Choose tools with quick setup and minimal config
                 3. Prefer integrated solutions
+                4. Avoid complex cloud services unless absolutely necessary
+                5. NEVER include multiple IDEs or text editors - choose only ONE development environment
+                6. For web projects, prefer simple deployment options (Vercel, Netlify) over complex cloud services
+                7. Prioritize simpler database solutions (SQLite, MongoDB Atlas) over complex setups
+                8. Only recommend services the user is already familiar with from their known_tech
+                9. For setup, avoid redundancy between Git and GitHub - if both are included, ensure distinct purposes are explained
                 
                 For Scalability Priority:
                 1. Focus on proven, enterprise-ready solutions
@@ -332,11 +344,11 @@ class TechStackCuratorCrew:
                 
                 2. Each Category Should Have:
                    - Planning: ONE project management tool
-                   - Setup: Minimal development environment
+                   - Setup: Minimal development environment (ONE IDE/editor maximum)
                    - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
-                   - Backend: Simplest architecture that meets requirements
+                   - Backend: Simplest architecture that meets requirements (for Speed priority, prefer serverless or BaaS solutions)
                    - Testing: ONE primary testing framework
-                   - Deploy: ONE deployment platform
+                   - Deploy: ONE deployment platform (prefer simple, integrated platforms for Speed priority)
                    - Maintain: Essential monitoring only
                 
                 3. Framework Redundancy Prevention:
@@ -417,8 +429,6 @@ class TechStackCuratorCrew:
                 "deploy": [],
                 "maintain": []
             }
-            
-    
         
     def _is_mobile_project(self, project_type: str) -> bool:
         """Check if the project type is mobile-related."""

@@ -491,7 +491,7 @@ const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask })
 
                       {/* official docs */}
                       <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Official Documentation</h4>
+                        <h4 className="text-sm font-medium text-gray-300">Helpful link</h4>
                         <div className="space-y-2">
                           <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
                             <div className="flex items-center gap-3">
@@ -1023,7 +1023,7 @@ const TechnologyCard = ({ icon, name, description, docLink, category }) => (
               className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
             >
               <FaBook className="text-xs" />
-              <span>Official Documentation</span>
+              <span>Helpful link</span>
             </a>
           )}
         </div>

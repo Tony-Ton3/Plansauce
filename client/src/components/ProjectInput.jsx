@@ -195,32 +195,17 @@ const ProjectInput = () => {
         maintain: []
       };
       
-      if (response.tech_stack_recommendation) {
-        if (typeof response.tech_stack_recommendation === 'object') {
-          formattedTechStack = response.tech_stack_recommendation;
-        } else if (typeof response.tech_stack_recommendation === 'string') {
-          try {
-            const parsed = JSON.parse(response.tech_stack_recommendation);
-            if (parsed && typeof parsed === 'object') {
-              formattedTechStack = parsed;
-            }
-          } catch (e) {
-            console.error("Error parsing tech stack string:", e);
-          }
-        }
-      } else if (response.frontend || response.backend) {
+      if (response.tech_stack) {
         formattedTechStack = {
-          planning: response.planning || [],
-          setup: response.setup || [],
-          frontend: response.frontend || [],
-          backend: response.backend || [],
-          testing: response.testing || [],
-          deploy: response.deploy || [],
-          maintain: response.maintain || []
+          planning: response.tech_stack.planning || [],
+          setup: response.tech_stack.setup || [],
+          frontend: response.tech_stack.frontend || [],
+          backend: response.tech_stack.backend || [],
+          testing: response.tech_stack.testing || [],
+          deploy: response.tech_stack.deploy || [],
+          maintain: response.tech_stack.maintain || []
         };
       }
-      
-      console.log("Formatted tooling from tech stack curator:", formattedTechStack);
 
       const formattedTasks = tasks.map((task) => ({
         id: task.id || String(Date.now() + Math.random()),
