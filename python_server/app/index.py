@@ -29,7 +29,7 @@ def infer_project_type(description: str, known_tech: List[str] = None, starred_t
     extension_indicators = ["browser extension", "chrome extension", "firefox addon", "browser plugin", "web extension"]
     cli_indicators = ["command line", "cli tool", "terminal", "shell script", "command-line interface"]
     backend_indicators = ["api", "backend", "microservice", "server", "rest api", "graphql", "database service"]
-    data_tech = ["python", "numpy", "pandas", "scikit-learn", "tensorflow", "pytorch", "jupyter notebooks"]
+    data_indicators = ["data analysis", "data science", "machine learning", "ai", "artificial intelligence", "data visualization", "analytics"]
     game_indicators = ["game", "gaming", "unity", "unreal", "2d game", "3d game", "multiplayer"]
     desktop_indicators = ["desktop app", "desktop application", "windows app", "mac app", "cross-platform desktop"]
     devops_indicators = ["devops", "infrastructure", "deployment", "ci/cd", "automation", "monitoring", "containerization"]
@@ -98,95 +98,32 @@ async def generate_tasks(request: Request):
             project_type=project_type,
             priority=priority,
             experience_level=experience_level,
+            project_description=description,
             known_tech=known_tech,
             disliked_tech=disliked_tech,
             starred_tech=starred_tech
         )
         
-        recommended_tech = [] #array of the curated tech stack to be used in task generation
-        tech_by_category = {} #structured categorization of the curated tech stack
+        tech_stack_by_category = {}
         
+        #extract tech stack by category so we can pass this to the task generation
         if isinstance(tech_stack_recommendation, dict) and "error" not in tech_stack_recommendation:
             for category in ["planning", "setup", "frontend", "backend", "testing", "deploy", "maintain"]:
                 if category in tech_stack_recommendation:
-                    tech_by_category[category] = tech_stack_recommendation[category]
-                    for tech in tech_stack_recommendation[category]:
-                        if "name" in tech:
-                            recommended_tech.append(tech["name"])
+                    tech_stack_by_category[category] = tech_stack_recommendation[category]
         
-        if recommended_tech:
-            tech_context = f"\nRecommended technologies: {', '.join(recommended_tech)}"
+        # print(f"Techstack by category: {tech_by_category}")
         
-        tech_context = ""
-        if tech_by_category:
-            tech_context += "\nTECH STACK BY CATEGORY:"
-            for category, techs in tech_by_category.items():
-                tech_names = [t.get("name") for t in techs if "name" in t]
-                if tech_names:
-                    tech_context += f"\n- {category.upper()}: {', '.join(tech_names)}"
-        
-        # Also keep the flat list for backwards compatibility
-        if recommended_tech:
-            tech_context += f"\nAll recommended technologies: {', '.join(recommended_tech)}"
-
-        print(f"Techstack by category: {tech_by_category}")
-        
-        # Enhanced description with detailed tech stack
-        # enhanced_description = f"""
-        # Project Description: {description}
-        # Project Type: {project_type}
-        # {tech_context}
-        
-        # TASK GENERATION INSTRUCTIONS:
-        # - Prioritize tasks based on the specified priority ({priority})
-        # - Use the recommended technologies in your task generation
-        # - Make each task and subtask highly actionable with specific instructions
-        # - Ensure tasks are well-scoped and don't require additional clarification
-        # - Map tasks to appropriate tech stack categories (planning, setup, frontend, backend, testing, deploy, maintain)
-        # - IMPORTANT: For each task, assign a category field that corresponds to one of the tech stack categories
-        # - Make sure each task uses the specific technologies mentioned in the corresponding category
-        # """
-        
-        print(f"Enhanced description: {enhanced_description}")
-        
-        # Generate tasks
         crew = TaskGenerationCrew()
         result = crew.generate_tasks(
             project_description = description,
             priority = priority,
-            tech_context = tech_context,
+            tech_stack_by_category = tech_stack_by_category,
             project_type = project_type
         )
         
         tasks = result.get("tasks", [])
-        
-        # Add tech stack information to each task based on its category
-        for task in tasks:
-            category = task.get("category", "")
-            tech_list = []
-            if category in tech_stack_recommendation:
-                tech_list = tech_stack_recommendation[category]
-            
-            # Add tech stack information to the task
-            task["tech_stack"] = tech_list
-            
-            # Add tech stack to subtasks
-            if "subtasks" in task and task["subtasks"]:
-                for subtask in task["subtasks"]:
-                    subtask["tech_stack"] = tech_list
-        
-        # Build a more detailed tech context that preserves category information
-        tech_context = ""
-        if tech_by_category:
-            tech_context += "\nTECH STACK BY CATEGORY:"
-            for category, techs in tech_by_category.items():
-                tech_names = [t.get("name") for t in techs if "name" in t]
-                if tech_names:
-                    tech_context += f"\n- {category.upper()}: {', '.join(tech_names)}"
-        
-        # Also keep the flat list for backwards compatibility
-        if recommended_tech:
-            tech_context += f"\nAll recommended technologies: {', '.join(recommended_tech)}"
+        #print(f"Generated tasks: {tasks}")
         
         return {
             "success": True,

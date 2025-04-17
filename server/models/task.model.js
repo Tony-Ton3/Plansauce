@@ -40,8 +40,8 @@ const TaskSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    enum: ['plan', 'setup', 'backend', 'frontend', 'testing', 'deploy', 'maintain'],
-    default: 'plan'
+    enum: ['planning', 'setup', 'backend', 'frontend', 'testing', 'deploy', 'maintain'],
+    default: 'planning'
   },
   subtasks: {
     type: [SubtaskSchema],

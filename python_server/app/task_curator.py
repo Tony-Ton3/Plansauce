@@ -1,4 +1,4 @@
-from crewai import Agent, Task, Crew, LLM
+from crewai import Agent, Task, Crew, LLM, Process
 from textwrap import dedent
 import os
 import json
@@ -15,63 +15,69 @@ class TaskGenerationCrew:
             temperature=0.7,
             api_key=os.getenv("GEMINI_API_KEY")
         )
-
-    def generate_tasks(self, project_description, priority, tech_context, project_type) -> Dict[str, Any]:
         
+        self.category_agents = {
+            "planning": self._create_plan_design_agent(),
+            "setup": self._create_setup_agent(),
+            "frontend": self._create_frontend_agent(),
+            "backend": self._create_backend_agent(), 
+            "testing": self._create_testing_agent(),
+            "deploy": self._create_deploy_agent(),
+            "maintain": self._create_maintain_agent()
+        }
+        
+        self.category_mapping = {
+            "planning": "planning",
+            "setup": "setup",
+            "frontend": "frontend",
+            "backend": "backend",
+            "testing": "testing",
+            "deploy": "deploy",
+            "maintain": "maintain"
+        }
+
+    def generate_tasks(self, project_description, priority, tech_stack_by_category, project_type) -> Dict[str, Any]:
         try:
-            # Create specialized agent based on priority
             if priority and "Speed" in priority:
-                agent = self._create_speed_agent()
-                task_description = self._create_speed_task_description(project_description)
+                coordinator_agent = self._create_speed_agent()
             elif priority and "Scalability" in priority:
-                agent = self._create_scalability_agent()
-                task_description = self._create_scalability_task_description(project_description)
+                coordinator_agent = self._create_scalability_agent()
             else:
-                agent = self._create_learning_agent()
-                task_description = self._create_learning_task_description(project_description)
+                coordinator_agent = self._create_learning_agent()
             
-             # Add priority context
-            # priority_context = ""
-            # if priority:
-            #     if "Speed" in priority:
-            #         priority_context = "\nSpeed - Focus on rapid development and MVP approach"
-            #     elif "Scalability" in priority:
-            #         priority_context = "\nScalability - Focus on architecture and future-proofing"
-            #     else:
-            #         priority_context = "\nLearning - Focus on educational value and skill development"
+            category_tasks = []
             
-            task = Task(
-                description=task_description,
-                expected_output="A JSON object containing task breakdown for the project",
-                agent=agent
-            )
-
+            active_categories = [cat for cat in tech_stack_by_category.keys() 
+                                    if cat in self.category_agents and tech_stack_by_category[cat]]
+            
+            for category in active_categories:
+                if category not in tech_stack_by_category:
+                    raise ValueError(f"The {category} category does not have a tool assigned to it.")
+            
+            for category in active_categories:
+                category_task = self._create_category_task(
+                    category=category,
+                    project_description=project_description,
+                    priority=priority,
+                    tech_stack=tech_stack_by_category.get(category),
+                    project_type=project_type,
+                    agent=self.category_agents[category]
+                )
+                category_tasks.append(category_task)
+            
+            active_agents = [self.category_agents[cat] for cat in active_categories]
+            
             crew = Crew(
-                agents=[agent],
-                tasks=[task],
-                verbose=True
+                agents=active_agents,
+                tasks=category_tasks,
+                verbose=True,
+                process=Process.sequential
             )
-
-            result = crew.kickoff()
-            print(f"Raw result from CrewAI: {result}")
             
-            result_str = str(result)
-            # try to parse the result as json
-            try:
-                tasks_data = json.loads(result_str)
-            except json.JSONDecodeError:
-                # if that fails, try to parse the result as json using regex
-                import re
-                json_match = re.search(r'(\{[\s\S]*\})', result_str)
-                if json_match:
-                    try:
-                        tasks_data = json.loads(json_match.group(1))
-                    except json.JSONDecodeError:
-                        tasks_data = eval(json_match.group(1))
-                else:
-                    raise ValueError("Could not extract valid JSON from result")
+            results = crew.kickoff()
+            combined_tasks = self._combine_category_results(results)
             
-            tasks_list = tasks_data.get("tasks", [])
+            tasks_list = combined_tasks.get("tasks", [])
             task_count = len(tasks_list)
             subtask_count = sum(len(task.get("subtasks", [])) for task in tasks_list)
             
@@ -82,7 +88,6 @@ class TaskGenerationCrew:
             }
             
         except Exception as e:
-            print(f"Error generating tasks: {str(e)}")
             return {
                 "error": str(e),
                 "tasks": [],
@@ -90,16 +95,149 @@ class TaskGenerationCrew:
                 "subtaskCount": 0
             }
     
+    def _combine_category_results(self, crew_output) -> Dict[str, Any]:
+        all_tasks = []
+
+        if not crew_output or not hasattr(crew_output, 'tasks_output') or not crew_output.tasks_output:
+            if hasattr(crew_output, 'raw'):
+                results_str = str(crew_output.raw)
+                import re
+                import json
+                json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', results_str)
+                if json_match:
+                    try:
+                        json_str = json_match.group(1)
+                        parsed_json = json.loads(json_str)
+                        if isinstance(parsed_json, dict) and "tasks" in parsed_json:
+                            tasks_from_raw = parsed_json["tasks"]
+                            all_tasks.extend(tasks_from_raw)
+                    except json.JSONDecodeError:
+                        pass
+                    except Exception:
+                        pass
+
+            if not all_tasks:
+                return {"tasks": []}
+        else:
+            import re
+            import json
+
+            for task_output in crew_output.tasks_output:
+                if not hasattr(task_output, 'raw'):
+                    continue
+
+                results_str = str(task_output.raw)
+                json_match = re.search(r'```json\s*(\{[\s\S]*?\})\s*```', results_str)
+                if json_match:
+                    try:
+                        json_str = json_match.group(1)
+                        parsed_json = json.loads(json_str)
+                        if isinstance(parsed_json, dict) and "tasks" in parsed_json:
+                            tasks_from_agent = parsed_json["tasks"]
+                            all_tasks.extend(tasks_from_agent)
+                    except json.JSONDecodeError:
+                        pass
+                    except Exception:
+                        pass
+
+        if not all_tasks:
+            return {"tasks": []}
+
+        final_tasks = []
+        for i, task in enumerate(all_tasks):
+            if isinstance(task, dict):
+                task["id"] = f"task-{i+1}"
+                if "category" not in task:
+                    task["category"] = "unknown"
+                subtasks = task.get("subtasks", [])
+                if isinstance(subtasks, list):
+                    for j, subtask in enumerate(subtasks):
+                        if isinstance(subtask, dict):
+                            subtask["id"] = f"subtask-{i+1}-{j+1}"
+                final_tasks.append(task)
+
+        return {"tasks": final_tasks}
+    
+    def _create_category_task(self, category, project_description, priority, tech_stack, project_type, agent) -> Task:
+        priority_context = ""
+        if priority:
+            if "Speed" in priority:
+                priority_context = "Speed - Focus on rapid development and MVP approach"
+            elif "Scalability" in priority:
+                priority_context = "Scalability - Focus on architecture and future-proofing"
+            else:
+                priority_context = "Learning - Focus on educational value and skill development"
+        
+        tech_details = []
+        for tech in tech_stack:
+            if isinstance(tech, dict) and "name" in tech and "description" in tech:
+                tech_details.append(f"- {tech['name']}: {tech['description']}")
+                if "docLink" in tech:
+                    tech_details.append(f"  Documentation: {tech['docLink']}")
+        
+        tech_stack_str = "\n".join(tech_details) if tech_details else "No specific technologies specified"
+        task_category = self.category_mapping.get(category, category)
+        
+        return Task(
+            description=dedent(f"""
+                Create a task breakdown for the {category} category of the following project:
+                
+                PROJECT DESCRIPTION:
+                {project_description}
+                
+                PROJECT TYPE:
+                {project_type}
+                
+                PRIORITY:
+                {priority_context}
+                
+                TECHNOLOGIES FOR THIS CATEGORY:
+                {tech_stack_str}
+                
+                IMPORTANT GUIDELINES:
+                1. Make each task and subtask HIGHLY ACTIONABLE with specific instructions.
+                2. A user should be able to complete each task/subtask without needing additional information.
+                3. Include technical details and specific steps in each task/subtask.
+                4. FOCUS ONLY ON THE "{category.upper()}" CATEGORY.
+                5. Tailor tasks specifically to the technologies listed above.
+                6. Tasks should incorporate the specific technologies mentioned above.
+                7. Include tasks for learning/setting up each technology if the priority is learning-focused.
+                8. Each task and subtask should be exactly ONE SENTENCE in length - be concise and clear.
+                9. Start task names with action verbs.
+                10. Keep task names BRIEF - use 5-10 words maximum for each task name.
+                
+                Format the response as a JSON object with this structure:
+                {{
+                    "tasks": [
+                        {{
+                            "id": "task-1",
+                            "text": "Task description",
+                            "completed": false,
+                            "category": "{task_category}",
+                            "subtasks": [
+                                {{
+                                    "id": "subtask-1-1",
+                                    "text": "Subtask description with specific actionable details",
+                                    "completed": false
+                                }}
+                            ]
+                        }}
+                    ]
+                }}
+            """),
+            expected_output=f"A JSON object containing task breakdown for the {category} category",
+            agent=agent
+        )
+    
     def _create_speed_agent(self) -> Agent:
         return Agent(
-            role='Speed-Oriented Task Planner',
-            goal='Create rapid development task breakdowns for software project',
+            role='Speed-Oriented Task Coordinator',
+            goal='Coordinate rapid development task breakdowns',
             backstory=dedent("""
                 You are an expert at rapid prototyping and MVP development.
                 You prioritize essential features and quick implementation over perfection.
                 You focus on delivering working software quickly with minimal overhead.
                 You know how to identify core functionality and defer nice-to-have features.
-                You create tasks that can be completed quickly without sacrificing too much quality.
             """),
             llm=self.llm,
             verbose=True
@@ -107,14 +245,13 @@ class TaskGenerationCrew:
     
     def _create_scalability_agent(self) -> Agent:
         return Agent(
-            role='Scalability-Oriented Task Planner',
-            goal='Create scalable architecture task breakdowns for software projects',
+            role='Scalability-Oriented Task Coordinator',
+            goal='Coordinate scalable architecture task breakdowns',
             backstory=dedent("""
                 You are an expert at designing scalable software architectures.
                 You prioritize future-proofing and extensibility in your task planning.
                 You focus on creating a solid foundation that can grow with the project.
                 You understand microservices, distributed systems, and cloud-native architectures.
-                You create tasks that ensure the system can handle growth in users, data, and features.
             """),
             llm=self.llm,
             verbose=True
@@ -122,184 +259,112 @@ class TaskGenerationCrew:
     
     def _create_learning_agent(self) -> Agent:
         return Agent(
-            role='Learning-Oriented Task Planner',
-            goal='Create educational task breakdowns for software projects',
+            role='Learning-Oriented Task Coordinator',
+            goal='Coordinate educational task breakdowns',
             backstory=dedent("""
                 You are an expert at creating educational project plans.
                 You prioritize learning outcomes and skill development in your task planning.
                 You focus on breaking down complex concepts into digestible learning steps.
                 You understand how to incorporate best practices and industry standards into learning tasks.
-                You create tasks that build knowledge progressively with appropriate challenges.
             """),
             llm=self.llm,
             verbose=True
         )
     
-    def _create_speed_task_description(self, project_description: str) -> str:
-        return dedent(f"""
-            Create a rapid development task breakdown for the following project:
-            {project_description}
-            
-            Break this down into a sufficient number of main tasks, each with appropriate subtasks.
-            
-            IMPORTANT GUIDELINES:
-            1. Make each task and subtask HIGHLY ACTIONABLE with specific instructions.
-            2. A user should be able to complete each task/subtask without needing additional information.
-            3. Include technical details and specific steps in each task/subtask.
-            4. If specific technologies are mentioned, include relevant technical details.
-            5. Focus on essential features and quick implementation:
-               - Prioritize core functionality over nice-to-have features
-               - Suggest simpler implementations that can be completed quickly
-               - Defer complex features that aren't critical for the MVP
-               - Focus on getting a working prototype as soon as possible
-            6. Create as many tasks as needed to fully build out the project - don't limit yourself to a specific number.
-            7. Each task and subtask should be exactly ONE SENTENCE in length - be concise and clear.
-            8. If a subtask involves a significant amount of work or multiple steps, consider making it a main task instead.
-            9. Ensure task complexity is appropriate - complex tasks should be broken down into smaller, more manageable tasks.
-            10. Use clear, non-technical language for task names - avoid jargon and complex terminology.
-            11. Make task names descriptive but simple - a non-technical person should understand what needs to be done.
-            12. Keep task names BRIEF - use 5-10 words maximum for each task name.
-            13. Start task names with action verbs
-            
-            Each task should be categorized into one of these categories:
-            - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
-            - setup: Setup - Environment configuration, repository initialization, installing core tools
-            - backend: Backend - Server-side logic, API development, database interactions
-            - frontend: Frontend - User interface development, client-side logic
-            - testing: Testing - Writing tests, quality assurance checks
-            - deploy: Deploy - Infrastructure setup, deployment process, going live
-            - maintain: Maintain - Monitoring, updates, bug fixes after launch
-            
-            Format the response as a JSON object with this structure:
-            {{
-                "tasks": [
-                    {{
-                        "id": "task-1",
-                        "text": "Task description",
-                        "completed": false,
-                        "category": "plan",
-                        "subtasks": [
-                            {{
-                                "id": "subtask-1-1",
-                                "text": "Subtask description with specific actionable details",
-                                "completed": false
-                            }}
-                        ]
-                    }}
-                ]
-            }}
-        """)
+    def _create_plan_design_agent(self) -> Agent:
+        return Agent(
+            role='Planning & Design Specialist',
+            goal='Generate comprehensive planning and design tasks',
+            backstory=dedent("""
+                You specialize in project architecture and design planning.
+                You excel at translating requirements into actionable design tasks.
+                You understand how to create tasks for requirements gathering, wireframing, and architecture planning.
+                You create tasks that incorporate the specific design tools recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
     
-    def _create_scalability_task_description(self, project_description: str) -> str:
-        return dedent(f"""
-            Create a scalability-focused task breakdown for the following project:
-            {project_description}
-            
-            Break this down into a sufficient number of main tasks, each with appropriate subtasks.
-            
-            IMPORTANT GUIDELINES:
-            1. Make each task and subtask HIGHLY ACTIONABLE with specific instructions.
-            2. A user should be able to complete each task/subtask without needing additional information.
-            3. Include technical details and specific steps in each task/subtask.
-            4. If specific technologies are mentioned, include relevant technical details.
-            5. Focus on architecture planning and future-proofing:
-               - Design for scalability from the beginning
-               - Include tasks for proper separation of concerns
-               - Consider microservices or modular architecture where appropriate
-               - Plan for database scaling and optimization
-               - Include tasks for monitoring, logging, and performance optimization
-               - Consider cloud-native approaches and containerization
-            6. Create as many tasks as needed to fully build out the project - don't limit yourself to a specific number.
-            7. Each task and subtask should be exactly ONE SENTENCE in length - be concise and clear.
-            8. If a subtask involves a significant amount of work or multiple steps, consider making it a main task instead.
-            9. Ensure task complexity is appropriate - complex tasks should be broken down into smaller, more manageable tasks.
-            10. Use clear, non-technical language for task names - avoid jargon and complex terminology.
-            11. Make task names descriptive but simple - a non-technical person should understand what needs to be done.
-            12. Keep task names BRIEF - use 5-10 words maximum for each task name.
-            13. Start task names with action verbs
-            
-            Each task should be categorized into one of these categories:
-            - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
-            - setup: Setup - Environment configuration, repository initialization, installing core tools
-            - backend: Backend - Server-side logic, API development, database interactions
-            - frontend: Frontend - User interface development, client-side logic
-            - testing: Testing - Writing tests, quality assurance checks
-            - deploy: Deploy - Infrastructure setup, deployment process, going live
-            - maintain: Maintain - Monitoring, updates, bug fixes after launch
-            
-            Format the response as a JSON object with this structure:
-            {{
-                "tasks": [
-                    {{
-                        "id": "task-1",
-                        "text": "Task description",
-                        "completed": false,
-                        "category": "plan",
-                        "subtasks": [
-                            {{
-                                "id": "subtask-1-1",
-                                "text": "Subtask description with specific actionable details",
-                                "completed": false
-                            }}
-                        ]
-                    }}
-                ]
-            }}
-        """)
+    def _create_setup_agent(self) -> Agent:
+        return Agent(
+            role='Development Setup Specialist',
+            goal='Create environment setup and configuration tasks',
+            backstory=dedent("""
+                You excel at establishing development environments and toolchains.
+                You know how to create tasks for setting up repositories, CI/CD pipelines, and development tools.
+                You understand the importance of standardizing development environments across teams.
+                You create tasks that incorporate the specific setup tools recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
     
-    def _create_learning_task_description(self, project_description: str) -> str:
-        return dedent(f"""
-            Create a learning-focused task breakdown for the following project:
-            {project_description}
-            
-            Break this down into a sufficient number of main tasks, each with appropriate subtasks.
-            
-            IMPORTANT GUIDELINES:
-            1. Make each task and subtask HIGHLY ACTIONABLE with specific instructions.
-            2. A user should be able to complete each task/subtask without needing additional information.
-            3. Include technical details and specific steps in each task/subtask.
-            4. If specific technologies are mentioned, include relevant technical details.
-            5. Focus on educational resources and learning milestones:
-               - Include tasks for researching and learning new technologies
-               - Break down complex concepts into digestible learning steps
-               - Include tasks for practicing and applying new skills
-               - Suggest resources for learning (documentation, tutorials, courses)
-               - Include tasks for code review and feedback
-               - Focus on best practices and industry standards
-            6. Create as many tasks as needed to fully build out the project - don't limit yourself to a specific number.
-            7. Each task and subtask should be exactly ONE SENTENCE in length - be concise and clear.
-            8. If a subtask involves a significant amount of work or multiple steps, consider making it a main task instead.
-            9. Ensure task complexity is appropriate - complex tasks should be broken down into smaller, more manageable tasks.
-            10. Use clear, non-technical language for task names - avoid jargon and complex terminology.
-            11. Make task names descriptive but simple - a non-technical person should understand what needs to be done.
-            12. Keep task names BRIEF - use 5-10 words maximum for each task name.
-            13. Start task names with action verbs
-            
-            Each task should be categorized into one of these categories:
-            - plan: Plan & Design - Initial requirements, user flows, architecture ideas, wireframes
-            - setup: Setup - Environment configuration, repository initialization, installing core tools
-            - backend: Backend - Server-side logic, API development, database interactions
-            - frontend: Frontend - User interface development, client-side logic
-            - testing: Testing - Writing tests, quality assurance checks
-            - deploy: Deploy - Infrastructure setup, deployment process, going live
-            - maintain: Maintain - Monitoring, updates, bug fixes after launch
-            
-            Format the response as a JSON object with this structure:
-            {{
-                "tasks": [
-                    {{
-                        "id": "task-1",
-                        "text": "Task description",
-                        "completed": false,
-                        "category": "plan",
-                        "subtasks": [
-                            {{
-                                "id": "subtask-1-1",
-                                "text": "Subtask description with specific actionable details",
-                                "completed": false
-                            }}
-                        ]
-                    }}
-                ]
-            }}
-        """) 
+    def _create_frontend_agent(self) -> Agent:
+        return Agent(
+            role='Frontend Development Expert',
+            goal='Generate frontend development task breakdown',
+            backstory=dedent("""
+                You're experienced in UI/UX implementation and frontend architecture.
+                You understand modern frontend frameworks and best practices.
+                You know how to break down complex UI requirements into manageable tasks.
+                You create tasks that incorporate the specific frontend technologies recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
+    
+    def _create_backend_agent(self) -> Agent:
+        return Agent(
+            role='Backend Development Architect',
+            goal='Create detailed backend development tasks',
+            backstory=dedent("""
+                You specialize in server-side logic, APIs, and data management.
+                You understand database design, API architecture, and server optimization.
+                You know how to create tasks for implementing secure and efficient backend systems.
+                You create tasks that incorporate the specific backend technologies recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
+    
+    def _create_testing_agent(self) -> Agent:
+        return Agent(
+            role='QA & Testing Strategist',
+            goal='Develop comprehensive testing plans and tasks',
+            backstory=dedent("""
+                You ensure code quality through proper testing methodologies.
+                You understand various testing approaches including unit, integration, and end-to-end testing.
+                You know how to create tasks for implementing effective test coverage and QA processes.
+                You create tasks that incorporate the specific testing tools recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
+    
+    def _create_deploy_agent(self) -> Agent:
+        return Agent(
+            role='DevOps & Deployment Expert',
+            goal='Create deployment pipeline and infrastructure tasks',
+            backstory=dedent("""
+                You specialize in CI/CD pipelines and deployment strategies.
+                You understand cloud infrastructure, containerization, and automated deployments.
+                You know how to create tasks for setting up reliable and secure deployment processes.
+                You create tasks that incorporate the specific deployment technologies recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )
+    
+    def _create_maintain_agent(self) -> Agent:
+        return Agent(
+            role='Maintenance & Support Planner',
+            goal='Plan maintenance, monitoring and support tasks',
+            backstory=dedent("""
+                You focus on long-term project health and maintenance.
+                You understand monitoring, logging, and troubleshooting best practices.
+                You know how to create tasks for implementing effective maintenance and support processes.
+                You create tasks that incorporate the specific maintenance tools recommended in the tech stack.
+            """),
+            llm=self.llm,
+            verbose=True
+        )

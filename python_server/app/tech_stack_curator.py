@@ -27,7 +27,7 @@ class BraveSearchTool(BaseTool):
             url = "https://api.search.brave.com/res/v1/web/search"
             params = {
                 "q": query,
-                "count": 5  # Limit to 5 results
+                "count": 3  # Limit to top 3 results
             }
             headers = {
                 "Accept": "application/json",
@@ -166,6 +166,7 @@ class TechStackCuratorCrew:
         project_type: str,
         priority: str,
         experience_level: str,
+        project_description: str,
         known_tech: List[str] = None,
         disliked_tech: List[str] = None,
         starred_tech: List[str] = None,
@@ -177,17 +178,19 @@ class TechStackCuratorCrew:
 
             research_tech = Task(
                 description=f"""
-                Consider the user's background:
-                - Known/liked technologies: {', '.join(known_tech) if known_tech else 'None'}
-                - Technologies to avoid (must exclude): {', '.join(disliked_tech) if disliked_tech else 'None'}
-                - Priority technologies (must include): {', '.join(starred_tech) if starred_tech else 'None'}
+                Consider the user's technology background and preferences:
+                - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'} (used to understand their comfort level and expertise)
+                - Technologies to strictly avoid: {', '.join(disliked_tech) if disliked_tech else 'None'} (these must NEVER be recommended)
+                - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'} (these have highest priority and MUST be included if relevant)
+                
+                Project Description: {project_description}
                 
                 IMPORTANT RULES:
-                1. Always include and research integration patterns for starred technologies: {', '.join(starred_tech) if starred_tech else 'None'}
-                2. Never recommend technologies from the technologies to avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
-                3. When a starred technology serves a specific purpose (e.g., Vercel for deployment), DO NOT recommend additional tools for the same purpose
-                4. Prioritize known/liked technologies that align with project goals
-                5. Only recommend new technologies when they fill a gap not covered by starred or known technologies
+                1. Priority technologies ({', '.join(starred_tech) if starred_tech else 'None'}) MUST be included if they are relevant to the project type and requirements
+                2. NEVER recommend technologies from the avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                3. Known technologies are for understanding user experience level, not for automatic inclusion
+                4. When a priority technology serves a specific purpose, DO NOT recommend additional tools for the same purpose
+                5. Prioritize technologies that align with the project's core requirements and features
                 6. AVOID FRAMEWORK REDUNDANCY: Do not include React if recommending Next.js, do not include Express if recommending NestJS, etc.
                 
                 PROJECT TYPE SPECIFIC GUIDELINES:
@@ -241,7 +244,7 @@ class TechStackCuratorCrew:
                 TOOL SELECTION RULES:
                 1. Mobile Apps:
                    - ONE primary mobile framework (e.g., React Native)
-                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI) since they're built on top of TailwindCSS
+                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI, etc) since they're built on top of TailwindCSS
                    - ONE state management solution
                    - Minimal backend services unless required
                    - For deployment, use mobile-specific CI/CD like Expo, Fastlane, or App Center
@@ -271,21 +274,20 @@ class TechStackCuratorCrew:
                 description=f"""
                 Create a tech stack recommendation for a {project_type} with {priority} as the main priority.
                 
-                Consider the user's background:
-                - Known/liked technologies: {', '.join(known_tech) if known_tech else 'None'}
-                - Technologies to avoid (must exclude): {', '.join(disliked_tech) if disliked_tech else 'None'}
-                - Priority technologies (must include): {', '.join(starred_tech) if starred_tech else 'None'}
+                Project Description: {project_description}
+                
+                Consider the user's technology background and preferences:
+                - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'} (used to understand their comfort level and expertise)
+                - Technologies to strictly avoid: {', '.join(disliked_tech) if disliked_tech else 'None'} (these must NEVER be recommended)
+                - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'} (these have highest priority and MUST be included if relevant)
                 
                 CRITICAL REQUIREMENTS:
-                1. MUST include ALL starred technologies: {', '.join(starred_tech) if starred_tech else 'None'}
-                2. NEVER include technologies from the technologies to avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
-                3. When a starred technology serves a specific purpose (e.g., Vercel for deployment), DO NOT recommend additional tools for the same purpose
-                4. Prioritize known/liked technologies that align with project goals
-                5. Only recommend new technologies when they fill a gap not covered by starred or known technologies
+                1. Priority technologies ({', '.join(starred_tech) if starred_tech else 'None'}) MUST be included if they are relevant to the project type and requirements
+                2. NEVER include technologies from the avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                3. Known technologies are for understanding user experience level, not for automatic inclusion
+                4. When a priority technology serves a specific purpose, DO NOT recommend additional tools for the same purpose
+                5. Prioritize technologies that align with the project's core requirements and features
                 6. AVOID REDUNDANT FRAMEWORKS: Do not recommend technologies that are already included in other recommended frameworks
-                   - If you recommend Next.js, DO NOT also include React
-                   - If you recommend Angular, DO NOT include additional UI libraries
-                   - If you recommend Express, DO NOT include Node.js separately
                 
                 PROJECT TYPE SPECIFIC GUIDELINES:
                 For Mobile Apps:
@@ -398,21 +400,21 @@ class TechStackCuratorCrew:
 
             result = crew.kickoff()
             
-            # Extract and validate the tech stack data
+            #doing this cause of weird ass response format
             tech_stack_data = self._extract_tech_stack_data(result)
             validated_data = self._validate_response(tech_stack_data)
 
             # Ensure project type is correctly set in the result
-            if "error" not in validated_data:
-                if "type" not in validated_data or not validated_data["type"]:
-                    validated_data["type"] = project_type
-                # Double-check mobile app specific recommendations
-                if self._is_mobile_project(project_type):
-                    validated_data = self._validate_mobile_recommendations(validated_data)
+            # if "error" not in validated_data:
+            #     if "type" not in validated_data or not validated_data["type"]:
+            #         validated_data["type"] = project_type
+            #     # Double-check mobile app specific recommendations
+            #     if self._is_mobile_project(project_type):
+            #         validated_data = self._validate_mobile_recommendations(validated_data)
 
-            if "error" in validated_data:
-                print(f"Error in response: {validated_data['error']}")
-                return validated_data
+            # if "error" in validated_data:
+            #     print(f"Error in response: {validated_data['error']}")
+            #     return validated_data
 
             return validated_data
 
@@ -430,65 +432,65 @@ class TechStackCuratorCrew:
                 "maintain": []
             }
         
-    def _is_mobile_project(self, project_type: str) -> bool:
-        """Check if the project type is mobile-related."""
-        return "mobile" in project_type.lower() or "ios" in project_type.lower() or "android" in project_type.lower()
+    # def _is_mobile_project(self, project_type: str) -> bool:
+    #     """Check if the project type is mobile-related."""
+    #     return "mobile" in project_type.lower() or "ios" in project_type.lower() or "android" in project_type.lower()
         
-    def _validate_mobile_recommendations(self, tech_stack: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate and fix mobile-specific recommendations."""
-        # Ensure we have the right tools for mobile deployment
-        mobile_deployment_tools = ["expo", "fastlane", "app center", "codepush", "appcenter", "firebase app distribution", "testflight"]
-        web_deployment_tools = ["vercel", "netlify", "heroku", "aws amplify"]
+    # def _validate_mobile_recommendations(self, tech_stack: Dict[str, Any]) -> Dict[str, Any]:
+    #     """Validate and fix mobile-specific recommendations."""
+    #     # Ensure we have the right tools for mobile deployment
+    #     mobile_deployment_tools = ["expo", "fastlane", "app center", "codepush", "appcenter", "firebase app distribution", "testflight"]
+    #     web_deployment_tools = ["vercel", "netlify", "heroku", "aws amplify"]
         
-        # Check deployment section
-        if "deploy" in tech_stack and tech_stack["deploy"]:
-            has_mobile_deploy = False
-            has_web_deploy = False
+    #     # Check deployment section
+    #     if "deploy" in tech_stack and tech_stack["deploy"]:
+    #         has_mobile_deploy = False
+    #         has_web_deploy = False
             
-            for deploy_tool in tech_stack["deploy"]:
-                tool_name = deploy_tool.get("name", "").lower()
-                if any(m_tool in tool_name for m_tool in mobile_deployment_tools):
-                    has_mobile_deploy = True
-                if any(w_tool in tool_name for w_tool in web_deployment_tools):
-                    has_web_deploy = True
+    #         for deploy_tool in tech_stack["deploy"]:
+    #             tool_name = deploy_tool.get("name", "").lower()
+    #             if any(m_tool in tool_name for m_tool in mobile_deployment_tools):
+    #                 has_mobile_deploy = True
+    #             if any(w_tool in tool_name for w_tool in web_deployment_tools):
+    #                 has_web_deploy = True
             
-            # If we have web deployment tools but no mobile deployment tools, replace them
-            if has_web_deploy and not has_mobile_deploy:
-                # Remove web deployment tools
-                tech_stack["deploy"] = [
-                    tool for tool in tech_stack["deploy"] 
-                    if not any(w_tool in tool.get("name", "").lower() for w_tool in web_deployment_tools)
-                ]
+    #         # If we have web deployment tools but no mobile deployment tools, replace them
+    #         if has_web_deploy and not has_mobile_deploy:
+    #             # Remove web deployment tools
+    #             tech_stack["deploy"] = [
+    #                 tool for tool in tech_stack["deploy"] 
+    #                 if not any(w_tool in tool.get("name", "").lower() for w_tool in web_deployment_tools)
+    #             ]
                 
-                # If we don't have any deployment tools left, add Expo as default
-                if not tech_stack["deploy"]:
-                    tech_stack["deploy"] = [{
-                        "name": "Expo",
-                        "description": "Expo is a framework and platform for universal React applications, simplifying the build and deployment process for mobile apps. It provides tools for easy app store submissions and over-the-air updates.",
-                        "docLink": "https://docs.expo.dev/"
-                    }]
+    #             # If we don't have any deployment tools left, add Expo as default
+    #             if not tech_stack["deploy"]:
+    #                 tech_stack["deploy"] = [{
+    #                     "name": "Expo",
+    #                     "description": "Expo is a framework and platform for universal React applications, simplifying the build and deployment process for mobile apps. It provides tools for easy app store submissions and over-the-air updates.",
+    #                     "docLink": "https://docs.expo.dev/"
+    #                 }]
         
-        # Ensure we have mobile-specific frontend tools
-        has_react_native = False
-        has_flutter = False
+    #     # Ensure we have mobile-specific frontend tools
+    #     has_react_native = False
+    #     has_flutter = False
         
-        if "frontend" in tech_stack and tech_stack["frontend"]:
-            for frontend_tool in tech_stack["frontend"]:
-                tool_name = frontend_tool.get("name", "").lower()
-                if "react native" in tool_name:
-                    has_react_native = True
-                if "flutter" in tool_name:
-                    has_flutter = True
+    #     if "frontend" in tech_stack and tech_stack["frontend"]:
+    #         for frontend_tool in tech_stack["frontend"]:
+    #             tool_name = frontend_tool.get("name", "").lower()
+    #             if "react native" in tool_name:
+    #                 has_react_native = True
+    #             if "flutter" in tool_name:
+    #                 has_flutter = True
         
-        # If no mobile frameworks found, add React Native as default
-        if not has_react_native and not has_flutter and ("frontend" in tech_stack):
-            tech_stack["frontend"].insert(0, {
-                "name": "React Native",
-                "description": "React Native is a framework for building native mobile applications using React. It allows developers to use JavaScript to build mobile apps that run natively on iOS and Android.",
-                "docLink": "https://reactnative.dev/docs/getting-started"
-            })
+    #     # If no mobile frameworks found, add React Native as default
+    #     if not has_react_native and not has_flutter and ("frontend" in tech_stack):
+    #         tech_stack["frontend"].insert(0, {
+    #             "name": "React Native",
+    #             "description": "React Native is a framework for building native mobile applications using React. It allows developers to use JavaScript to build mobile apps that run natively on iOS and Android.",
+    #             "docLink": "https://reactnative.dev/docs/getting-started"
+    #         })
             
-        return tech_stack
+    #     return tech_stack
     
     def _extract_tech_stack_data(self, result):
         """Extract tech stack data from any format of result."""

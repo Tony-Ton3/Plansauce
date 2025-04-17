@@ -6,7 +6,7 @@ import { SiVite, SiTypescript, SiRedux, SiPrisma } from "react-icons/si";
 
 const PROJECT_CATEGORIES = [
   { id: "all", name: "All", description: "All tasks" },
-  { id: 'plan', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
+  { id: 'planning', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
   { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
   { id: 'frontend', name: 'Frontend', description: 'User interface development, client-side logic' },
   { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
@@ -1189,8 +1189,8 @@ function Tasks() {
   const [error, setError] = useState(null);
   const [isComposing, setIsComposing] = useState(false);
   const [newTask, setNewTask] = useState('');
-  const [currentCategory, setCurrentCategory] = useState('plan');
-  const [newTaskCategory, setNewTaskCategory] = useState('plan');
+  const [currentCategory, setCurrentCategory] = useState('planning');
+  const [newTaskCategory, setNewTaskCategory] = useState('planning');
   const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   const [showTechStack, setShowTechStack] = useState(false);
   
@@ -1221,7 +1221,7 @@ function Tasks() {
       // Initialize category for new tasks if needed
       const tasksWithCategories = currentTasks.map(task => ({
         ...task,
-        category: task.category || 'plan' // Default to planning category if not specified
+        category: task.category || 'planning' // Default to planning category if not specified
       }));
       setTasks(tasksWithCategories);
       setLoading(false);
