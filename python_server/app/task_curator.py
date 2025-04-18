@@ -25,7 +25,7 @@ class TaskGenerationCrew:
             "deploy": self._create_deploy_agent(),
             "maintain": self._create_maintain_agent()
         }
-        
+
         self.category_mapping = {
             "planning": "planning",
             "setup": "setup",

@@ -173,14 +173,15 @@ export const enhanceProjectIdea = async (req, res, next) => {
 
     Project Type: [EXACTLY ONE type from the list above, no extensions or notes]
 
-    Enhanced Description: Write 3-4 sentences that expand on the original idea. Focus on the core purpose, 
-    target users, and main value proposition. Be specific about the type of application and its primary interface.
+    Description: Write 3-4 sentences that expand on the original idea. Focus on the core purpose, 
+    target users, and main value proposition. Do not restate the project type as it's already specified above.
 
-    Key Features:
-    - List 6-8 core features (not technical requirements)
+    Features:
+    - List core features based on the project's scope and complexity
     - Each feature should be a clear user-facing capability
-    - Focus on MVP features first, then nice-to-haves
+    - Focus on MVP features only
     - Keep each point brief (5-8 words)
+    - Include only the most essential features that align with the project's purpose
 
     Keep the total response under 250 words and focus on clarity over comprehensiveness. 
     Do not include arbitrary names or technical implementation details.

@@ -405,16 +405,16 @@ class TechStackCuratorCrew:
             validated_data = self._validate_response(tech_stack_data)
 
             # Ensure project type is correctly set in the result
-            # if "error" not in validated_data:
-            #     if "type" not in validated_data or not validated_data["type"]:
-            #         validated_data["type"] = project_type
-            #     # Double-check mobile app specific recommendations
-            #     if self._is_mobile_project(project_type):
-            #         validated_data = self._validate_mobile_recommendations(validated_data)
+            if "error" not in validated_data:
+                if "type" not in validated_data or not validated_data["type"]:
+                    validated_data["type"] = project_type
+                # Double-check mobile app specific recommendations
+                if self._is_mobile_project(project_type):
+                    validated_data = self._validate_mobile_recommendations(validated_data)
 
-            # if "error" in validated_data:
-            #     print(f"Error in response: {validated_data['error']}")
-            #     return validated_data
+            if "error" in validated_data:
+                print(f"Error in response: {validated_data['error']}")
+                return validated_data
 
             return validated_data
 
@@ -432,65 +432,65 @@ class TechStackCuratorCrew:
                 "maintain": []
             }
         
-    # def _is_mobile_project(self, project_type: str) -> bool:
-    #     """Check if the project type is mobile-related."""
-    #     return "mobile" in project_type.lower() or "ios" in project_type.lower() or "android" in project_type.lower()
+    def _is_mobile_project(self, project_type: str) -> bool:
+        """Check if the project type is mobile-related."""
+        return "mobile" in project_type.lower() or "ios" in project_type.lower() or "android" in project_type.lower()
         
-    # def _validate_mobile_recommendations(self, tech_stack: Dict[str, Any]) -> Dict[str, Any]:
-    #     """Validate and fix mobile-specific recommendations."""
-    #     # Ensure we have the right tools for mobile deployment
-    #     mobile_deployment_tools = ["expo", "fastlane", "app center", "codepush", "appcenter", "firebase app distribution", "testflight"]
-    #     web_deployment_tools = ["vercel", "netlify", "heroku", "aws amplify"]
+    def _validate_mobile_recommendations(self, tech_stack: Dict[str, Any]) -> Dict[str, Any]:
+        """Validate and fix mobile-specific recommendations."""
+        # Ensure we have the right tools for mobile deployment
+        mobile_deployment_tools = ["expo", "fastlane", "app center", "codepush", "appcenter", "firebase app distribution", "testflight"]
+        web_deployment_tools = ["vercel", "netlify", "heroku", "aws amplify"]
         
-    #     # Check deployment section
-    #     if "deploy" in tech_stack and tech_stack["deploy"]:
-    #         has_mobile_deploy = False
-    #         has_web_deploy = False
+        # Check deployment section
+        if "deploy" in tech_stack and tech_stack["deploy"]:
+            has_mobile_deploy = False
+            has_web_deploy = False
             
-    #         for deploy_tool in tech_stack["deploy"]:
-    #             tool_name = deploy_tool.get("name", "").lower()
-    #             if any(m_tool in tool_name for m_tool in mobile_deployment_tools):
-    #                 has_mobile_deploy = True
-    #             if any(w_tool in tool_name for w_tool in web_deployment_tools):
-    #                 has_web_deploy = True
+            for deploy_tool in tech_stack["deploy"]:
+                tool_name = deploy_tool.get("name", "").lower()
+                if any(m_tool in tool_name for m_tool in mobile_deployment_tools):
+                    has_mobile_deploy = True
+                if any(w_tool in tool_name for w_tool in web_deployment_tools):
+                    has_web_deploy = True
             
-    #         # If we have web deployment tools but no mobile deployment tools, replace them
-    #         if has_web_deploy and not has_mobile_deploy:
-    #             # Remove web deployment tools
-    #             tech_stack["deploy"] = [
-    #                 tool for tool in tech_stack["deploy"] 
-    #                 if not any(w_tool in tool.get("name", "").lower() for w_tool in web_deployment_tools)
-    #             ]
+            # If we have web deployment tools but no mobile deployment tools, replace them
+            if has_web_deploy and not has_mobile_deploy:
+                # Remove web deployment tools
+                tech_stack["deploy"] = [
+                    tool for tool in tech_stack["deploy"] 
+                    if not any(w_tool in tool.get("name", "").lower() for w_tool in web_deployment_tools)
+                ]
                 
-    #             # If we don't have any deployment tools left, add Expo as default
-    #             if not tech_stack["deploy"]:
-    #                 tech_stack["deploy"] = [{
-    #                     "name": "Expo",
-    #                     "description": "Expo is a framework and platform for universal React applications, simplifying the build and deployment process for mobile apps. It provides tools for easy app store submissions and over-the-air updates.",
-    #                     "docLink": "https://docs.expo.dev/"
-    #                 }]
+                # If we don't have any deployment tools left, add Expo as default
+                if not tech_stack["deploy"]:
+                    tech_stack["deploy"] = [{
+                        "name": "Expo",
+                        "description": "Expo is a framework and platform for universal React applications, simplifying the build and deployment process for mobile apps. It provides tools for easy app store submissions and over-the-air updates.",
+                        "docLink": "https://docs.expo.dev/"
+                    }]
         
-    #     # Ensure we have mobile-specific frontend tools
-    #     has_react_native = False
-    #     has_flutter = False
+        # Ensure we have mobile-specific frontend tools
+        has_react_native = False
+        has_flutter = False
         
-    #     if "frontend" in tech_stack and tech_stack["frontend"]:
-    #         for frontend_tool in tech_stack["frontend"]:
-    #             tool_name = frontend_tool.get("name", "").lower()
-    #             if "react native" in tool_name:
-    #                 has_react_native = True
-    #             if "flutter" in tool_name:
-    #                 has_flutter = True
+        if "frontend" in tech_stack and tech_stack["frontend"]:
+            for frontend_tool in tech_stack["frontend"]:
+                tool_name = frontend_tool.get("name", "").lower()
+                if "react native" in tool_name:
+                    has_react_native = True
+                if "flutter" in tool_name:
+                    has_flutter = True
         
-    #     # If no mobile frameworks found, add React Native as default
-    #     if not has_react_native and not has_flutter and ("frontend" in tech_stack):
-    #         tech_stack["frontend"].insert(0, {
-    #             "name": "React Native",
-    #             "description": "React Native is a framework for building native mobile applications using React. It allows developers to use JavaScript to build mobile apps that run natively on iOS and Android.",
-    #             "docLink": "https://reactnative.dev/docs/getting-started"
-    #         })
+        # If no mobile frameworks found, add React Native as default
+        if not has_react_native and not has_flutter and ("frontend" in tech_stack):
+            tech_stack["frontend"].insert(0, {
+                "name": "React Native",
+                "description": "React Native is a framework for building native mobile applications using React. It allows developers to use JavaScript to build mobile apps that run natively on iOS and Android.",
+                "docLink": "https://reactnative.dev/docs/getting-started"
+            })
             
-    #     return tech_stack
+        return tech_stack
     
     def _extract_tech_stack_data(self, result):
         """Extract tech stack data from any format of result."""

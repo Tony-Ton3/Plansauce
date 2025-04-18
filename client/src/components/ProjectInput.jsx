@@ -8,10 +8,11 @@ import {
   enhanceProjectIdea,
   getUserProjects,
 } from "../utils/api.jsx";
-import { FaCheck, FaSearch, FaTimes, FaInfoCircle } from "react-icons/fa";
+import { FaCheck, FaTimes, FaInfoCircle } from "react-icons/fa";
 import { BsLightningChargeFill } from "react-icons/bs";
 import { RiRobot2Fill, RiScalesFill } from "react-icons/ri";
 import { PiBookFill } from "react-icons/pi";
+import { HiOutlineGlobeAlt } from "react-icons/hi2";
 import { RotateSpinner } from "react-spinners-kit";
 
 const ProjectInput = () => {
@@ -494,7 +495,7 @@ const ProjectInput = () => {
                       <BsLightningChargeFill className="h-4 w-4 text-brand-yellow" />
                     )}
                     {form.priority?.startsWith("Scalability") && (
-                      <RiScalesFill className="h-4 w-4 text-brand-yellow" />
+                      <HiOutlineGlobeAlt className="h-4 w-4 text-brand-yellow" />
                     )}
                     {form.priority?.startsWith("Learning") && (
                       <PiBookFill className="h-4 w-4 text-brand-yellow" />
@@ -553,7 +554,7 @@ const ProjectInput = () => {
                           }
                         >
                           <div className="flex items-center">
-                            <RiScalesFill className="h-3.5 w-3.5 mr-3 text-brand-yellow" />
+                            <HiOutlineGlobeAlt className="h-3.5 w-3.5 mr-3 text-brand-yellow" />
                             <div>
                               <div className="font-medium text-brand-black">Scalability</div>
                               <div className="text-xs text-brand-gray">
@@ -610,7 +611,10 @@ const ProjectInput = () => {
               </button>
               <button
                 type="submit"
-                className="px-4 py-2 bg-brand-yellow hover:bg-brand-yellow/80 text-brand-black font-medium rounded-lg shadow-lg transition-colors"
+                disabled={showEnhancer}
+                className={`px-4 py-2 bg-brand-yellow hover:bg-brand-yellow/80 text-brand-black font-medium rounded-lg shadow-lg transition-colors ${
+                  showEnhancer ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
                 {isSubmitting ? "Saving..." : "Create project"}
               </button>

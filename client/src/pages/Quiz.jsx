@@ -61,14 +61,11 @@ export default function Quiz() {
     // Get all selected skills
     const selectedTechs = answers.known_tech || [];
     const dislikedTechs = answers.disliked_tech || [];
-    const unavailableTechs = [
-      ...selectedTechs,
-      ...dislikedTechs,
-    ];
-
-    // Filter out suggestions that are already selected
+    
+    // Filter out suggestions that are already selected (case-insensitive)
     let availableSuggestions = allSkills.filter(
-      (tech) => !unavailableTechs.includes(tech)
+      (tech) => !selectedTechs.some(selected => selected.toLowerCase() === tech.toLowerCase()) &&
+                !dislikedTechs.some(disliked => disliked.toLowerCase() === tech.toLowerCase())
     );
 
     // If search text exists, filter by it
@@ -102,23 +99,28 @@ export default function Quiz() {
     const currentSelections = answers[questionId] || [];
     const lowerCaseOption = optionValue.toLowerCase();
     
+    // Check if the technology already exists in the list (case-insensitive)
+    const alreadyExists = currentSelections.some(
+      tech => tech.toLowerCase() === lowerCaseOption
+    );
+    
     // If adding to known_tech, remove from disliked_tech
-    if (questionId === "known_tech" && !currentSelections.includes(lowerCaseOption)) {
+    if (questionId === "known_tech" && !alreadyExists) {
       setAnswers({
         ...answers,
         [questionId]: [...currentSelections, lowerCaseOption],
-        disliked_tech: answers.disliked_tech.filter(tech => tech !== lowerCaseOption)
+        disliked_tech: answers.disliked_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption)
       });
       return;
     }
 
     // If adding to disliked_tech, remove from known_tech and starred_tech
-    if (questionId === "disliked_tech" && !currentSelections.includes(lowerCaseOption)) {
+    if (questionId === "disliked_tech" && !alreadyExists) {
       setAnswers({
         ...answers,
         [questionId]: [...currentSelections, lowerCaseOption],
-        known_tech: answers.known_tech.filter(tech => tech !== lowerCaseOption),
-        starred_tech: answers.starred_tech.filter(tech => tech !== lowerCaseOption)
+        known_tech: answers.known_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption),
+        starred_tech: answers.starred_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption)
       });
       return;
     }
@@ -126,29 +128,29 @@ export default function Quiz() {
     // If removing from either list, just remove it
     setAnswers({
       ...answers,
-      [questionId]: currentSelections.filter((value) => value !== lowerCaseOption)
+      [questionId]: currentSelections.filter((value) => value.toLowerCase() !== lowerCaseOption)
     });
   };
 
   const handleCustomTechKeyDown = (e) => {
     if (e.key === "Enter" && searchText.trim() !== "") {
       e.preventDefault();
-      const enteredTech = searchText.trim().toLowerCase();
+      const enteredTech = searchText.trim();
       
       // If there's exactly one suggestion, use that
       if (quickSuggestions.length === 1) {
-        handleOptionSelect(activeField, quickSuggestions[0].toLowerCase());
+        handleOptionSelect(activeField, quickSuggestions[0]);
         setSearchText("");
         return;
       }
 
-      // Otherwise, check if the entered tech exists in allSkills (case insensitive)
+      // Check if the entered tech exists in allSkills (case insensitive)
       const existingTech = allSkills.find(
-        tech => tech.toLowerCase() === enteredTech
+        tech => tech.toLowerCase() === enteredTech.toLowerCase()
       );
 
-      // If it exists, use the lowercase version, otherwise use the entered text
-      const techToAdd = existingTech ? existingTech.toLowerCase() : enteredTech;
+      // If it exists, use the actual casing from the original list, otherwise use the entered text
+      const techToAdd = existingTech || enteredTech;
       
       // Add the technology
       handleOptionSelect(activeField, techToAdd);
@@ -187,7 +189,7 @@ export default function Quiz() {
     const answer = answers[questionId];
     const lowerCaseOption = optionValue.toLowerCase();
     if (Array.isArray(answer)) {
-      return answer.includes(lowerCaseOption);
+      return answer.some(item => item.toLowerCase() === lowerCaseOption);
     }
     return answer === lowerCaseOption;
   };
@@ -204,8 +206,8 @@ export default function Quiz() {
     const lowerCaseTech = tech.toLowerCase();
     setAnswers(prev => ({
       ...prev,
-      starred_tech: prev.starred_tech.includes(lowerCaseTech)
-        ? prev.starred_tech.filter(t => t !== lowerCaseTech)
+      starred_tech: prev.starred_tech.some(t => t.toLowerCase() === lowerCaseTech)
+        ? prev.starred_tech.filter(t => t.toLowerCase() !== lowerCaseTech)
         : [...prev.starred_tech, lowerCaseTech]
     }));
   };
@@ -218,7 +220,7 @@ export default function Quiz() {
     if (timeDiff < DOUBLE_CLICK_DELAY) {
       // Double click - toggle star (only for known_tech)
       if (field === "known_tech") {
-        if (!answers.known_tech.includes(lowerCaseTech)) {
+        if (!answers.known_tech.some(t => t.toLowerCase() === lowerCaseTech)) {
           // If not selected, select it first
           handleOptionSelect("known_tech", lowerCaseTech);
         }
@@ -340,22 +342,23 @@ export default function Quiz() {
                       key={option}
                       onClick={() => handleTechClick(option, "known_tech")}
                       className={`px-2.5 py-1 text-xs rounded-full flex items-center transition-all hover:scale-110 ${
-                        isOptionSelected("known_tech", option.toLowerCase())
+                        isOptionSelected("known_tech", option)
                           ? "bg-brand-yellow text-brand-black"
                           : "bg-gray-100 text-brand-gray"
                       }`}
                     >
                       {option}
-                      {isOptionSelected("known_tech", option.toLowerCase()) && (
-                        answers.starred_tech.includes(option.toLowerCase()) 
+                      {isOptionSelected("known_tech", option) && (
+                        answers.starred_tech.some(tech => tech.toLowerCase() === option.toLowerCase()) 
                           ? <FaStar className="ml-1 text-brand-black" size={8} />
                           : <FaCheck className="ml-1" size={8} />
                       )}
                     </button>
                   ))}
 
+                  {/* Custom added technologies that aren't in the predefined list */}
                   {answers.known_tech
-                    .filter((tech) => !allSkills.includes(tech))
+                    .filter(tech => !allSkills.some(skill => skill.toLowerCase() === tech.toLowerCase()))
                     .map((tech) => (
                       <button
                         key={tech}
@@ -363,7 +366,7 @@ export default function Quiz() {
                         className="px-2.5 py-1 text-xs rounded-full bg-brand-yellow text-brand-black transition-all hover:scale-110 flex items-center"
                       >
                         {tech}
-                        {answers.starred_tech.includes(tech.toLowerCase()) 
+                        {answers.starred_tech.some(t => t.toLowerCase() === tech.toLowerCase())
                           ? <FaStar className="ml-1 text-brand-black" size={8} />
                           : <FaCheck className="ml-1" size={8} />
                         }
