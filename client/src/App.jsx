@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import Home from "./pages/Home";
+// import Home from "./pages/Home";
 import Landing from "./pages/Landing";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
@@ -33,7 +33,7 @@ export default function App() {
           <Route path="/quiz" element={<Quiz />} />
 
           <Route element={<Layout />}>
-            <Route path="/home" element={<Home />} />
+            {/* <Route path="home" element={<Home />} /> */}
             <Route path="settings" element={<Settings />} />
             <Route path="projectinput" element={<ProjectInput />} />
             <Route path="createdstacks" element={<CreatedStacks />} />

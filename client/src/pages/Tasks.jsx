@@ -2,15 +2,16 @@ import { useState, useRef, useEffect } from "react";
 import { FaCheckCircle, FaRegCircle, FaBox, FaGripLines, 
   FaTimes, FaPlus, FaChevronDown, FaUser, FaChevronRight, 
   FaCode, FaBook, FaLink, FaRocket,  FaDatabase, 
-  FaGraduationCap,  FaWrench, FaCalendarAlt  } from "react-icons/fa";
+  FaGraduationCap,  FaWrench, FaCalendarAlt, FaChevronUp } from "react-icons/fa";
 import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
 import  Subtask  from "../components/Subtask";
 import TaskActionPanel from "../components/TaskActionPanel";
+import { RiCloudyLine } from "react-icons/ri";
 
 const PROJECT_CATEGORIES = [
   { id: "all", name: "All", description: "All tasks" },
-  { id: 'planning', name: 'Plan & Design', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
+  { id: 'planning', name: 'Plan', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
   { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
   { id: 'frontend', name: 'Frontend', description: 'User interface development, client-side logic' },
   { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
@@ -19,70 +20,16 @@ const PROJECT_CATEGORIES = [
   { id: 'maintain', name: 'Maintain', description: 'Monitoring, updates, bug fixes after launch' },
 ];
 
-const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskCompletion, deleteTask }) => {
+const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, deleteTask }) => {
   const [expanded, setExpanded] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
   const [selectedSubtask, setSelectedSubtask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [isDragging, setIsDragging] = useState(false);
-  const [showDropIndicator, setShowDropIndicator] = useState(false);
   const [checkAnimation, setCheckAnimation] = useState(false);
   const ref = useRef(null);
   const contentRef = useRef(null);
   const deleteTimerRef = useRef(null);
-  
-  // //handle drag start
-  const handleDragStart = (e) => {
-    //set the drag data - store the task index
-    e.dataTransfer.setData('text/plain', index.toString());
-    
-    //for Firefox - required for drag to work properly
-    e.dataTransfer.effectAllowed = 'move';
-    
-    //add a small delay to allow the browser to render the ghost image
-    setTimeout(() => {
-      setIsDragging(true);
-    }, 0);
-  };
-  
-  //handle drag end
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    setShowDropIndicator(false);
-  };
-  
-  //handle drag over
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    
-    if (!showDropIndicator) {
-      setShowDropIndicator(true);
-    }
-  };
-  
-  //handle drag leave
-  const handleDragLeave = () => {
-    setShowDropIndicator(false);
-  };
-  
-  //handle drop
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setShowDropIndicator(false);
-    
-    //get the dragged item's index
-    const draggedIndex = parseInt(e.dataTransfer.getData('text/plain'), 10);
-    
-    //don't do anything if dropping on the same item
-    if (draggedIndex === index) {
-      return;
-    }
-    
-    //perform the move
-    moveTask(draggedIndex, index);
-  };
   
   const completedSubtasks = task.subtasks ? task.subtasks.filter(st => st.completed).length : 0;
   const totalSubtasks = task.subtasks ? task.subtasks.length : 0;
@@ -93,16 +40,14 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     setExpanded(!expanded);
   };
   
-  //handle task click - now only expands/collapses
   const handleTaskClick = (e) => {
-    //don't trigger task click when clicking on control buttons
-    if (
-      e.target.closest('button') || 
-      e.target.closest('[role="button"]') || 
-      e.target.closest('[aria-label]')
-    ) {
-      return;
-    }
+    // if (
+    //   e.target.closest('button') || 
+    //   e.target.closest('[role="button"]') || 
+    //   e.target.closest('[aria-label]')
+    // ) {
+    //   return;
+    // }
     
     //simply expand/collapse on click
     setExpanded(!expanded);
@@ -180,46 +125,21 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   };
 
   return (
-    <div 
-      className={`${isDragging ? 'opacity-50' : 'opacity-100'} relative group/task`}
-    >
-      {/* left-side drag handle and add indicator (visible on hover) */}
-      <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center opacity-0 group-hover/task:opacity-100 transition-opacity -ml-10 px-2 gap-2">
-        <div 
-          className="w-4 h-2 bg-gray-800/70 backdrop-blur-sm rounded-full flex items-center justify-center text-gray-400 hover:text-gray-300 hover:bg-gray-700/80 cursor-grab transition-colors"
-          title="Drag to reorder"
-          aria-label="Drag to reorder"
-        >
-          <FaGripLines className="size-3" />
-        </div>
-        <button
-          className="w-4 h-4 bg-brand-yellow/20 rounded-full flex items-center justify-center text-brand-yellow hover:text-brand-yellow hover:bg-brand-yellow/30 transition-colors"
-          title="Add subtask"
-          aria-label="Add subtask"
-          onClick={(e) => {
-            e.stopPropagation();
-            //future subtask implementation
-          }}
-        >
-          <FaPlus className="size-3" />
-        </button>
-      </div>
-
+    <div className="relative group/task">
       <div 
         ref={ref}
-        draggable="true"
-        className={`bg-white border ${deleteConfirm ? 'border-brand-pink/50' : 'border-gray-300'} rounded-lg p-3 mb-1 flex items-center gap-3 ${
-          isDragging ? 'shadow-lg shadow-brand-yellow/10 cursor-grabbing' : (deleteConfirm ? 'shadow-md shadow-brand-pink/10' : 'hover:shadow-md hover:shadow-brand-yellow/5 cursor-grab')
-        } transition-all duration-200 hover:border-gray-400 group`}
+        className={`bg-white ${deleteConfirm ? 'bg-brand-pink/5' : 'hover:bg-gray-50'} rounded-lg px-6 py-2 mb-1 flex items-center gap-6 ${
+          deleteConfirm ? 'shadow-sm shadow-brand-pink/10' : ''
+        } transition-all duration-200 group`}
         onClick={handleTaskClick}
       >
-        {/* task checkbox - very explicitly use the task ID */}
+        {/* task checkbox */}
         <div 
           onDoubleClick={(e) => {
             e.stopPropagation(); 
             handleTaskCompletion(e);
           }}
-          className={`flex-shrink-0 h-8 w-8 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
+          className={`flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
             ${checkAnimation ? 'scale-110 bg-brand-yellow/20' : 'hover:bg-gray-100'}`}
           role="button"
           aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
@@ -228,112 +148,81 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
         >
           {task.completed ? (
             <div className="relative">
-              <FaCheckCircle className="text-xl text-brand-yellow" />
+              <FaCheckCircle className="text-lg text-brand-yellow" />
               <span className={`absolute inset-0 flex items-center justify-center transition-opacity ${checkAnimation ? 'opacity-100' : 'opacity-0'}`}>
-                <span className="animate-ping absolute h-4 w-4 rounded-full bg-brand-yellow opacity-75"></span>
+                <span className="animate-ping absolute h-3 w-3 rounded-full bg-brand-yellow opacity-75"></span>
               </span>
             </div>
           ) : (
             <div className="relative">
-              <FaRegCircle className="text-xl text-brand-gray hover:text-gray-400 transition-colors" />
+              <FaRegCircle className="text-lg text-brand-gray hover:text-gray-400 transition-colors" />
               <span className={`absolute inset-0 flex items-center justify-center text-white transition-transform origin-center ${checkAnimation ? 'scale-100' : 'scale-0'} duration-300`}>
-                <FiCheck className="text-sm" />
+                <FiCheck className="text-xs" />
               </span>
             </div>
           )}
         </div>
         
-        {/* task name - no longer toggles task completion on click */}
-        <div className="flex-grow flex items-center py-1.5 cursor-pointer">
-          <p className={`${task.completed ? 'line-through text-brand-gray' : 'text-brand-black'} text-base mr-2 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
+        {/* task name */}
+        <div className="flex-grow flex items-center cursor-pointer">
+          <p className={`${task.completed ? 'line-through text-brand-gray' : 'text-brand-black'} text-sm mr-6 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
             {task.text}
           </p>
           
-          {/* completion confetti effect - only shows during animation */}
+          {/* completion confetti effect */}
           {checkAnimation && !task.completed && (
-            <div className="absolute left-8 -top-1 overflow-hidden h-8">
-              <div className="animate-confetti-1 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow"></div>
-              <div className="animate-confetti-2 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow delay-75"></div>
-              <div className="animate-confetti-3 absolute w-1.5 h-1.5 rounded-full bg-brand-yellow delay-150"></div>
+            <div className="absolute left-6 -top-1 overflow-hidden h-6">
+              <div className="animate-confetti-1 absolute w-1 h-1 rounded-full bg-brand-yellow"></div>
+              <div className="animate-confetti-2 absolute w-1 h-1 rounded-full bg-brand-yellow delay-75"></div>
+              <div className="animate-confetti-3 absolute w-1 h-1 rounded-full bg-brand-yellow delay-150"></div>
             </div>
           )}
         </div>
         
         {/* right side actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {/* task action buttons - Task Breakdown, Smart Prompt, Resources */}
-          <div className="flex gap-1.5 mr-2">
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleActionButton('breakdown');
-              }}
-              className="p-1.5 text-xs bg-brand-yellow/10 text-brand-yellow rounded-full hover:bg-brand-yellow/20 transition-colors group/tooltip relative"
-              aria-label="Task Breakdown"
-              title="Task Breakdown"
-            >
-              <FaCode />
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Task Breakdown</span>
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleActionButton('prompt');
-              }}
-              className="p-1.5 text-xs bg-brand-pink/10 text-brand-pink rounded-full hover:bg-brand-pink/20 transition-colors group/tooltip relative"
-              aria-label="Smart Prompt"
-              title="Smart Prompt"
-            >
-              <FaBook />
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Smart Prompt</span>
-            </button>
-            <button 
-              onClick={(e) => {
-                e.stopPropagation();
-                handleActionButton('resources');
-              }}
-              className="p-1.5 text-xs bg-brand-yellow/10 text-brand-yellow rounded-full hover:bg-brand-yellow/20 transition-colors group/tooltip relative"
-              aria-label="Resources"
-              title="Resources"
-            >
-              <FaLink />
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Resources</span>
-            </button>
-          </div>
+          {/* task action button - Get Prompt */}
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleActionButton('prompt');
+            }}
+            className="px-2 py-1 rounded-md text-xs bg-brand-pink/10 text-brand-pink hover:bg-brand-pink/20 transition-colors group/tooltip relative flex items-center gap-1 opacity-0 group-hover/task:opacity-100"
+          >
+            <span>Get Prompt</span>
+          </button>
         
           {/* subtask indicator and toggle */}
           {task.subtasks && task.subtasks.length > 0 && (
             <button 
               onClick={toggleExpand}
-              className="flex items-center gap-1 text-xs text-brand-gray hover:text-brand-black transition-colors group/tooltip relative"
+              className="flex items-center gap-1.5 min-w-[40px] justify-end text-xs text-brand-gray hover:text-brand-black transition-colors group/tooltip relative"
               title={expanded ? "Hide subtasks" : "Show subtasks"}
             >
-              <span>{completedSubtasks}/{totalSubtasks}</span>
-              <span>
+              <span className="flex items-center gap-1">
+                <span className="text-brand-gray/60">{completedSubtasks}/{totalSubtasks}</span>
                 {expanded ? 
                   <FaChevronDown className="text-xs" /> : 
                   <FaChevronRight className="text-xs" />
                 }
               </span>
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">{expanded ? "Hide subtasks" : "Show subtasks"}</span>
             </button>
           )}
           
           {/* task controls */}
           {!deleteConfirm ? (
-            <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity pl-1">
               <button 
                 onClick={handleDeleteClick}
-                className="text-brand-gray hover:text-brand-pink transition-colors group/tooltip relative"
+                className="text-brand-gray hover:text-brand-pink transition-colors"
                 aria-label="Delete task"
                 title="Delete task"
               >
-                <FaTimes />
-                <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap bg-gray-800 text-gray-200 text-xs px-2 py-1 rounded opacity-0 group-hover/tooltip:opacity-100 pointer-events-none transition-opacity duration-150">Delete task</span>
+                <FaTimes className="text-xs" />
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2 animate-pulse">
+            <div className="flex items-center gap-1 animate-pulse pl-1">
               <button
                 onClick={cancelDelete}
                 className="px-2 py-1 text-xs font-medium text-brand-black bg-gray-100 rounded hover:bg-gray-200"
@@ -350,30 +239,27 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
           )}
         </div>
       </div>
-
-      {/* bottom drop indicator line */}
-      {showDropIndicator && (
-        <div className="absolute bottom-0 left-0 w-full h-1 bg-brand-yellow translate-y-0.5 rounded-full shadow-[0_0_8px_rgba(255,200,0,0.5)] z-10" />
-      )}
       
       {/* subtasks accordion panel */}
       {task.subtasks && task.subtasks.length > 0 && (
         <div 
           ref={contentRef}
-          className={`overflow-hidden transition-all duration-300 mb-3 ml-6 pl-4 border-l border-gray-300 ${
-            expanded ? 'max-h-96 py-2' : 'max-h-0 py-0 border-l-transparent'
+          className={`overflow-hidden transition-all duration-300 ${
+            expanded ? 'max-h-96 mt-1' : 'max-h-0'
           }`}
         >
-          {task.subtasks.map((subtask, i) => (
-            <Subtask
-              key={subtask.id}
-              subtask={subtask}
-              parentId={task.id}
-              parentText={task.text}
-              toggleSubtaskCompletion={toggleSubtaskCompletion}
-              onSelectSubtask={handleSelectSubtask}
-            />
-          ))}
+          <div className="pl-8 space-y-0.5">
+            {task.subtasks.map((subtask, i) => (
+              <Subtask
+                key={subtask.id}
+                subtask={subtask}
+                parentId={task.id}
+                parentText={task.text}
+                toggleSubtaskCompletion={toggleSubtaskCompletion}
+                onSelectSubtask={handleSelectSubtask}
+              />
+            ))}
+          </div>
         </div>
       )}
 
@@ -392,32 +278,62 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
 
 // Phase Navigation component with counts - rename to CategoryNavigation
 const CategoryNavigation = ({ categories, currentCategory, onChange}) => {
+  const getCategoryStyle = (categoryId) => {
+    switch (categoryId) {
+      case 'planning':
+        return 'bg-blue-500/10 text-blue-500';
+      case 'setup':
+        return 'bg-purple-500/10 text-purple-500';
+      case 'frontend':
+        return 'bg-blue-400/10 text-blue-400';
+      case 'backend':
+        return 'bg-indigo-500/10 text-indigo-500';
+      case 'testing':
+        return 'bg-amber-500/10 text-amber-500';
+      case 'deploy':
+        return 'bg-red-500/10 text-red-500';
+      case 'maintain':
+        return 'bg-gray-500/10 text-gray-500';
+      default:
+        return 'bg-gray-100/80 text-gray-900';
+    }
+  };
+
   return (
-    <div className="w-full bg-white">
-      <div className="max-w-3xl mx-auto flex items-center gap-6 overflow-x-auto px-4 relative">
-        {/* Top border that spans full width */}
-        <div className="absolute top-0 inset-x-0 h-px bg-gray-200" />
-        {/* Bottom border that spans full width */}
-        <div className="absolute bottom-0 inset-x-0 h-px bg-gray-200" />
+    <div className="w-full">
+      <div className="max-w-3xl mx-auto flex items-center gap-2 px-8 py-1">
+        {/* All category button */}
+        <button
+          onClick={() => onChange("all")}
+          className={`py-2 px-3 text-sm font-medium rounded-md transition-colors whitespace-nowrap ${
+            currentCategory === "all"
+              ? 'bg-gray-100/80 text-gray-900'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/80'
+          }`}
+        >
+          All Tasks
+        </button>
+
+        {/* Separator */}
+        <div className="h-6 w-px bg-gray-200/80 mx-2" />
         
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            onClick={() => onChange(category.id)}
-            className={`relative py-2 text-sm font-medium transition-colors whitespace-nowrap ${
-              currentCategory === category.id 
-                ? 'text-gray-900'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-            title={category.description}
-          >
-            <span>{category.name}</span>
-            {/* Active indicator line */}
-            <span className={`absolute bottom-0 left-0 w-full h-0.5 bg-gray-900 transition-opacity ${
-              currentCategory === category.id ? 'opacity-100' : 'opacity-0'
-            }`} />
-          </button>
-        ))}
+        {/* Other categories */}
+        <div className="flex items-center gap-1 overflow-x-auto">
+          {categories.filter(category => category.id !== "all").map((category) => (
+            <button
+              key={category.id}
+              onClick={() => onChange(category.id)}
+              className={`relative py-2 px-3 text-sm font-medium transition-colors whitespace-nowrap rounded-md ${
+                currentCategory === category.id 
+                  ? getCategoryStyle(category.id)
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50/80'
+              }`}
+              title={category.description}
+            >
+              {category.name}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -562,7 +478,7 @@ const ResourcesModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div ref={modalRef} className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
+      <div ref={modalRef} className="bg-white rounded-2xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">Your Personalized Resources</h2>
@@ -627,6 +543,7 @@ function Tasks() {
   const [newTaskCategory, setNewTaskCategory] = useState('planning');
   const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   const [showTechStack, setShowTechStack] = useState(false);
+  const [showFullDescription, setShowFullDescription] = useState(false);
   
   const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
   const { currentProject } = useSelector((state) => state.projects);
@@ -748,21 +665,6 @@ function Tasks() {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
   
-  const moveTask = (fromIndex, toIndex) => {
-    setTasks(prevTasks => {
-      // Create a copy of the tasks array
-      const updatedTasks = [...prevTasks];
-      
-      // Remove the task from the original position
-      const [movedTask] = updatedTasks.splice(fromIndex, 1);
-      
-      // Insert the task at the new position
-      updatedTasks.splice(toIndex, 0, movedTask);
-      
-      return updatedTasks;
-    });
-  };
-  
   const addNewTask = (e) => {
     e.preventDefault();
     if (!newTask.trim()) return;
@@ -831,22 +733,63 @@ function Tasks() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      <header className="sticky top-0 z-20 bg-white/70 backdrop-blur-xl">
-        <div className="max-w-3xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <h1 className="text-4xl font-bold text-brand-black">
-              {currentProject?.name}
-            </h1>
-            <button
-              onClick={() => setShowTechStack(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-yellow"
-            >
-              <FaRocket className="text-brand-yellow text-sm" />
-              <span>See Resources</span>
-            </button>
+      {/* Wrapper for both header and nav to handle sticky behavior together */}
+      <div className="sticky top-0 z-30">
+        <div className="bg-white/70 backdrop-blur-xl border-b border-gray-100">
+          <div className="max-w-5xl mx-auto px-8 py-4">
+            <div className="flex items-center justify-between">
+              <div 
+                className="flex flex-col max-w-3xl flex-grow cursor-pointer group/expand"
+                onClick={() => setShowFullDescription(!showFullDescription)}
+              >
+                <div className="flex items-center justify-between">
+                  <h1 className="text-3xl font-semibold text-gray-900 flex items-center gap-3">
+                    {currentProject?.name}
+                    <span className="text-gray-400 group-hover/expand:text-gray-600 transition-colors">
+                      {showFullDescription ? (
+                        <FaChevronDown className="mt-1 text-lg" />
+                      ) : (
+                        <FaChevronRight className="mt-1 text-lg" />
+                      )}
+                    </span>
+                  </h1>
+                </div>
+                <div className={`overflow-hidden transition-all duration-300 ${showFullDescription ? 'max-h-32' : 'max-h-6'}`}>
+                  <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                    {currentProject?.description}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTechStack(true);
+                }}
+                className="group relative inline-flex items-center gap-3 px-5 py-2.5 text-sm font-medium bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100 hover:border-blue-200 transition-all duration-300 shadow-sm hover:shadow flex-shrink-0 overflow-hidden ml-4"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-400/0 via-blue-400/5 to-indigo-400/0 group-hover:via-blue-400/10 transition-all duration-500"></div>
+                <div className="relative flex items-center gap-3">
+                  <span className="flex items-center justify-center w-6 h-6 rounded-lg">
+                    <RiCloudyLine className="text-blue-500 text-xl" />
+                  </span>
+                  <span className="text-gray-600 group-hover:text-gray-800">Resources</span>
+                </div>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+
+        {/* Category Navigation - now part of the sticky header wrapper */}
+        {!loading && !error && (
+          <div className="bg-white/50 backdrop-blur-lg border-b border-gray-100/50">
+            <CategoryNavigation
+              categories={PROJECT_CATEGORIES} 
+              currentCategory={currentCategory} 
+              onChange={setCurrentCategory}
+            />
+          </div>
+        )}
+      </div>
       
       <ResourcesModal 
         isOpen={showTechStack} 
@@ -859,15 +802,7 @@ function Tasks() {
         currentProject={currentProject}
       />
       
-      {!loading && !error && (
-        <CategoryNavigation
-          categories={PROJECT_CATEGORIES} 
-          currentCategory={currentCategory} 
-          onChange={setCurrentCategory}
-        />
-      )}
-        
-      <main className="flex-grow w-full max-w-3xl mx-auto px-4 py-6 pb-16">
+      <main className="flex-grow w-full max-w-5xl mx-auto px-8 py-6">
         {loading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-brand-yellow animate-spin mr-2">
@@ -890,20 +825,83 @@ function Tasks() {
           </div>
         ) : (
           <>
-            <div className="bg-white/30 border border-gray-100 rounded-md p-2 mb-6 min-h-[400px]">
+            <div className="bg-white/30 p-2 mb-6 min-h-[400px]">
               {currentCategoryTasks.length > 0 ? (
-                <div className="space-y-1">
-                  {currentCategoryTasks.map((task) => (
-                    <Task
-                      key={task.id}
-                      task={task}
-                      index={tasks.findIndex(t => t.id === task.id)}
-                      moveTask={moveTask}
-                      toggleTaskCompletion={toggleTaskCompletion}
-                      toggleSubtaskCompletion={toggleSubtaskCompletion}
-                      deleteTask={deleteTask}
-                    />
-                  ))}
+                <div className="space-y-6">
+                  {currentCategory === 'all' ? (
+                    // Group tasks by category when "All" is selected
+                    PROJECT_CATEGORIES.filter(category => category.id !== 'all').map(category => {
+                      const categoryTasks = tasks.filter(task => task.category === category.id);
+                      if (categoryTasks.length === 0) return null;
+                      
+                      const completedCount = categoryTasks.filter(task => task.completed).length;
+                      
+                      return (
+                        <div key={category.id} className="space-y-1">
+                          <div className="flex items-center justify-between mb-2 group">
+                            <div className="flex items-center gap-3">
+                              <h2 className="text-lg font-medium text-gray-900">
+                                {category.name}
+                              </h2>
+                            </div>
+                            <div className="h-1 flex-grow mx-4 rounded-full bg-gray-100 overflow-hidden">
+                              <div 
+                                className="h-full bg-blue-500/20 rounded-full transition-all duration-300"
+                                style={{ width: `${(completedCount / categoryTasks.length) * 100}%` }}
+                              />
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {completedCount}/{categoryTasks.length} completed
+                            </div>
+                          </div>
+                          <div className="space-y-1 pl-1">
+                            {categoryTasks.map((task) => (
+                              <Task
+                                key={task.id}
+                                task={task}
+                                index={tasks.findIndex(t => t.id === task.id)}
+                                toggleTaskCompletion={toggleTaskCompletion}
+                                toggleSubtaskCompletion={toggleSubtaskCompletion}
+                                deleteTask={deleteTask}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })
+                  ) : (
+                    // Single category view with header
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between mb-2 group">
+                        <div className="flex items-center gap-3">
+                          <h2 className="text-lg font-medium text-gray-900">
+                            {PROJECT_CATEGORIES.find(cat => cat.id === currentCategory)?.name}
+                          </h2>
+                        </div>
+                        <div className="h-1 flex-grow mx-4 rounded-full bg-gray-100 overflow-hidden">
+                          <div 
+                            className="h-full bg-blue-500/20 rounded-full transition-all duration-300"
+                            style={{ width: `${(completedTasksCount / currentCategoryTasks.length) * 100}%` }}
+                          />
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {completedTasksCount}/{currentCategoryTasks.length} completed
+                        </div>
+                      </div>
+                      <div className="space-y-1 pl-1">
+                        {currentCategoryTasks.map((task) => (
+                          <Task
+                            key={task.id}
+                            task={task}
+                            index={tasks.findIndex(t => t.id === task.id)}
+                            toggleTaskCompletion={toggleTaskCompletion}
+                            toggleSubtaskCompletion={toggleSubtaskCompletion}
+                            deleteTask={deleteTask}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <CategoryEmptyState category={currentCategory} setIsComposing={setIsComposing} />
@@ -912,89 +910,6 @@ function Tasks() {
           </>
         )}
       </main>
-        
-      {/* Compose area - Add task dialog */}
-      {/* {isComposing && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-gray-300 rounded-xl shadow-xl w-full max-w-lg animate-fadeIn">
-            <form onSubmit={addNewTask}>
-              <div className="p-6 space-y-4">
-                <h2 className="text-xl font-semibold text-brand-black">Create New Task</h2>
-                
-                <div>
-                  <label htmlFor="taskTitle" className="block text-sm font-medium text-brand-gray mb-1">
-                    Task Title
-                  </label>
-                  <input
-                    id="taskTitle"
-                    type="text"
-                    value={newTask}
-                    onChange={(e) => setNewTask(e.target.value)}
-                    placeholder="What needs to be done?"
-                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-brand-black placeholder-brand-gray focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent"
-                    autoFocus
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="taskCategory" className="block text-sm font-medium text-brand-gray mb-1">
-                    Task Category
-                  </label>
-                  <select
-                    id="taskCategory"
-                    value={newTaskCategory}
-                    onChange={(e) => setNewTaskCategory(e.target.value)}
-                    className="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 text-brand-black focus:outline-none focus:ring-2 focus:ring-brand-yellow focus:border-transparent"
-                  >
-                    {PROJECT_CATEGORIES.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-sm text-brand-gray">
-                    {PROJECT_CATEGORIES.find(c => c.id === newTaskCategory)?.description}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-300 px-6 py-4 flex justify-end space-x-3">
-                <button 
-                  type="button" 
-                  onClick={() => setIsComposing(false)}
-                  className="px-4 py-2 text-brand-gray hover:text-brand-black transition-colors"
-                >
-                  Cancel
-                </button>
-                <button 
-                  type="submit"
-                  disabled={!newTask.trim()}
-                  className={`px-4 py-2 rounded-lg font-medium ${
-                    newTask.trim() 
-                      ? 'bg-brand-yellow text-brand-black hover:bg-brand-yellow/90 shadow-lg shadow-brand-yellow/20' 
-                      : 'bg-gray-200 text-brand-gray cursor-not-allowed'
-                  }`}
-                >
-                  Create Task
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )} */}
-        
-      {/* {!isComposing && (
-        <button
-          onClick={() => {
-            setNewTaskCategory(currentCategory); // Set the default category to current category
-            setIsComposing(true);
-          }}
-          className="fixed right-6 bottom-6 bg-brand-yellow text-brand-black p-4 rounded-full shadow-lg shadow-brand-yellow/30 hover:bg-brand-yellow/90 transition-colors z-10"
-          aria-label="Add new task"
-        >
-          <FaPlus />
-        </button>
-      )} */}
     </div>
   );
 }

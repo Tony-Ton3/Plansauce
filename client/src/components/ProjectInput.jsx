@@ -14,6 +14,7 @@ import { RiRobot2Fill, RiScalesFill } from "react-icons/ri";
 import { PiBookFill } from "react-icons/pi";
 import { HiOutlineGlobeAlt } from "react-icons/hi2";
 import { RotateSpinner } from "react-spinners-kit";
+import { BarLoader } from "react-spinners";
 
 const ProjectInput = () => {
   const [form, setForm] = useState(() => {
@@ -270,7 +271,7 @@ const ProjectInput = () => {
     return (
       <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
         <div className="flex flex-col justify-center items-center bg-brand-wite rounded-lg p-8 text-center max-w-md">
-          <RotateSpinner size={50} color="#fcc700" loading={isSubmitting} />
+          <BarLoader color="#fcc700" loading={isSubmitting} />
           <h2 className="px-3 py-2 text-xl font-bold text-brand-black mt-4">
             Creating your project...
           </h2>
