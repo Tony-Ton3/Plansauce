@@ -5,7 +5,7 @@ import { errorHandler } from "../utils/error.js";
 
 export const test = (req, res, next) => {
   return res.status(200).json({ message: "Test successful" });
-}
+};
 
 export const signout = (req, res, next) => {
   try {
@@ -108,4 +108,17 @@ export const updateUserBackground = async (req, res, next) => {
   } catch (error) {
     next(errorHandler(500, "Error updating quiz answers"));
   }
-}
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    await User.findByIdAndDelete(req.user.id);
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    next(errorHandler(500, "Error deleting user"));
+  }
+};

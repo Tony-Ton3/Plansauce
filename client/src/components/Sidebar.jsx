@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { TbStack3Filled } from "react-icons/tb";
-import { FaPlus, FaFolder } from "react-icons/fa";
+import { FaPlus, FaFolder, FaCog, FaSignOutAlt } from "react-icons/fa";
 import { signoutSuccess } from "../redux/userSlice";
 import { setTasksSuccess } from "../redux/taskSlice";
 import { setProjectsSuccess, setCurrentProject } from "../redux/projectSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { getUserProjects, getProjectWithTasks } from "../utils/api";
 import { setProjectsStart, setProjectsFailure } from "../redux/projectSlice";
+import { TbBottleFilled } from "react-icons/tb";
 
 function Sidebar() {
   const navigate = useNavigate();
@@ -113,10 +114,10 @@ function Sidebar() {
     >
       <div className="flex items-center ml-1 p-4">
         <div className="min-w-[30px] flex justify-center">
-          <TbStack3Filled className="text-2xl text-brand-yellow" />
+          <TbBottleFilled className="text-3xl text-brand-yellow" />
         </div>
-        <div className="ml-3 text-xl whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          LearnStack
+        <div className="ml-3 font-bold text-xl whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+          Plansauce
         </div>
       </div>
 
@@ -173,9 +174,9 @@ function Sidebar() {
         </div>
       </div>
 
-      <div className="mt-auto p-3 border-t border-gray-200 flex items-center relative">
+      <div className="mt-auto">
         <div
-          className="flex items-center cursor-pointer w-full"
+          className="p-4 flex items-center cursor-pointer w-full"
           onClick={(e) => {
             e.stopPropagation();
             if (isHovered) {
@@ -183,32 +184,36 @@ function Sidebar() {
             }
           }}
         >
-          <div className="min-w-[30px] flex justify-center">
-            <div className="w-8 h-8 rounded-md bg-brand-yellow flex items-center justify-center text-sm font-medium text-brand-black">
+          <div className="min-w-[30px] w-[30px] flex-shrink-0 flex justify-center">
+            <div className="size-8 rounded-md bg-brand-yellow flex items-center justify-center text-sm font-medium text-brand-black flex-shrink-0">
               {currentUser?.name?.charAt(0).toUpperCase()}
             </div>
           </div>
-          <div className="ml-3 whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-            <div className="text-sm font-normal truncate text-brand-black">{currentUser?.name}</div>
+          <div className="ml-5 whitespace-nowrap overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+            <div className="text-lg font-bold truncate text-brand-black">
+              {currentUser?.name}
+            </div>
           </div>
         </div>
 
         {showPopup && isHovered && (
           <div
-            className="absolute bottom-16 left-1 bg-white rounded-md shadow-lg p-1 min-w-[150px] z-50 border border-gray-200"
+            className="absolute bottom-[60px] left-4 bg-white rounded-md shadow-lg p-1 min-w-[150px] z-50 border border-gray-200"
             onClick={(e) => e.stopPropagation()}
           >
             <div
-              className="flex items-center px-3 py-1 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
-              onClick={() => navigate("/profile")}
+              className="flex items-center px-3 py-2 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
+              onClick={() => navigate("/settings")}
             >
-              <span>Profile</span>
+              <FaCog className="text-lg" />
+              <span className="ml-2">Settings</span>
             </div>
             <div
-              className="flex items-center px-3 py-1 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
+              className="flex items-center px-3 py-2 text-brand-gray hover:bg-gray-100 hover:text-brand-black rounded cursor-pointer transition-colors"
               onClick={handleSignOut}
             >
-              <span>Sign out</span>
+              <FaSignOutAlt className="text-lg" />
+              <span className="ml-2">Sign out</span>
             </div>
           </div>
         )}

@@ -1,8 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { FaCheckCircle, FaRegCircle, FaGripLines, FaTimes, FaPlus, FaChevronDown, FaChevronRight, FaCode, FaBook, FaLink, FaTimes as FaClose, FaRocket, FaReact, FaNode, FaDatabase, FaChartLine, FaGraduationCap, FaCog } from "react-icons/fa";
+import { FaCheckCircle, FaRegCircle, FaBox, FaGripLines, 
+  FaTimes, FaPlus, FaChevronDown, FaUser, FaChevronRight, 
+  FaCode, FaBook, FaLink, FaRocket,  FaDatabase, 
+  FaGraduationCap,  FaWrench, FaCalendarAlt  } from "react-icons/fa";
 import { FiCheck } from "react-icons/fi";
 import { useSelector, useDispatch } from "react-redux";
-import { SiVite, SiTypescript, SiRedux, SiPrisma } from "react-icons/si";
+import  Subtask  from "../components/Subtask";
+import TaskActionPanel from "../components/TaskActionPanel";
 
 const PROJECT_CATEGORIES = [
   { id: "all", name: "All", description: "All tasks" },
@@ -15,530 +19,6 @@ const PROJECT_CATEGORIES = [
   { id: 'maintain', name: 'Maintain', description: 'Monitoring, updates, bug fixes after launch' },
 ];
 
-const Subtask = ({ subtask, parentId, parentText, toggleSubtaskCompletion, onSelectSubtask }) => {
-  const handleActionClick = (e, action) => {
-    e.stopPropagation();
-    onSelectSubtask(subtask, parentId, parentText, action);
-  };
-
-  const handleSubtaskCompletion = (e) => {
-    e.stopPropagation();
-    toggleSubtaskCompletion(parentId, subtask.id);
-  };
-
-  const handleSubtaskClick = () => {
-    onSelectSubtask(subtask, parentId, parentText, null);
-  };
-
-  return (
-    <div 
-      className="flex items-center gap-3 py-2 pl-8 relative group hover:bg-gray-800/30 rounded-md transition-colors cursor-pointer"
-      onClick={handleSubtaskClick}
-    >
-      <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
-      <div className="absolute left-4 top-1/2 w-4 h-0.5 bg-gray-800 group-hover:bg-gray-700"></div>
-      <div
-        onDoubleClick={handleSubtaskCompletion}
-        onClick={(e) => e.stopPropagation()}
-        className="flex-shrink-0 h-7 w-7 flex items-center justify-center cursor-pointer hover:bg-gray-800/50 rounded-full transition-colors"
-        role="button"
-        aria-label={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
-        title={subtask.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
-      >
-        {subtask.completed ? (
-          <FaCheckCircle className="text-brand-yellow" />
-        ) : (
-          <FaRegCircle className="hover:text-gray-200" />
-        )}
-      </div>
-      
-      <div 
-        className="flex-grow flex items-center justify-between cursor-pointer"
-      >
-        <p className={`${subtask.completed ? 'line-through' : ''} text-sm`}>
-          {subtask.text}
-        </p>
-        
-        {/* subtask action buttons - Implementation Guide, Technical Prompt, Development Resources */}
-        {/* <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity pr-2" onClick={e => e.stopPropagation()}>
-          <button 
-            onClick={(e) => handleActionClick(e, 'implementation')}
-            className="text-xs text-gray-400 hover:text-blue-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="Implementation Guide"
-            title="Implementation Guide"
-          >
-            <FaCode />
-          </button>
-          <button 
-            onClick={(e) => handleActionClick(e, 'technical')}
-            className="text-xs text-gray-400 hover:text-purple-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="Technical Prompt"
-            title="Technical Prompt"
-          >
-            <FaBook />
-          </button>
-          <button 
-            onClick={(e) => handleActionClick(e, 'development')}
-            className="text-xs text-gray-400 hover:text-green-400 transition-colors p-1.5 hover:bg-gray-800/50 rounded-full" 
-            aria-label="Development Resources"
-            title="Development Resources"
-          >
-            <FaLink />
-          </button>
-        </div> */}
-      </div>
-    </div>
-  );
-};
-
-//taskactionpanel component
-const TaskActionPanel = ({ isOpen, onClose, action, task, subtask, parentTask }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isRendered, setIsRendered] = useState(false);
-  
-  //handle animation timing
-  useEffect(() => {
-    if (isOpen) {
-      setIsRendered(true);
-      //trigger animation in next frame
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setIsVisible(true);
-        });
-      });
-    } else {
-      setIsVisible(false);
-      //wait for animation to complete before unmounting
-      const timer = setTimeout(() => {
-        setIsRendered(false);
-      }, 300); //match transition duration
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-  
-  if (!isRendered) return null;
-
-  const isSubtask = !!subtask;
-  const currentItem = subtask || task;
-  
-  let actionIcon, actionColor, actionTitle, actionDescription;
-  
-  if (isSubtask) {
-    switch (action) {
-      case 'implementation':
-        actionIcon = <FaCode className="text-blue-400 text-sm" />;
-        actionColor = "blue";
-        actionTitle = "Implementation Guide";
-        actionDescription = `Step-by-step guide for implementing ${currentItem.text}`;
-        break;
-      case 'technical':
-        actionIcon = <FaBook className="text-purple-400 text-sm" />;
-        actionColor = "purple";
-        actionTitle = "Technical Prompt";
-        actionDescription = `Specific code-focused prompts for ${currentItem.text}`;
-        break;
-      case 'development':
-        actionIcon = <FaLink className="text-green-400 text-sm" />;
-        actionColor = "green";
-        actionTitle = "Development Resources";
-        actionDescription = `API documentation and code references for ${currentItem.text}`;
-        break;
-      default:
-        actionIcon = <FaCode className="text-blue-400 text-sm" />;
-        actionColor = "blue";
-        actionTitle = "Implementation Guide";
-        actionDescription = `Step-by-step guide for implementing ${currentItem.text}`;
-    }
-  } else {
-    switch (action) {
-      case 'breakdown':
-        actionIcon = <FaCode className="text-blue-400 text-sm" />;
-        actionColor = "blue";
-        actionTitle = "Task Breakdown";
-        actionDescription = `Why this task matters and what it accomplishes`;
-        break;
-      case 'prompt':
-        actionIcon = <FaBook className="text-purple-400 text-sm" />;
-        actionColor = "purple";
-        actionTitle = "Smart Prompt";
-        actionDescription = `Strategic planning prompts for ${currentItem.text}`;
-        break;
-      case 'resources':
-        actionIcon = <FaLink className="text-green-400 text-sm" />;
-        actionColor = "green";
-        actionTitle = "Resources";
-        actionDescription = `Reference materials for ${currentItem.text}`;
-        break;
-      default:
-        actionIcon = <FaCode className="text-blue-400 text-sm" />;
-        actionColor = "blue";
-        actionTitle = "Task Breakdown";
-        actionDescription = `Why this task matters and what it accomplishes`;
-    }
-  }
-  
-  //use a sliding panel from the right side
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden">
-      {/* semi-transparent backdrop */}
-      <div 
-        className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
-          isVisible ? 'opacity-100' : 'opacity-0'
-        }`}
-        onClick={onClose}
-      />
-      
-      {/* notion-like panel with slide animation */}
-      <div className={`absolute inset-y-0 right-0 max-w-4xl w-full bg-gray-900 shadow-2xl shadow-blue-500/5 flex flex-col overflow-hidden transform transition-transform duration-300 ease-out ${
-        isVisible ? 'translate-x-0' : 'translate-x-full'
-      }`}>
-        {/* panel header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
-          <div className="flex flex-col gap-1">
-            {/* breadcrumb navigation */}
-            {isSubtask && parentTask && (
-              <div className="flex items-center text-sm text-gray-400">
-                <span>{parentTask}</span>
-                <span className="mx-2">›</span>
-                <span className="text-gray-200">{subtask.text}</span>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-3">
-              <div className={`w-6 h-6 bg-${actionColor}-500/20 rounded-full flex items-center justify-center`}>
-                {actionIcon}
-              </div>
-              <h2 className="text-lg font-semibold text-gray-100">
-                {actionTitle}: {currentItem.text}
-              </h2>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-300 p-2 rounded-full hover:bg-gray-800/50"
-          >
-            <FaClose />
-          </button>
-        </div>
-        
-        {/* tabs for different actions */}
-        <div className="border-b border-gray-800">
-          <div className="flex px-6">
-            {isSubtask ? (
-              <>
-                <button className={`py-3 px-4 border-b-2 ${action === 'implementation' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Implementation Guide
-                </button>
-                <button className={`py-3 px-4 border-b-2 ${action === 'technical' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Technical Prompt
-                </button>
-                <button className={`py-3 px-4 border-b-2 ${action === 'development' ? 'border-green-500 text-green-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Development Resources
-                </button>
-              </>
-            ) : (
-              <>
-                <button className={`py-3 px-4 border-b-2 ${action === 'breakdown' ? 'border-blue-500 text-blue-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Task Breakdown
-                </button>
-                <button className={`py-3 px-4 border-b-2 ${action === 'prompt' ? 'border-purple-500 text-purple-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Smart Prompt
-                </button>
-                <button className={`py-3 px-4 border-b-2 ${action === 'resources' ? 'border-green-500 text-green-400' : 'border-transparent text-gray-500 hover:text-gray-400'}`}>
-                  Resources
-                </button>
-              </>
-            )}
-          </div>
-        </div>
-        
-        {/* panel content */}
-        <div className="flex-1 overflow-y-auto p-6">
-          {(() => {
-            if (isSubtask) {
-              switch (action) {
-                case 'implementation':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Implementation Guide</h3>
-                        <p className="text-gray-400 mt-2">
-                          Step-by-step guide for implementing {currentItem.text}
-                        </p>
-                      </div>
-
-                      {/* steps section */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Implementation Steps</h4>
-                        <div className="space-y-3">
-                          <div className="bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
-                            <div className="flex items-center gap-3">
-                              <span className="flex-shrink-0 w-6 h-6 rounded-full bg-blue-500/10 text-blue-400 flex items-center justify-center text-sm">1</span>
-                              <h5 className="text-gray-200 font-medium">Setup Dependencies</h5>
-                            </div>
-                            <p className="mt-2 text-gray-400 text-sm pl-9">Install and configure required packages...</p>
-                            <div className="mt-3 pl-9">
-                              <pre className="bg-gray-900/50 p-3 rounded-md text-sm text-gray-300 font-mono">npm install @api-package/core</pre>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* code examples */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Code Examples</h4>
-                        <div className="bg-gray-800/50 rounded-lg overflow-hidden">
-                          <div className="border-b border-gray-700 p-3 flex justify-between items-center">
-                            <span className="text-sm text-gray-400">example.ts</span>
-                            <button className="text-gray-500 hover:text-gray-300">Copy</button>
-                          </div>
-                          <pre className="p-4 text-sm text-gray-300 font-mono">
-                            <code>{`import { API } from '@api/core';\n\nasync function setup() {\n  // Implementation code...\n}`}</code>
-                          </pre>
-                        </div>
-                      </div>
-                    </div>
-                  );
-
-                case 'technical':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Technical Prompt</h3>
-                        <p className="text-gray-400 mt-2">
-                          Code-focused prompts for {currentItem.text}
-                        </p>
-                      </div>
-
-                      <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
-                        <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
-                          {`I'm working on implementing ${currentItem.text} for a web application.
-                            Technical Context:
-                            - Subtask: ${currentItem.text}
-                            - Parent Task: ${parentTask}
-                            - Status: ${currentItem.completed ? 'Completed' : 'In Progress'}
-
-                            Please provide:
-                            1. Detailed code implementation
-                            2. Handling edge cases specific to this functionality
-                            3. Unit testing approach
-                            4. Performance optimization tips`}
-                        </pre>
-                        <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
-                          Copy to Clipboard
-                        </button>
-                      </div>
-                    </div>
-                  );
-
-                case 'development':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Development Resources</h3>
-                        <p className="text-gray-400 mt-2">
-                          API documentation and code references for {currentItem.text}
-                        </p>
-                      </div>
-
-                      {/* API docs */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">API Documentation</h4>
-                        <div className="space-y-2">
-                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <FaBook className="text-blue-400" />
-                              <div>
-                                <h5 className="text-gray-200">API Reference</h5>
-                                <p className="text-sm text-gray-400 mt-1">
-                                  Complete technical documentation
-                                </p>
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-
-                      {/* code examples */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Code Snippets</h4>
-                        <div className="space-y-2">
-                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <FaCode className="text-purple-400" />
-                              <div>
-                                <h5 className="text-gray-200">
-                                  Sample Implementation
-                                </h5>
-                                <p className="text-sm text-gray-400 mt-1">
-                                  Ready-to-use code examples
-                                </p>
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-
-                default:
-                  return null;
-              }
-            } else {
-              switch (action) {
-                case 'breakdown':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Task Breakdown</h3>
-                        <p className="text-gray-400 mt-2">
-                          Why this task matters for the project
-                        </p>
-                      </div>
-
-                      {/* importance section */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Task Importance</h4>
-                        <div className="bg-gray-800/50 p-4 rounded-lg backdrop-blur-sm">
-                          <p className="text-gray-300">
-                            This task is critical because it establishes the foundation for {task.text.toLowerCase()}, which is essential for the project's success.
-                          </p>
-                          
-                          <div className="mt-4 flex gap-3 flex-wrap">
-                            <div className="bg-blue-500/10 px-3 py-1.5 rounded-full text-xs text-blue-400">
-                              Core Functionality
-                            </div>
-                            <div className="bg-purple-500/10 px-3 py-1.5 rounded-full text-xs text-purple-400">
-                              User Experience
-                            </div>
-                            <div className="bg-green-500/10 px-3 py-1.5 rounded-full text-xs text-green-400">
-                              Project Structure
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* subtasks progress */}
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-medium text-gray-300">Implementation Progress</h4>
-                          <span className="text-xs text-gray-400">
-                            {task.subtasks ? `${task.subtasks.filter(st => st.completed).length}/${task.subtasks.length} completed` : '0/0 completed'}
-                          </span>
-                        </div>
-                        
-                        <div className="bg-gray-800/50 rounded-lg p-4">
-                          {task.subtasks && task.subtasks.length > 0 ? (
-                            <div className="space-y-2">
-                              {task.subtasks.map(st => (
-                                <div key={st.id} className="flex items-center gap-3">
-                                  <div className={`w-2 h-2 rounded-full ${st.completed ? 'bg-blue-500' : 'bg-gray-600'}`}></div>
-                                  <span className={`text-sm ${st.completed ? 'text-gray-400 line-through' : 'text-gray-300'}`}>
-                                    {st.text}
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-gray-400 text-sm">No subtasks defined yet.</p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  );
-
-                case 'prompt':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Smart Prompt</h3>
-                        <p className="text-gray-400 mt-2">
-                          Strategic planning prompts for {currentItem.text}
-                        </p>
-                      </div>
-
-                      <div className="bg-gray-800/50 rounded-lg p-4 backdrop-blur-sm">
-                        <pre className="text-sm text-gray-300 whitespace-pre-wrap font-mono">
-                          {`I'm working on planning ${currentItem.text} for a web application.
-                            Project Context:
-                            - Task: ${currentItem.text}
-                            - Progress: ${currentItem.subtasks?.filter(st => st.completed).length || 0}/${currentItem.subtasks?.length || 0} subtasks completed
-                            - Subtasks: ${currentItem.subtasks?.map(st => st.text).join(', ') || 'None defined'}
-
-                            Please provide:
-                            1. High-level architecture recommendations
-                            2. Implementation strategy
-                            3. Common pitfalls to avoid
-                            4. Testing approach
-                            5. Resource planning`}
-                        </pre>
-                        <button className="mt-4 w-full bg-purple-600/20 text-purple-400 py-2 rounded-lg hover:bg-purple-600/30 transition-colors">
-                          Copy to Clipboard
-                        </button>
-                      </div>
-                    </div>
-                  );
-
-                case 'resources':
-                  return (
-                    <div className="space-y-6">
-                      <div className="border-b border-gray-800 pb-4">
-                        <h3 className="text-xl font-semibold text-gray-100">Resources</h3>
-                        <p className="text-gray-400 mt-2">
-                          Reference materials for {currentItem.text}
-                        </p>
-                      </div>
-
-                      {/* official docs */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Helpful link</h4>
-                        <div className="space-y-2">
-                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <FaBook className="text-blue-400" />
-                              <div>
-                                <h5 className="text-gray-200">API Documentation</h5>
-                                <p className="text-sm text-gray-400 mt-1">
-                                  Complete API reference and guides
-                                </p>
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-
-                      {/* community resources */}
-                      <div className="space-y-4">
-                        <h4 className="text-sm font-medium text-gray-300">Community Resources</h4>
-                        <div className="space-y-2">
-                          <a href="#" className="block p-3 bg-gray-800/50 rounded-lg hover:bg-gray-800 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <FaCode className="text-purple-400" />
-                              <div>
-                                <h5 className="text-gray-200">Example Repository</h5>
-                                <p className="text-sm text-gray-400 mt-1">
-                                  Community-maintained examples and patterns
-                                </p>
-                              </div>
-                            </div>
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-                  );
-
-                default:
-                  return null;
-              }
-            }
-          })()}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-//task component with native drag and drop
 const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskCompletion, deleteTask }) => {
   const [expanded, setExpanded] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
@@ -552,7 +32,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   const contentRef = useRef(null);
   const deleteTimerRef = useRef(null);
   
-  //handle drag start
+  // //handle drag start
   const handleDragStart = (e) => {
     //set the drag data - store the task index
     e.dataTransfer.setData('text/plain', index.toString());
@@ -604,12 +84,9 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
     moveTask(draggedIndex, index);
   };
   
-  //calculate subtask completion percentage
   const completedSubtasks = task.subtasks ? task.subtasks.filter(st => st.completed).length : 0;
   const totalSubtasks = task.subtasks ? task.subtasks.length : 0;
-  const completionPercentage = totalSubtasks > 0 ? Math.round((completedSubtasks / totalSubtasks) * 100) : 0;
   
-  //toggle expand
   const toggleExpand = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -705,9 +182,6 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
   return (
     <div 
       className={`${isDragging ? 'opacity-50' : 'opacity-100'} relative group/task`}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
     >
       {/* left-side drag handle and add indicator (visible on hover) */}
       <div className="absolute left-0 top-0 bottom-0 flex flex-col items-center justify-center opacity-0 group-hover/task:opacity-100 transition-opacity -ml-10 px-2 gap-2">
@@ -734,8 +208,6 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
       <div 
         ref={ref}
         draggable="true"
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
         className={`bg-white border ${deleteConfirm ? 'border-brand-pink/50' : 'border-gray-300'} rounded-lg p-3 mb-1 flex items-center gap-3 ${
           isDragging ? 'shadow-lg shadow-brand-yellow/10 cursor-grabbing' : (deleteConfirm ? 'shadow-md shadow-brand-pink/10' : 'hover:shadow-md hover:shadow-brand-yellow/5 cursor-grab')
         } transition-all duration-200 hover:border-gray-400 group`}
@@ -919,7 +391,7 @@ const Task = ({ task, index, moveTask, toggleTaskCompletion, toggleSubtaskComple
 };
 
 // Phase Navigation component with counts - rename to CategoryNavigation
-const CategoryNavigationWithCounts = ({ categories, currentCategory, onChange, categoryTaskCounts }) => {
+const CategoryNavigation = ({ categories, currentCategory, onChange}) => {
   return (
     <div className="w-full bg-white">
       <div className="max-w-3xl mx-auto flex items-center gap-6 overflow-x-auto px-4 relative">
@@ -951,12 +423,11 @@ const CategoryNavigationWithCounts = ({ categories, currentCategory, onChange, c
   );
 };
 
-// Phase Empty State component - rename to CategoryEmptyState
 const CategoryEmptyState = ({ category, setIsComposing }) => {
   const currentCategory = PROJECT_CATEGORIES.find(c => c.id === category);
   
   return (
-    <div className="bg-white/50 border border-gray-300 rounded-lg p-6 text-center">
+    <div className="text-center">
       <h3 className="text-lg font-medium text-brand-black mb-2">No tasks in {currentCategory.name}</h3>
       <p className="text-brand-gray mb-4">{currentCategory.description}</p>
       <button 
@@ -970,70 +441,59 @@ const CategoryEmptyState = ({ category, setIsComposing }) => {
   );
 };
 
-// Add these before the TechnologyCard component
-// const renderVideoTutorials = (tutorials) => {
-//   if (!tutorials || !Array.isArray(tutorials) || tutorials.length === 0) {
-//     return null;
-//   }
+const TechnologyCard = ({ icon, name, description, docLink, category }) => {
+  const getCategoryIcon = () => {
+    switch (category) {
+      case 'planning':
+        return <FaCalendarAlt className="text-blue-500" />;
+      case 'setup':
+        return <FaBox className="text-purple-500" />;
+      case 'frontend':
+        return <FaUser className="text-blue-400" />;
+      case 'backend':
+        return <FaDatabase className="text-indigo-500" />;
+      case 'testing':
+        return <FaCode className="text-amber-500" />;
+      case 'deploy':
+        return <FaRocket className="text-red-500" />;
+      case 'maintain':
+        return <FaWrench className="text-gray-500" />;
+      
+      default:
+        return <FaGraduationCap className="text-gray-500" />;
+    }
+  };
 
-//   return (
-//     <div className="mt-4 space-y-2">
-//       <h5 className="text-sm font-medium text-gray-900 flex items-center gap-2">
-//         <FaYoutube className="text-red-600" />
-//         <span>Video Tutorials</span>
-//       </h5>
-//       <ul className="space-y-2">
-//         {tutorials.map((tutorial, index) => (
-//           <li key={index}>
-//             <a
-//               href={tutorial.url}
-//               target="_blank"
-//               rel="noopener noreferrer"
-//               className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-2 hover:bg-gray-100 px-2 py-1 rounded-md transition-colors"
-//             >
-//               <span className="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center flex-shrink-0">
-//                 {index + 1}
-//               </span>
-//               <span className="flex-grow line-clamp-1">{tutorial.title}</span>
-//               <span className="text-xs text-gray-500">{tutorial.duration}</span>
-//             </a>
-//           </li>
-//         ))}
-//       </ul>
-//     </div>
-//   );
-// };
-
-const TechnologyCard = ({ icon, name, description, docLink, category }) => (
-  <div className="bg-gray-50 rounded-lg p-4">
-    <div className="flex items-start gap-3">
-      <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-        {icon}
-      </div>
-      <div className="flex-grow">
-        <h4 className="text-base font-medium text-gray-900">{name}</h4>
-        <p className="text-sm text-gray-600 mt-1">{description}</p>
-        
-        <div className="mt-3 space-y-2">
-          {docLink && (
-            <a 
-              href={docLink} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <FaBook className="text-xs" />
-              <span>Helpful link</span>
-            </a>
-          )}
+  return (
+    <div className="bg-gray-50 rounded-lg p-4">
+      <div className="flex items-start gap-3">
+        <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
+          {icon || getCategoryIcon()}
+        </div>
+        <div className="flex-grow">
+          <h4 className="text-base font-medium text-gray-900">{name}</h4>
+          <p className="text-sm text-gray-600 mt-1">{description}</p>
+          
+          <div className="mt-3 space-y-2">
+            {docLink && (
+              <a 
+                href={docLink} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
+              >
+                <FaBook className="text-xs" />
+                <span>Helpful link</span>
+              </a>
+            )}
+          </div>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
-// Update the TechStackModal component to display all tech stack categories and improve priority-specific information display
-const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProject }) => {
+const ResourcesModal = ({ isOpen, onClose, techStackData, isLoading, currentProject }) => {
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -1086,8 +546,8 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
           {techs.map((tech, index) => (
             <TechnologyCard
               key={`${category}-${index}`}
-              icon={getTechIcon(tech.name)}
               name={tech.name}
+              
               description={tech.description}
               docLink={tech.documentationUrl || tech.docLink}
               category={category}
@@ -1098,29 +558,17 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
     );
   };
 
-  const getPriorityIcon = (priority) => {
-    switch (priority) {
-      case 'speed':
-        return <FaRocket className="text-blue-500" />;
-      case 'scalability':
-        return <FaChartLine className="text-green-500" />;
-      case 'learning':
-        return <FaGraduationCap className="text-purple-500" />;
-      default:
-        return <FaCog className="text-gray-500" />;
-    }
-  };
+
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div ref={modalRef} className="bg-white border border-gray-200 rounded-xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">Your Personalized Tech Stack</h2>
+            <h2 className="text-xl font-semibold text-gray-900">Your Personalized Resources</h2>
             <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              {getPriorityIcon(currentProject?.priority)}
               <p>
-                Optimized for {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
+                Curated resources for an {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
               </p>
             </div>
           </div>
@@ -1145,18 +593,18 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
               
               {techStackData && typeof techStackData === 'object' ? (
                 <div className="space-y-8">
-                  {renderTechSection('Planning Tools', techStackData.planning, 'planning')}
-                  {renderTechSection('Setup Tools', techStackData.setup, 'setup')}
-                  {renderTechSection('Frontend Technologies', techStackData.frontend, 'frontend')}
-                  {renderTechSection('Backend Technologies', techStackData.backend, 'backend')}
-                  {renderTechSection('Testing Tools', techStackData.testing, 'testing')}
-                  {renderTechSection('Deployment Solutions', techStackData.deploy, 'deploy')}
-                  {renderTechSection('Maintenance Tools', techStackData.maintain, 'maintain')}
+                  {renderTechSection('Planning', techStackData.planning, 'planning')}
+                  {renderTechSection('Setup', techStackData.setup, 'setup')}
+                  {renderTechSection('Frontend', techStackData.frontend, 'frontend')}
+                  {renderTechSection('Backend', techStackData.backend, 'backend')}
+                  {renderTechSection('Testing', techStackData.testing, 'testing')}
+                  {renderTechSection('Deployment', techStackData.deploy, 'deploy')}
+                  {renderTechSection('Maintenance', techStackData.maintain, 'maintain')}
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-500">
-                  <p>No tech stack data available</p>
-                  <p className="text-xs mt-2">Please create a new project to get tech stack recommendations</p>
+                  <p>No resources available</p>
+                  <p className="text-xs mt-2">Please create a new project to get resources</p>
                 </div>
               )}
             </>
@@ -1167,21 +615,7 @@ const TechStackModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
   );
 };
 
-// Helper function to get the appropriate icon for each technology
-const getTechIcon = (techName) => {
-  const techIcons = {
-    'Vite': <SiVite className="text-purple-500 text-xl" />,
-    'React': <FaReact className="text-blue-500 text-xl" />,
-    'TypeScript': <SiTypescript className="text-blue-600 text-xl" />,
-    'Redux Toolkit': <SiRedux className="text-purple-500 text-xl" />,
-    'TailwindCSS': <img src="https://tailwindcss.com/favicons/favicon-32x32.png" alt="Tailwind" className="w-5 h-5" />,
-    'Node.js': <FaNode className="text-green-600 text-xl" />,
-    'Prisma': <SiPrisma className="text-gray-600 text-xl" />,
-    'MongoDB': <FaDatabase className="text-green-600 text-xl" />,
-  };
 
-  return techIcons[techName] || <FaCode className="text-gray-500 text-xl" />;
-};
 
 function Tasks() {
   const [tasks, setTasks] = useState([]);
@@ -1408,14 +842,13 @@ function Tasks() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-yellow"
             >
               <FaRocket className="text-brand-yellow text-sm" />
-              <span>See Techstack</span>
+              <span>See Resources</span>
             </button>
           </div>
         </div>
       </header>
       
-      {/* Update TechStack Modal to use currentProject.techStack */}
-      <TechStackModal 
+      <ResourcesModal 
         isOpen={showTechStack} 
         onClose={() => setShowTechStack(false)}
         techStackData={currentProject?.techStack || {
@@ -1426,17 +859,14 @@ function Tasks() {
         currentProject={currentProject}
       />
       
-      {/* Category navigation */}
       {!loading && !error && (
-        <CategoryNavigationWithCounts
+        <CategoryNavigation
           categories={PROJECT_CATEGORIES} 
           currentCategory={currentCategory} 
           onChange={setCurrentCategory}
-          categoryTaskCounts={categoryTaskCounts}
         />
       )}
         
-      {/* main content */}
       <main className="flex-grow w-full max-w-3xl mx-auto px-4 py-6 pb-16">
         {loading ? (
           <div className="flex items-center justify-center h-64">
@@ -1484,7 +914,7 @@ function Tasks() {
       </main>
         
       {/* Compose area - Add task dialog */}
-      {isComposing && (
+      {/* {isComposing && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white border border-gray-300 rounded-xl shadow-xl w-full max-w-lg animate-fadeIn">
             <form onSubmit={addNewTask}>
@@ -1551,7 +981,7 @@ function Tasks() {
             </form>
           </div>
         </div>
-      )}
+      )} */}
         
       {/* {!isComposing && (
         <button

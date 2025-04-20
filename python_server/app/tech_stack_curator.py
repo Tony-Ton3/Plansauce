@@ -4,6 +4,7 @@ from typing import List, Dict, Any, Optional
 import json
 import os
 import uuid
+import time
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -67,17 +68,10 @@ class TechStackCuratorCrew:
     def _create_agents(self) -> Dict[str, Agent]:
         research_agent = Agent(
             role="Technology Research Specialist",
-            goal="Research and evaluate tools across all project phases including planning, setup, development, testing, deployment, and maintenance",
-            backstory="""You are an expert in researching and evaluating development tools and technologies across the entire software development lifecycle.
-            You excel at:
-            - Finding and evaluating project management and planning tools
-            - Identifying development environment setup tools
-            - Researching frontend and backend technologies
-            - Discovering testing frameworks and methodologies
-            - Evaluating deployment and CI/CD solutions
-            - Finding monitoring and maintenance tools
-            
-            You understand how different tools complement each other and can identify the best options based on project requirements and team expertise.""",
+            goal="Research and evaluate tools across all project phases",
+            backstory="""You are an expert in researching and evaluating development tools and technologies.
+            You excel at finding and evaluating tools for planning, setup, development, testing, deployment, and maintenance.
+            You understand how different tools complement each other and can identify the best options based on project requirements.""",
             verbose=True,
             allow_delegation=False,
             llm=self.llm,
@@ -86,23 +80,10 @@ class TechStackCuratorCrew:
         
         curator_agent = Agent(
             role="Tech Stack Curator",
-            goal="Create a comprehensive tech stack recommendation that covers all project phases and ensures tool compatibility",
+            goal="Create a comprehensive tech stack recommendation",
             backstory="""You are a tech stack curator who excels at creating complete development ecosystems.
-            You understand:
-            - How to structure a project from planning to maintenance
-            - Which tools work best together in each phase
-            - How to balance learning curves with productivity
-            - When to recommend familiar tools vs. new technologies
-            - How to ensure smooth transitions between project phases
-            
-            You create recommendations that:
-            - Start with proper planning and setup tools
-            - Include appropriate development technologies
-            - Incorporate testing and quality assurance
-            - Provide deployment and hosting solutions
-            - Include maintenance and monitoring tools
-            
-            Your recommendations are always practical, well-reasoned, and consider the team's experience level.""",
+            You understand how to structure projects and which tools work best together.
+            You create practical, well-reasoned recommendations that consider the team's experience level.""",
             verbose=True,
             allow_delegation=False,
             llm=self.llm
@@ -113,53 +94,51 @@ class TechStackCuratorCrew:
             "curator": curator_agent
         }
     
-    def _validate_response(self, result: Any) -> Dict[str, Any]:
-        """Validate and format the response from the LLM."""
+    def _validate_response(self, result: Any, max_retries: int = 3) -> Dict[str, Any]:
+        """Validate and format the response from the LLM with retry logic."""
         if not result:
-            return {
-                "error": "Empty response from LLM",
-                "planning": [],
-                "setup": [],
-                "frontend": [],
-                "backend": [],
-                "testing": [],
-                "deploy": [],
-                "maintain": []
-            }
+            return self._get_default_response("Empty response from LLM")
 
-        try:
-            # If result is already a dict, use it directly
-            if isinstance(result, dict):
-                return result
+        for attempt in range(max_retries):
+            try:
+                # If result is already a dict, use it directly
+                if isinstance(result, dict):
+                    return result
 
-            # Try to parse as JSON if it's a string
-            if isinstance(result, str):
-                parsed = json.loads(result)
-                if isinstance(parsed, dict):
-                    return parsed
+                # Try to parse as JSON if it's a string
+                if isinstance(result, str):
+                    parsed = json.loads(result)
+                    if isinstance(parsed, dict):
+                        return parsed
 
-            # If we get here, the response is invalid
-            return {
-                "error": "Invalid response format from LLM",
-                "planning": [],
-                "setup": [],
-                "frontend": [],
-                "backend": [],
-                "testing": [],
-                "deploy": [],
-                "maintain": []
-            }
-        except Exception as e:
-            return {
-                "error": f"Error processing response: {str(e)}",
-                "planning": [],
-                "setup": [],
-                "frontend": [],
-                "backend": [],
-                "testing": [],
-                "deploy": [],
-                "maintain": []
-            }
+                # If we get here, the response is invalid
+                if attempt < max_retries - 1:
+                    time.sleep(1)  # Wait before retrying
+                    continue
+                
+                return self._get_default_response("Invalid response format from LLM")
+                
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    time.sleep(1)
+                    continue
+                return self._get_default_response(f"Error processing response: {str(e)}")
+                
+            return self._get_default_response("Max retries exceeded")
+    
+    def _get_default_response(self, error_message: str) -> Dict[str, Any]:
+        """Return a default response structure with error message."""
+        return {
+            "error": error_message,
+            "type": "Web Application",
+            "planning": [],
+            "setup": [],
+            "frontend": [],
+            "backend": [],
+            "testing": [],
+            "deploy": [],
+            "maintain": []
+        }
 
     def curate_tech_stack(
         self,
@@ -170,267 +149,129 @@ class TechStackCuratorCrew:
         known_tech: List[str] = None,
         disliked_tech: List[str] = None,
         starred_tech: List[str] = None,
+        max_retries: int = 3
     ) -> Dict[str, Any]:
         try:
             known_tech = known_tech or []
             disliked_tech = disliked_tech or []
             starred_tech = starred_tech or []
 
-            research_tech = Task(
-                description=f"""
-                Consider the user's technology background and preferences:
-                - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'} (used to understand their comfort level and expertise)
-                - Technologies to strictly avoid: {', '.join(disliked_tech) if disliked_tech else 'None'} (these must NEVER be recommended)
-                - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'} (these have highest priority and MUST be included if relevant)
-                
-                Project Description: {project_description}
-                
-                IMPORTANT RULES:
-                1. Priority technologies ({', '.join(starred_tech) if starred_tech else 'None'}) MUST be included if they are relevant to the project type and requirements
-                2. NEVER recommend technologies from the avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
-                3. Known technologies are for understanding user experience level, not for automatic inclusion
-                4. When a priority technology serves a specific purpose, DO NOT recommend additional tools for the same purpose
-                5. Prioritize technologies that align with the project's core requirements and features
-                6. AVOID FRAMEWORK REDUNDANCY: Do not include React if recommending Next.js, do not include Express if recommending NestJS, etc.
-                
-                PROJECT TYPE SPECIFIC GUIDELINES:
-                For Mobile Apps:
-                - Focus on mobile-first technologies and frameworks
-                - Minimize backend complexity unless absolutely necessary
-                - Prioritize offline capabilities and mobile performance
-                - Consider platform-specific requirements (iOS/Android)
-                - Choose tools with good mobile development experience
-                - For deployment, focus on app store deployment tools, not web hosting
-                
-                For Web Applications:
-                - Focus on responsive design and web standards
-                - Consider progressive web app capabilities
-                - Prioritize browser compatibility
-                - If recommending Next.js, DO NOT also recommend React separately
-                - If recommending Angular, Vue, or other complete frameworks, DO NOT recommend additional UI libraries
-                
-                For Other Project Types:
-                - Adapt recommendations to the specific needs of the project type
-                - Focus on domain-specific best practices
-                
-                PRIORITY SPECIFIC GUIDELINES:
-                For Learning Priority:
-                1. Start with familiar technologies from known_tech list
-                2. Add maximum 1-2 (if needed) new technologies that are:
-                   - Well-documented with clear tutorials
-                   - Have strong community support
-                   - Integrate well with known technologies
-                3. Focus on fundamentals over cutting-edge features
-                4. Choose stable, mature technologies over trending ones unless it aligns with what the user is trying to achieve
-                5. Prefer technologies with good learning resources
-                6. If the user is trying to achieve something specific, recommend technologies that are known to be good at that
-
-                For Speed Priority:
-                1. Minimize the number of new technologies
-                2. Choose tools with quick setup and minimal config
-                3. Prefer integrated solutions
-                4. Avoid complex cloud services unless absolutely necessary
-                5. NEVER include multiple IDEs or text editors - choose only ONE development environment
-                6. For web projects, prefer simple deployment options (Vercel, Netlify) over complex cloud services
-                7. Prioritize simpler database solutions (SQLite, MongoDB Atlas) over complex setups
-                8. Only recommend services the user is already familiar with from their known_tech
-                9. For setup, avoid redundancy between Git and GitHub - if both are included, ensure distinct purposes are explained
-                
-                For Scalability Priority:
-                1. Focus on proven, enterprise-ready solutions
-                2. Include necessary monitoring and optimization tools
-                3. Choose technologies known for performance
-                
-                TOOL SELECTION RULES:
-                1. Mobile Apps:
-                   - ONE primary mobile framework (e.g., React Native)
-                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI, etc) since they're built on top of TailwindCSS
-                   - ONE state management solution
-                   - Minimal backend services unless required
-                   - For deployment, use mobile-specific CI/CD like Expo, Fastlane, or App Center
-                
-                2. Each Category Should Have:
-                   - Planning: ONE project management tool
-                   - Setup: Minimal development environment (ONE IDE/editor maximum)
-                   - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
-                   - Backend: Simplest architecture that meets requirements (for Speed priority, prefer serverless or BaaS solutions)
-                   - Testing: ONE primary testing framework
-                   - Deploy: ONE deployment platform (prefer simple, integrated platforms for Speed priority)
-                   - Maintain: Essential monitoring only
-                
-                3. Integration Requirements:
-                   - All tools must work well together ideally taking inspriration from MERN, MEVN, T3, LAMP, LEMP, JAM, PERN, ELK, etc.
-                   - Prefer tools from the same ecosystem
-                   - Minimize cross-platform complexity
-                
-                IMPORTANT: Return findings in a structured format with documentation, if documentation isn't relevant(e.g. github documentation we should return the link to the github itself instead of github documentation link, or Figma documentation we should return the link to the figma itself instead of figma documentation link).
-                Focus on technologies specific to {project_type}, not general web technologies unless they directly support this project type.
-                """,
-                expected_output="A structured list of technology research findings including documentation links and priority-specific features.",
-                agent=self.agents["research"]
-            )
-            
-            curation_tech = Task(
-                description=f"""
-                Create a tech stack recommendation for a {project_type} with {priority} as the main priority.
-                
-                Project Description: {project_description}
-                
-                Consider the user's technology background and preferences:
-                - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'} (used to understand their comfort level and expertise)
-                - Technologies to strictly avoid: {', '.join(disliked_tech) if disliked_tech else 'None'} (these must NEVER be recommended)
-                - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'} (these have highest priority and MUST be included if relevant)
-                
-                CRITICAL REQUIREMENTS:
-                1. Priority technologies ({', '.join(starred_tech) if starred_tech else 'None'}) MUST be included if they are relevant to the project type and requirements
-                2. NEVER include technologies from the avoid list: {', '.join(disliked_tech) if disliked_tech else 'None'}
-                3. Known technologies are for understanding user experience level, not for automatic inclusion
-                4. When a priority technology serves a specific purpose, DO NOT recommend additional tools for the same purpose
-                5. Prioritize technologies that align with the project's core requirements and features
-                6. AVOID REDUNDANT FRAMEWORKS: Do not recommend technologies that are already included in other recommended frameworks
-                
-                PROJECT TYPE SPECIFIC GUIDELINES:
-                For Mobile Apps:
-                - Focus on mobile-first technologies and frameworks
-                - Minimize backend complexity unless absolutely necessary
-                - Prioritize offline capabilities and mobile performance
-                - Consider platform-specific requirements (iOS/Android)
-                - Choose tools with good mobile development experience
-                - DEPLOYMENT must use mobile app deployment tools (Expo, Fastlane, App Center) NOT web hosting
-                
-                For Web Applications:
-                - Focus on responsive design and web standards
-                - Consider progressive web app capabilities
-                - Prioritize browser compatibility
-                - AVOID REDUNDANCY: If recommending integrated frameworks like Next.js, NEVER list React separately
-                - Include only essential libraries that serve distinct purposes
-                
-                For Other Project Types:
-                - Adapt recommendations to the specific needs of the project type
-                - Focus on domain-specific best practices
-                
-                PRIORITY SPECIFIC GUIDELINES:
-                For Learning Priority:
-                1. Start with familiar technologies from known_tech list
-                2. Add maximum 1-2 new technologies that are:
-                   - Well-documented with clear tutorials
-                   - Have strong community support
-                   - Integrate well with known technologies
-                3. Focus on fundamentals over cutting-edge features
-                4. Choose stable, mature technologies over trending ones
-                5. Prefer technologies with good learning resources
-                
-                For Speed Priority:
-                1. Minimize the number of new technologies
-                2. Choose tools with quick setup and minimal config
-                3. Prefer integrated solutions
-                4. Avoid complex cloud services unless absolutely necessary
-                5. NEVER include multiple IDEs or text editors - choose only ONE development environment
-                6. For web projects, prefer simple deployment options (Vercel, Netlify) over complex cloud services
-                7. Prioritize simpler database solutions (SQLite, MongoDB Atlas) over complex setups
-                8. Only recommend services the user is already familiar with from their known_tech
-                9. For setup, avoid redundancy between Git and GitHub - if both are included, ensure distinct purposes are explained
-                
-                For Scalability Priority:
-                1. Focus on proven, enterprise-ready solutions
-                2. Include necessary monitoring and optimization tools
-                3. Choose technologies known for performance
-                
-                TOOL SELECTION RULES:
-                1. Mobile Apps:
-                   - ONE primary mobile framework (e.g., React Native)
-                   - TailwindCSS can be combined with ONE UI component library (e.g., Shadcn/UI, DaisyUI) since they're built on top of TailwindCSS
-                   - ONE state management solution
-                   - Minimal backend services unless required
-                   - For deployment, use mobile-specific CI/CD like Expo, Fastlane, or App Center
-                
-                2. Each Category Should Have:
-                   - Planning: ONE project management tool
-                   - Setup: Minimal development environment (ONE IDE/editor maximum)
-                   - Frontend: ONE core framework + essential utilities only (NEVER include redundant frameworks, but TailwindCSS can be combined with component libraries built on it)
-                   - Backend: Simplest architecture that meets requirements (for Speed priority, prefer serverless or BaaS solutions)
-                   - Testing: ONE primary testing framework
-                   - Deploy: ONE deployment platform (prefer simple, integrated platforms for Speed priority)
-                   - Maintain: Essential monitoring only
-                
-                3. Framework Redundancy Prevention:
-                   - Next.js already includes React - NEVER recommend both
-                   - Angular is a complete framework - do not recommend additional UI libraries
-                   - NestJS includes Express - do not recommend both
-                   - Laravel includes PHP - do not list PHP separately
-                   - Django includes Python - do not list Python separately
-                
-                4. Integration Requirements:
-                   - All tools must work well together
-                   - Prefer tools from the same ecosystem
-                   - Minimize cross-platform complexity
-                
-                IMPORTANT: Respond with ONLY a valid JSON object following the specified structure.
-                
-                The JSON object MUST follow this exact structure:
-                {{
-                    "type": "{project_type}",
-                    "planning": [
+            for attempt in range(max_retries):
+                try:
+                    research_tech = Task(
+                        description=f"""
+                        Consider the user's technology background and preferences:
+                        - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'}
+                        - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                        - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'}
+                        
+                        Project Description: {project_description}
+                        
+                        Research and recommend technologies for this {project_type} project.
+                        Focus on tools that align with the project's core requirements and avoid redundant frameworks.
+                        """,
+                        expected_output="A structured list of technology research findings.",
+                        agent=self.agents["research"]
+                    )
+                    
+                    curation_tech = Task(
+                        description=f"""
+                        Create a tech stack recommendation for a {project_type} with {priority} as the main priority.
+                        
+                        Project Description: {project_description}
+                        
+                        Consider the user's technology background and preferences:
+                        - Technologies they have experience with: {', '.join(known_tech) if known_tech else 'None'}
+                        - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
+                        - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'}
+                        
+                        Create a practical, well-reasoned recommendation that considers the team's experience level.
+                        
+                        IMPORTANT: Each technology recommendation MUST include:
+                        1. name: The technology's name
+                        2. description: A brief explanation (50-75 words) of what it does and why it fits
+                        3. docLink: URL to official documentation or relevant resource
+                        
+                        The response MUST be a valid JSON object with this exact structure:
                         {{
-                            "name": "Technology name",
-                            "description": "Brief explanation (50-75 words max) of what this technology does and why it fits this specific project's requirements, priority, and user background",
-                            "docLink": "URL to official documentation, if documentation isn't relevant(e.g. github documentation we should return the link to the github itself instead of github documentation link, or Figma documentation we should return the link to the figma itself instead of figma documentation link)"
+                            "type": "{project_type}",
+                            "planning": [
+                                {{
+                                    "name": "Technology name",
+                                    "description": "Brief explanation of what this technology does and why it fits",
+                                    "docLink": "URL to official documentation"
+                                }}
+                            ],
+                            "setup": [...],
+                            "frontend": [...],
+                            "backend": [...],
+                            "testing": [...],
+                            "deploy": [...],
+                            "maintain": [...]
                         }}
-                    ],
-                    "setup": [...],
-                    "frontend": [...],
-                    "backend": [...],
-                    "testing": [...],
-                    "deploy": [...],
-                    "maintain": [...]
-                }}
-                
-                Your response should be ONLY the JSON object above without any additional text, explanation, or formatting.
-                """,
-                expected_output="A clean JSON object containing the curated tech stack with detailed explanations.",
-                agent=self.agents["curator"]
-            )
+                        
+                        Each array (planning, setup, frontend, etc.) should contain at least one technology with all required fields.
+                        """,
+                        expected_output="A clean JSON object containing the curated tech stack with detailed explanations.",
+                        agent=self.agents["curator"]
+                    )
 
-            crew = Crew(
-                agents=list(self.agents.values()),
-                tasks=[research_tech, curation_tech],
-                process=Process.sequential,
-                verbose=True
-            )
+                    crew = Crew(
+                        agents=list(self.agents.values()),
+                        tasks=[research_tech, curation_tech],
+                        process=Process.sequential,
+                        verbose=True
+                    )
 
-            result = crew.kickoff()
-            
-            #doing this cause of weird ass response format
-            tech_stack_data = self._extract_tech_stack_data(result)
-            validated_data = self._validate_response(tech_stack_data)
+                    result = crew.kickoff()
+                    
+                    if result:
+                        tech_stack_data = self._extract_tech_stack_data(result)
+                        validated_data = self._validate_response(tech_stack_data)
 
-            # Ensure project type is correctly set in the result
-            if "error" not in validated_data:
-                if "type" not in validated_data or not validated_data["type"]:
-                    validated_data["type"] = project_type
-                # Double-check mobile app specific recommendations
-                if self._is_mobile_project(project_type):
-                    validated_data = self._validate_mobile_recommendations(validated_data)
+                        # Validate tech stack items
+                        if "error" not in validated_data:
+                            # Ensure each category has at least one valid item
+                            categories = ["planning", "setup", "frontend", "backend", "testing", "deploy", "maintain"]
+                            for category in categories:
+                                if category in validated_data:
+                                    items = validated_data[category]
+                                    if not isinstance(items, list):
+                                        validated_data[category] = []
+                                    else:
+                                        # Filter out invalid items
+                                        validated_data[category] = [
+                                            item for item in items
+                                            if isinstance(item, dict) and
+                                            all(key in item for key in ["name", "description", "docLink"])
+                                        ]
+                                        
+                                        # If no valid items, add a default
+                                        if not validated_data[category]:
+                                            validated_data[category] = [{
+                                                "name": f"Default {category} tool",
+                                                "description": f"Basic tool for {category} phase",
+                                                "docLink": "https://example.com"
+                                            }]
 
-            if "error" in validated_data:
-                print(f"Error in response: {validated_data['error']}")
-                return validated_data
+                        return validated_data
+                            
+                    if attempt < max_retries - 1:
+                        time.sleep(2)  # Wait before retrying
+                        continue
+                        
+                except Exception as e:
+                    print(f"Attempt {attempt + 1} failed: {str(e)}")
+                    if attempt < max_retries - 1:
+                        time.sleep(2)
+                        continue
+                    raise
 
-            return validated_data
+            return self._get_default_response("All attempts failed to generate valid response")
 
         except Exception as e:
             print(f"Error in curate_tech_stack: {str(e)}")
-            return {
-                "error": f"Error generating tech stack: {str(e)}",
-                "type": project_type,
-                "planning": [],
-                "setup": [],
-                "frontend": [],
-                "backend": [],
-                "testing": [],
-                "deploy": [],
-                "maintain": []
-            }
+            return self._get_default_response(f"Error generating tech stack: {str(e)}")
         
     def _is_mobile_project(self, project_type: str) -> bool:
         """Check if the project type is mobile-related."""

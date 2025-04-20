@@ -47,7 +47,6 @@ export const backgroundQuestions = [
             "PyCharm",
             "Netlify",
             "Heroku",
-            "CI/CD",
             "Playwright",
             "Postman",
             "Selenium",

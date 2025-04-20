@@ -1,7 +1,13 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { FaSearch, FaArrowRight, FaTimes, FaCheck, FaStar } from "react-icons/fa";
+import {
+  FaSearch,
+  FaArrowRight,
+  FaTimes,
+  FaCheck,
+  FaStar,
+} from "react-icons/fa";
 import { backgroundQuestions } from "../constants/backgroundQuestions.jsx";
 import { updateUserBackground } from "../utils/api.jsx";
 import { updateSuccess } from "../redux/userSlice";
@@ -43,7 +49,7 @@ export default function Quiz() {
   const [activeField, setActiveField] = useState("known_tech");
   const searchInputRef = useRef(null);
   const [lastClickTime, setLastClickTime] = useState(0);
-  const DOUBLE_CLICK_DELAY = 250; // milliseconds
+  const DOUBLE_CLICK_DELAY = 150; // milliseconds
 
   // Filter to only show the known_tech question, we'll improve this later
   const techQuestion = backgroundQuestions.find((q) => q.id === "known_tech");
@@ -61,11 +67,16 @@ export default function Quiz() {
     // Get all selected skills
     const selectedTechs = answers.known_tech || [];
     const dislikedTechs = answers.disliked_tech || [];
-    
+
     // Filter out suggestions that are already selected (case-insensitive)
     let availableSuggestions = allSkills.filter(
-      (tech) => !selectedTechs.some(selected => selected.toLowerCase() === tech.toLowerCase()) &&
-                !dislikedTechs.some(disliked => disliked.toLowerCase() === tech.toLowerCase())
+      (tech) =>
+        !selectedTechs.some(
+          (selected) => selected.toLowerCase() === tech.toLowerCase()
+        ) &&
+        !dislikedTechs.some(
+          (disliked) => disliked.toLowerCase() === tech.toLowerCase()
+        )
     );
 
     // If search text exists, filter by it
@@ -76,7 +87,6 @@ export default function Quiz() {
     }
 
     setQuickSuggestions(availableSuggestions.slice(0, 8));
-
   }, [searchText, answers.known_tech, answers.disliked_tech, allSkills]);
 
   useEffect(() => {
@@ -98,18 +108,20 @@ export default function Quiz() {
   const handleOptionSelect = (questionId, optionValue) => {
     const currentSelections = answers[questionId] || [];
     const lowerCaseOption = optionValue.toLowerCase();
-    
+
     // Check if the technology already exists in the list (case-insensitive)
     const alreadyExists = currentSelections.some(
-      tech => tech.toLowerCase() === lowerCaseOption
+      (tech) => tech.toLowerCase() === lowerCaseOption
     );
-    
+
     // If adding to known_tech, remove from disliked_tech
     if (questionId === "known_tech" && !alreadyExists) {
       setAnswers({
         ...answers,
         [questionId]: [...currentSelections, lowerCaseOption],
-        disliked_tech: answers.disliked_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption)
+        disliked_tech: answers.disliked_tech.filter(
+          (tech) => tech.toLowerCase() !== lowerCaseOption
+        ),
       });
       return;
     }
@@ -119,8 +131,12 @@ export default function Quiz() {
       setAnswers({
         ...answers,
         [questionId]: [...currentSelections, lowerCaseOption],
-        known_tech: answers.known_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption),
-        starred_tech: answers.starred_tech.filter(tech => tech.toLowerCase() !== lowerCaseOption)
+        known_tech: answers.known_tech.filter(
+          (tech) => tech.toLowerCase() !== lowerCaseOption
+        ),
+        starred_tech: answers.starred_tech.filter(
+          (tech) => tech.toLowerCase() !== lowerCaseOption
+        ),
       });
       return;
     }
@@ -128,7 +144,9 @@ export default function Quiz() {
     // If removing from either list, just remove it
     setAnswers({
       ...answers,
-      [questionId]: currentSelections.filter((value) => value.toLowerCase() !== lowerCaseOption)
+      [questionId]: currentSelections.filter(
+        (value) => value.toLowerCase() !== lowerCaseOption
+      ),
     });
   };
 
@@ -136,7 +154,7 @@ export default function Quiz() {
     if (e.key === "Enter" && searchText.trim() !== "") {
       e.preventDefault();
       const enteredTech = searchText.trim();
-      
+
       // If there's exactly one suggestion, use that
       if (quickSuggestions.length === 1) {
         handleOptionSelect(activeField, quickSuggestions[0]);
@@ -146,16 +164,55 @@ export default function Quiz() {
 
       // Check if the entered tech exists in allSkills (case insensitive)
       const existingTech = allSkills.find(
-        tech => tech.toLowerCase() === enteredTech.toLowerCase()
+        (tech) => tech.toLowerCase() === enteredTech.toLowerCase()
       );
 
       // If it exists, use the actual casing from the original list, otherwise use the entered text
       const techToAdd = existingTech || enteredTech;
-      
+
       // Add the technology
       handleOptionSelect(activeField, techToAdd);
       setSearchText("");
     }
+  };
+
+  const handleStarTech = (tech) => {
+    const lowerCaseTech = tech.toLowerCase();
+
+    // First ensure it's in known_tech if not already there
+    if (!answers.known_tech.some((t) => t.toLowerCase() === lowerCaseTech)) {
+      setAnswers((prev) => ({
+        ...prev,
+        known_tech: [...prev.known_tech, lowerCaseTech],
+      }));
+    }
+
+    // Then toggle star status
+    setAnswers((prev) => ({
+      ...prev,
+      starred_tech: prev.starred_tech.some(
+        (t) => t.toLowerCase() === lowerCaseTech
+      )
+        ? prev.starred_tech.filter((t) => t.toLowerCase() !== lowerCaseTech)
+        : [...prev.starred_tech, lowerCaseTech],
+    }));
+  };
+
+  const handleTechClick = (tech, field = "known_tech") => {
+    const currentTime = new Date().getTime();
+    const timeDiff = currentTime - lastClickTime;
+    const lowerCaseTech = tech.toLowerCase();
+
+    if (timeDiff < DOUBLE_CLICK_DELAY) {
+      // Double click - toggle star (only for known_tech)
+      if (field === "known_tech") {
+        handleStarTech(lowerCaseTech);
+      }
+    } else {
+      // Single click - toggle selection
+      handleOptionSelect(field, lowerCaseTech);
+    }
+    setLastClickTime(currentTime);
   };
 
   const handleSubmit = async () => {
@@ -163,8 +220,23 @@ export default function Quiz() {
     setError(null);
 
     try {
-      console.log("Submitting background answers:", answers);
-      const updatedUser = await updateUserBackground(answers);
+      // Clean up the answers before submitting
+      const cleanedAnswers = {
+        known_tech: [
+          ...new Set(answers.known_tech.map((tech) => tech.toLowerCase())),
+        ],
+        disliked_tech: [
+          ...new Set(answers.disliked_tech.map((tech) => tech.toLowerCase())),
+        ],
+        starred_tech: [
+          ...new Set(answers.starred_tech.map((tech) => tech.toLowerCase())),
+        ].filter((tech) =>
+          answers.known_tech.some((t) => t.toLowerCase() === tech)
+        ),
+      };
+
+      console.log("Submitting background answers:", cleanedAnswers);
+      const updatedUser = await updateUserBackground(cleanedAnswers);
       console.log("Received updated user:", updatedUser);
 
       const userWithBackgroundFilled = {
@@ -189,7 +261,7 @@ export default function Quiz() {
     const answer = answers[questionId];
     const lowerCaseOption = optionValue.toLowerCase();
     if (Array.isArray(answer)) {
-      return answer.some(item => item.toLowerCase() === lowerCaseOption);
+      return answer.some((item) => item.toLowerCase() === lowerCaseOption);
     }
     return answer === lowerCaseOption;
   };
@@ -202,37 +274,6 @@ export default function Quiz() {
     setShowSuggestions(false);
   };
 
-  const handleStarTech = (tech) => {
-    const lowerCaseTech = tech.toLowerCase();
-    setAnswers(prev => ({
-      ...prev,
-      starred_tech: prev.starred_tech.some(t => t.toLowerCase() === lowerCaseTech)
-        ? prev.starred_tech.filter(t => t.toLowerCase() !== lowerCaseTech)
-        : [...prev.starred_tech, lowerCaseTech]
-    }));
-  };
-
-  const handleTechClick = (tech, field = "known_tech") => {
-    const currentTime = new Date().getTime();
-    const timeDiff = currentTime - lastClickTime;
-    const lowerCaseTech = tech.toLowerCase();
-
-    if (timeDiff < DOUBLE_CLICK_DELAY) {
-      // Double click - toggle star (only for known_tech)
-      if (field === "known_tech") {
-        if (!answers.known_tech.some(t => t.toLowerCase() === lowerCaseTech)) {
-          // If not selected, select it first
-          handleOptionSelect("known_tech", lowerCaseTech);
-        }
-        handleStarTech(lowerCaseTech);
-      }
-    } else {
-      // Single click - toggle selection
-      handleOptionSelect(field, lowerCaseTech);
-    }
-    setLastClickTime(currentTime);
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-2xl px-5 py-6 flex flex-col h-[600px]">
@@ -241,7 +282,9 @@ export default function Quiz() {
             What skills do you have or enjoy working with?
           </h1>
           <p className="text-brand-gray text-sm flex items-center">
-            Double-click to star a tool <FaStar className="mx-1 text-brand-yellow" size={10} /> to always include it in recommendations
+            Double-click to star a tool{" "}
+            <FaStar className="mx-1 text-brand-yellow" size={10} /> to always
+            include it in recommendations
           </p>
         </div>
 
@@ -297,7 +340,11 @@ export default function Quiz() {
               onFocus={() => setShowSuggestions(quickSuggestions.length > 0)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
               onKeyDown={handleCustomTechKeyDown}
-              placeholder={activeField === "known_tech" ? "Search all skills..." : "Skills to filter out..."}
+              placeholder={
+                activeField === "known_tech"
+                  ? "Search all skills..."
+                  : "Skills to filter out..."
+              }
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-gray-300 rounded-lg text-sm focus:outline-none"
             />
 
@@ -309,7 +356,10 @@ export default function Quiz() {
                       <li
                         key={suggestion}
                         onClick={() => {
-                          handleOptionSelect(activeField, suggestion.toLowerCase());
+                          handleOptionSelect(
+                            activeField,
+                            suggestion.toLowerCase()
+                          );
                           setSearchText("");
                           setShowSuggestions(false);
                         }}
@@ -325,7 +375,8 @@ export default function Quiz() {
                     ))
                   ) : (
                     <li className="w-full px-4 py-2 text-gray-500 text-sm italic">
-                      No matching skills found. Press Enter to add a custom skill.
+                      No matching skills found. Press Enter to add a custom
+                      skill.
                     </li>
                   )}
                 </ul>
@@ -348,17 +399,25 @@ export default function Quiz() {
                       }`}
                     >
                       {option}
-                      {isOptionSelected("known_tech", option) && (
-                        answers.starred_tech.some(tech => tech.toLowerCase() === option.toLowerCase()) 
-                          ? <FaStar className="ml-1 text-brand-black" size={8} />
-                          : <FaCheck className="ml-1" size={8} />
-                      )}
+                      {isOptionSelected("known_tech", option) &&
+                        (answers.starred_tech.some(
+                          (tech) => tech.toLowerCase() === option.toLowerCase()
+                        ) ? (
+                          <FaStar className="ml-1 text-brand-black" size={8} />
+                        ) : (
+                          <FaCheck className="ml-1" size={8} />
+                        ))}
                     </button>
                   ))}
 
                   {/* Custom added technologies that aren't in the predefined list */}
                   {answers.known_tech
-                    .filter(tech => !allSkills.some(skill => skill.toLowerCase() === tech.toLowerCase()))
+                    .filter(
+                      (tech) =>
+                        !allSkills.some(
+                          (skill) => skill.toLowerCase() === tech.toLowerCase()
+                        )
+                    )
                     .map((tech) => (
                       <button
                         key={tech}
@@ -366,10 +425,13 @@ export default function Quiz() {
                         className="px-2.5 py-1 text-xs rounded-full bg-brand-yellow text-brand-black transition-all hover:scale-110 flex items-center"
                       >
                         {tech}
-                        {answers.starred_tech.some(t => t.toLowerCase() === tech.toLowerCase())
-                          ? <FaStar className="ml-1 text-brand-black" size={8} />
-                          : <FaCheck className="ml-1" size={8} />
-                        }
+                        {answers.starred_tech.some(
+                          (t) => t.toLowerCase() === tech.toLowerCase()
+                        ) ? (
+                          <FaStar className="ml-1 text-brand-black" size={8} />
+                        ) : (
+                          <FaCheck className="ml-1" size={8} />
+                        )}
                       </button>
                     ))}
                 </div>
@@ -400,12 +462,24 @@ export default function Quiz() {
           </div>
         </div>
 
-        <div className="w-full flex justify-end mt-auto">
+        <div className="w-full flex justify-end mt-auto gap-2">
+          <button
+            className="px-4 py-2 rounded-full text-sm font-medium flex justify-center bg-gray-100 text-brand-gray hover:shadow-md transition-all duration-200 hover:scale-105"
+            onClick={() => navigate("/projectinput")}
+          >
+            skip for now
+          </button>
           <button
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting ||
+              (answers.known_tech.length === 0 &&
+                answers.disliked_tech.length === 0)
+            }
             className={`px-4 py-2 rounded-full text-sm font-medium flex items-center ${
-              isSubmitting
+              isSubmitting ||
+              (answers.known_tech.length === 0 &&
+                answers.disliked_tech.length === 0)
                 ? "bg-gray-300 text-gray-500 cursor-not-allowed"
                 : "bg-brand-yellow text-brand-black hover:shadow-md transition-all duration-200 hover:scale-105"
             }`}
