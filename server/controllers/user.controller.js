@@ -122,3 +122,23 @@ export const deleteUser = async (req, res, next) => {
     next(errorHandler(500, "Error deleting user"));
   }
 };
+
+export const updateUserName = async (req, res, next) => {
+  const userId = req.user.id;
+  const { name } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = name;
+    const updatedUser = await user.save();
+
+    const { password, ...userData } = updatedUser._doc;
+    return res.status(200).json(userData);
+  } catch (error) {
+    next(errorHandler(500, "Error updating user"));
+  }
+};

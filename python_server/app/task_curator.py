@@ -5,7 +5,6 @@ import json
 from typing import List, Dict, Any
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 class TaskGenerationCrew:
@@ -17,7 +16,6 @@ class TaskGenerationCrew:
         )
         
         self.category_agents = {
-            "planning": self._create_plan_design_agent(),
             "setup": self._create_setup_agent(),
             "frontend": self._create_frontend_agent(),
             "backend": self._create_backend_agent(), 
@@ -27,7 +25,6 @@ class TaskGenerationCrew:
         }
 
         self.category_mapping = {
-            "planning": "planning",
             "setup": "setup",
             "frontend": "frontend",
             "backend": "backend",
@@ -43,32 +40,38 @@ class TaskGenerationCrew:
             elif priority and "Scalability" in priority:
                 coordinator_agent = self._create_scalability_agent()
             else:
-                coordinator_agent = self._create_learning_agent()
+                coordinator_agent = self._create_speed_agent()  # default to speed if no priority
             
             category_tasks = []
             
-            active_categories = [cat for cat in tech_stack_by_category.keys() 
-                                    if cat in self.category_agents and tech_stack_by_category[cat]]
+            #ensure all core categories are included
+            required_categories = ["setup", "frontend", "backend", "testing", "deploy", "maintain"]
             
-            for category in active_categories:
+            #initialize empty tech stacks for missing categories
+            for category in required_categories:
                 if category not in tech_stack_by_category:
-                    raise ValueError(f"The {category} category does not have a tool assigned to it.")
+                    tech_stack_by_category[category] = []
             
-            for category in active_categories:
+            #create tasks for all required categories
+            for category in required_categories:
+                if category not in self.category_agents:
+                    continue
+                    
                 category_task = self._create_category_task(
                     category=category,
                     project_description=project_description,
                     priority=priority,
-                    tech_stack=tech_stack_by_category.get(category),
+                    tech_stack=tech_stack_by_category.get(category, []),
                     project_type=project_type,
                     agent=self.category_agents[category]
                 )
                 category_tasks.append(category_task)
             
-            active_agents = [self.category_agents[cat] for cat in active_categories]
+            #create the crew with coordinator agent first, followed by category agents
+            all_agents = [coordinator_agent] + [self.category_agents[cat] for cat in required_categories if cat in self.category_agents]
             
             crew = Crew(
-                agents=active_agents,
+                agents=all_agents,
                 tasks=category_tasks,
                 verbose=True,
                 process=Process.sequential
@@ -76,15 +79,16 @@ class TaskGenerationCrew:
             
             results = crew.kickoff()
             combined_tasks = self._combine_category_results(results)
-            
             tasks_list = combined_tasks.get("tasks", [])
+            
             task_count = len(tasks_list)
             subtask_count = sum(len(task.get("subtasks", [])) for task in tasks_list)
             
             return {
                 "tasks": tasks_list,
                 "taskCount": task_count,
-                "subtaskCount": subtask_count
+                "subtaskCount": subtask_count,
+                "projectType": project_type
             }
             
         except Exception as e:
@@ -94,7 +98,7 @@ class TaskGenerationCrew:
                 "taskCount": 0,
                 "subtaskCount": 0
             }
-    
+
     def _combine_category_results(self, crew_output) -> Dict[str, Any]:
         all_tasks = []
 
@@ -165,8 +169,6 @@ class TaskGenerationCrew:
                 priority_context = "Speed - Focus on rapid development and MVP approach"
             elif "Scalability" in priority:
                 priority_context = "Scalability - Focus on architecture and future-proofing"
-            else:
-                priority_context = "Learning - Focus on educational value and skill development"
         
         tech_details = []
         for tech in tech_stack:
@@ -229,6 +231,7 @@ class TaskGenerationCrew:
             agent=agent
         )
     
+    #agent for speed and mvp
     def _create_speed_agent(self) -> Agent:
         return Agent(
             role='Speed-Oriented Task Coordinator',
@@ -243,6 +246,7 @@ class TaskGenerationCrew:
             verbose=True
         )
     
+    #agent for scalability and future proofing
     def _create_scalability_agent(self) -> Agent:
         return Agent(
             role='Scalability-Oriented Task Coordinator',
@@ -252,34 +256,6 @@ class TaskGenerationCrew:
                 You prioritize future-proofing and extensibility in your task planning.
                 You focus on creating a solid foundation that can grow with the project.
                 You understand microservices, distributed systems, and cloud-native architectures.
-            """),
-            llm=self.llm,
-            verbose=True
-        )
-    
-    def _create_learning_agent(self) -> Agent:
-        return Agent(
-            role='Learning-Oriented Task Coordinator',
-            goal='Coordinate educational task breakdowns',
-            backstory=dedent("""
-                You are an expert at creating educational project plans.
-                You prioritize learning outcomes and skill development in your task planning.
-                You focus on breaking down complex concepts into digestible learning steps.
-                You understand how to incorporate best practices and industry standards into learning tasks.
-            """),
-            llm=self.llm,
-            verbose=True
-        )
-    
-    def _create_plan_design_agent(self) -> Agent:
-        return Agent(
-            role='Planning & Design Specialist',
-            goal='Generate comprehensive planning and design tasks',
-            backstory=dedent("""
-                You specialize in project architecture and design planning.
-                You excel at translating requirements into actionable design tasks.
-                You understand how to create tasks for requirements gathering, wireframing, and architecture planning.
-                You create tasks that incorporate the specific design tools recommended in the tech stack.
             """),
             llm=self.llm,
             verbose=True

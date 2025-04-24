@@ -3,11 +3,9 @@ from crewai.tools import BaseTool
 from typing import List, Dict, Any, Optional
 import json
 import os
-import uuid
 import time
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 class BraveSearchTool(BaseTool):
@@ -70,7 +68,7 @@ class TechStackCuratorCrew:
             role="Technology Research Specialist",
             goal="Research and evaluate tools across all project phases",
             backstory="""You are an expert in researching and evaluating development tools and technologies.
-            You excel at finding and evaluating tools for planning, setup, development, testing, deployment, and maintenance.
+            You excel at finding and evaluating tools for setup, frontend, backend, testing, deployment, and maintenance.
             You understand how different tools complement each other and can identify the best options based on project requirements.""",
             verbose=True,
             allow_delegation=False,
@@ -101,19 +99,19 @@ class TechStackCuratorCrew:
 
         for attempt in range(max_retries):
             try:
-                # If result is already a dict, use it directly
+                #if result is already a dict, use it directly
                 if isinstance(result, dict):
                     return result
 
-                # Try to parse as JSON if it's a string
+                #try to parse as JSON if it's a string
                 if isinstance(result, str):
                     parsed = json.loads(result)
                     if isinstance(parsed, dict):
                         return parsed
 
-                # If we get here, the response is invalid
+                #if we get here, the response is invalid
                 if attempt < max_retries - 1:
-                    time.sleep(1)  # Wait before retrying
+                    time.sleep(1)  #wait before retrying
                     continue
                 
                 return self._get_default_response("Invalid response format from LLM")
@@ -131,7 +129,6 @@ class TechStackCuratorCrew:
         return {
             "error": error_message,
             "type": "Web Application",
-            "planning": [],
             "setup": [],
             "frontend": [],
             "backend": [],
@@ -195,14 +192,13 @@ class TechStackCuratorCrew:
                         The response MUST be a valid JSON object with this exact structure:
                         {{
                             "type": "{project_type}",
-                            "planning": [
+                            "setup": [
                                 {{
                                     "name": "Technology name",
                                     "description": "Brief explanation of what this technology does and why it fits",
-                                    "docLink": "URL to official documentation"
+                                    "docLink": "URL to official documentation / relevant resource"
                                 }}
                             ],
-                            "setup": [...],
                             "frontend": [...],
                             "backend": [...],
                             "testing": [...],
@@ -210,7 +206,7 @@ class TechStackCuratorCrew:
                             "maintain": [...]
                         }}
                         
-                        Each array (planning, setup, frontend, etc.) should contain at least one technology with all required fields.
+                        Each array (setup, frontend, etc.) should contain at least one technology with all required fields.
                         """,
                         expected_output="A clean JSON object containing the curated tech stack with detailed explanations.",
                         agent=self.agents["curator"]
@@ -232,7 +228,7 @@ class TechStackCuratorCrew:
                         # Validate tech stack items
                         if "error" not in validated_data:
                             # Ensure each category has at least one valid item
-                            categories = ["planning", "setup", "frontend", "backend", "testing", "deploy", "maintain"]
+                            categories = ["setup", "frontend", "backend", "testing", "deploy", "maintain"]
                             for category in categories:
                                 if category in validated_data:
                                     items = validated_data[category]

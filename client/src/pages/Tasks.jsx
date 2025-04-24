@@ -1,17 +1,16 @@
 import { useState, useRef, useEffect } from "react";
-import { FaCheckCircle, FaRegCircle, FaBox, FaGripLines, 
-  FaTimes, FaPlus, FaChevronDown, FaUser, FaChevronRight, 
-  FaCode, FaBook, FaLink, FaRocket,  FaDatabase, 
-  FaGraduationCap,  FaWrench, FaCalendarAlt, FaChevronUp } from "react-icons/fa";
-import { FiCheck } from "react-icons/fi";
+import { FaTimes, FaChevronDown, FaChevronRight, FaPlus } from "react-icons/fa";
+import { RiCloudyLine } from "react-icons/ri";
 import { useSelector, useDispatch } from "react-redux";
 import  Subtask  from "../components/Subtask";
-import TaskActionPanel from "../components/TaskActionPanel";
-import { RiCloudyLine } from "react-icons/ri";
+import PromptPanel from "../components/PromptPanel";
+import ResourcesModal from "../components/ResourceModal";
+import { updateTaskStatus as updateTaskStatusRedux } from "../redux/taskSlice";
+import { updateTaskStatus } from '../utils/api';
 
 const PROJECT_CATEGORIES = [
   { id: "all", name: "All", description: "All tasks" },
-  { id: 'planning', name: 'Plan', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
+  // { id: 'planning', name: 'Planning', description: 'Initial requirements, user flows, architecture ideas, wireframes' },
   { id: 'setup', name: 'Setup', description: 'Environment configuration, repository initialization, installing core tools' },
   { id: 'frontend', name: 'Frontend', description: 'User interface development, client-side logic' },
   { id: 'backend', name: 'Backend', description: 'Server-side logic, API development, database interactions' },
@@ -20,18 +19,16 @@ const PROJECT_CATEGORIES = [
   { id: 'maintain', name: 'Maintain', description: 'Monitoring, updates, bug fixes after launch' },
 ];
 
-const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, deleteTask }) => {
+const Task = ({ task, index, toggleTaskCompletion, deleteTask }) => {
   const [expanded, setExpanded] = useState(false);
   const [showActionPanel, setShowActionPanel] = useState(false);
   const [activeAction, setActiveAction] = useState(null);
   const [selectedSubtask, setSelectedSubtask] = useState(null);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
-  const [checkAnimation, setCheckAnimation] = useState(false);
   const ref = useRef(null);
   const contentRef = useRef(null);
   const deleteTimerRef = useRef(null);
   
-  const completedSubtasks = task.subtasks ? task.subtasks.filter(st => st.completed).length : 0;
   const totalSubtasks = task.subtasks ? task.subtasks.length : 0;
   
   const toggleExpand = (e) => {
@@ -41,15 +38,13 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
   };
   
   const handleTaskClick = (e) => {
-    // if (
-    //   e.target.closest('button') || 
-    //   e.target.closest('[role="button"]') || 
-    //   e.target.closest('[aria-label]')
-    // ) {
-    //   return;
-    // }
-    
-    //simply expand/collapse on click
+    if (
+      e.target.closest('button') || 
+      e.target.closest('[role="button"]') || 
+      e.target.closest('[aria-label]')
+    ) {
+      return;
+    }
     setExpanded(!expanded);
   };
 
@@ -113,15 +108,14 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
   const handleTaskCompletion = (e) => {
     e.stopPropagation();
     e.preventDefault();
-    
-    const taskId = task._id;
-    
-    setCheckAnimation(true);
-    setTimeout(() => {
-      setCheckAnimation(false);
-    }, 600);
-    
-    toggleTaskCompletion(taskId);
+    // console.log('Task data:', task); // Debug log
+    if (task.id) {
+      toggleTaskCompletion(task.id);
+    } else if (task._id) {
+      toggleTaskCompletion(task._id);
+    } else {
+      console.error('No valid task ID found:', task);
+    }
   };
 
   return (
@@ -135,72 +129,24 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
       >
         {/* task checkbox */}
         <div 
-          onDoubleClick={(e) => {
-            e.stopPropagation(); 
-            handleTaskCompletion(e);
-          }}
-          className={`flex-shrink-0 h-6 w-6 flex items-center justify-center rounded-full cursor-pointer transition-all duration-300 relative
-            ${checkAnimation ? 'scale-110 bg-brand-yellow/20' : 'hover:bg-gray-100'}`}
-          role="button"
-          aria-label={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
-          title={task.completed ? "Double-click to mark as incomplete" : "Double-click to mark as complete"}
-          data-task-id={task.id}
+          className="flex-shrink-0 h-6 w-6 flex items-center justify-center relative"
         >
-          {task.completed ? (
-            <div className="relative">
-              <FaCheckCircle className="text-lg text-brand-yellow" />
-              <span className={`absolute inset-0 flex items-center justify-center transition-opacity ${checkAnimation ? 'opacity-100' : 'opacity-0'}`}>
-                <span className="animate-ping absolute h-3 w-3 rounded-full bg-brand-yellow opacity-75"></span>
-              </span>
-            </div>
-          ) : (
-            <div className="relative">
-              <FaRegCircle className="text-lg text-brand-gray hover:text-gray-400 transition-colors" />
-              <span className={`absolute inset-0 flex items-center justify-center text-white transition-transform origin-center ${checkAnimation ? 'scale-100' : 'scale-0'} duration-300`}>
-                <FiCheck className="text-xs" />
-              </span>
-            </div>
-          )}
+          <input 
+            type="checkbox"
+            checked={task.completed}
+            onChange={handleTaskCompletion}
+            onClick={(e) => e.stopPropagation()}
+            className="checkbox checkbox-success checkbox-md border-2 border-gray-200"
+          />
         </div>
-        
-        {/* task name */}
-        <div className="flex-grow flex items-center cursor-pointer">
-          <p className={`${task.completed ? 'line-through text-brand-gray' : 'text-brand-black'} text-sm mr-6 transition-all duration-300 ${checkAnimation ? 'transform translate-y-0.5' : ''}`}>
-            {task.text}
-          </p>
-          
-          {/* completion confetti effect */}
-          {checkAnimation && !task.completed && (
-            <div className="absolute left-6 -top-1 overflow-hidden h-6">
-              <div className="animate-confetti-1 absolute w-1 h-1 rounded-full bg-brand-yellow"></div>
-              <div className="animate-confetti-2 absolute w-1 h-1 rounded-full bg-brand-yellow delay-75"></div>
-              <div className="animate-confetti-3 absolute w-1 h-1 rounded-full bg-brand-yellow delay-150"></div>
-            </div>
-          )}
-        </div>
-        
-        {/* right side actions */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          {/* task action button - Get Prompt */}
-          <button 
-            onClick={(e) => {
-              e.stopPropagation();
-              handleActionButton('prompt');
-            }}
-            className="px-2 py-1 rounded-md text-xs bg-brand-pink/10 text-brand-pink hover:bg-brand-pink/20 transition-colors group/tooltip relative flex items-center gap-1 opacity-0 group-hover/task:opacity-100"
-          >
-            <span>Get Prompt</span>
-          </button>
-        
-          {/* subtask indicator and toggle */}
-          {task.subtasks && task.subtasks.length > 0 && (
+        {task.subtasks && task.subtasks.length > 0 && (
             <button 
               onClick={toggleExpand}
               className="flex items-center gap-1.5 min-w-[40px] justify-end text-xs text-brand-gray hover:text-brand-black transition-colors group/tooltip relative"
               title={expanded ? "Hide subtasks" : "Show subtasks"}
             >
               <span className="flex items-center gap-1">
-                <span className="text-brand-gray/60">{completedSubtasks}/{totalSubtasks}</span>
+                <span className="text-brand-gray/60">{totalSubtasks} steps</span>
                 {expanded ? 
                   <FaChevronDown className="text-xs" /> : 
                   <FaChevronRight className="text-xs" />
@@ -208,6 +154,28 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
               </span>
             </button>
           )}
+        
+        {/* task name */}
+        <div className="flex-grow flex items-center cursor-pointer">
+          <p className={`${task.completed ? 'line-through text-brand-gray' : 'text-brand-black'} text-sm mr-6 transition-all duration-300`}>
+            {task.text}
+          </p>
+        </div>
+        
+        {/* right side actions */}
+        <div className="flex items-center gap-3 flex-shrink-0">
+          <button 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleActionButton('prompt');
+            }}
+            className="btn btn-dash btn-sm bg-brand-pink/10 hover:bg-brand-pink/20 text-brand-pink border-0 group/tooltip relative flex items-center gap-1 opacity-0 group-hover/task:opacity-100"
+          >
+            <span>Start Task</span>
+          </button>
+        
+          {/* subtask indicator and toggle */}
+          
           
           {/* task controls */}
           {!deleteConfirm ? (
@@ -255,7 +223,6 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
                 subtask={subtask}
                 parentId={task.id}
                 parentText={task.text}
-                toggleSubtaskCompletion={toggleSubtaskCompletion}
                 onSelectSubtask={handleSelectSubtask}
               />
             ))}
@@ -264,7 +231,7 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
       )}
 
       {/* action panel for task or subtask - with different options for each */}
-      <TaskActionPanel 
+      <PromptPanel 
         isOpen={showActionPanel}
         onClose={closeActionPanel}
         action={activeAction || (selectedSubtask ? 'implementation' : 'breakdown')}
@@ -280,8 +247,8 @@ const Task = ({ task, index, toggleTaskCompletion, toggleSubtaskCompletion, dele
 const CategoryNavigation = ({ categories, currentCategory, onChange}) => {
   const getCategoryStyle = (categoryId) => {
     switch (categoryId) {
-      case 'planning':
-        return 'bg-blue-500/10 text-blue-500';
+      //case 'planning':
+      //   return 'bg-blue-500/10 text-blue-500';
       case 'setup':
         return 'bg-purple-500/10 text-purple-500';
       case 'frontend':
@@ -339,15 +306,15 @@ const CategoryNavigation = ({ categories, currentCategory, onChange}) => {
   );
 };
 
-const CategoryEmptyState = ({ category, setIsComposing }) => {
+const CategoryEmptyState = ({ category }) => {
   const currentCategory = PROJECT_CATEGORIES.find(c => c.id === category);
   
   return (
     <div className="text-center">
-      <h3 className="text-lg font-medium text-brand-black mb-2">No tasks in {currentCategory.name}</h3>
-      <p className="text-brand-gray mb-4">{currentCategory.description}</p>
+      <h3 className="text-lg font-medium text-brand-black mb-2">No tasks in {currentCategory?.name}</h3>
+      <p className="text-brand-gray mb-4">{currentCategory?.description}</p>
       <button 
-        onClick={() => setIsComposing(true)}
+        // onClick={() =>()}
         className="inline-flex items-center gap-2 bg-brand-yellow hover:bg-brand-yellow/90 text-brand-black rounded-full px-4 py-2 transition-colors shadow-lg shadow-brand-yellow/20"
       >
         <FaPlus size={12} />
@@ -357,222 +324,46 @@ const CategoryEmptyState = ({ category, setIsComposing }) => {
   );
 };
 
-const TechnologyCard = ({ icon, name, description, docLink, category }) => {
-  const getCategoryIcon = () => {
-    switch (category) {
-      case 'planning':
-        return <FaCalendarAlt className="text-blue-500" />;
-      case 'setup':
-        return <FaBox className="text-purple-500" />;
-      case 'frontend':
-        return <FaUser className="text-blue-400" />;
-      case 'backend':
-        return <FaDatabase className="text-indigo-500" />;
-      case 'testing':
-        return <FaCode className="text-amber-500" />;
-      case 'deploy':
-        return <FaRocket className="text-red-500" />;
-      case 'maintain':
-        return <FaWrench className="text-gray-500" />;
-      
-      default:
-        return <FaGraduationCap className="text-gray-500" />;
-    }
-  };
-
-  return (
-    <div className="bg-gray-50 rounded-lg p-4">
-      <div className="flex items-start gap-3">
-        <div className="flex-shrink-0 w-8 h-8 bg-blue-500/10 rounded-lg flex items-center justify-center">
-          {icon || getCategoryIcon()}
-        </div>
-        <div className="flex-grow">
-          <h4 className="text-base font-medium text-gray-900">{name}</h4>
-          <p className="text-sm text-gray-600 mt-1">{description}</p>
-          
-          <div className="mt-3 space-y-2">
-            {docLink && (
-              <a 
-                href={docLink} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-700"
-              >
-                <FaBook className="text-xs" />
-                <span>Helpful link</span>
-              </a>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const ResourcesModal = ({ isOpen, onClose, techStackData, isLoading, currentProject }) => {
-  const modalRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (modalRef.current && !modalRef.current.contains(event.target)) {
-        onClose();
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      console.log("TechStackModal opened with data:", techStackData);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isOpen, onClose, techStackData]);
-
-  if (!isOpen) return null;
-
-  // Debug output for tech stack data
-  const debugOutput = () => {
-    if (!techStackData) {
-      return (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          <p className="text-sm">Tech stack data is undefined or null</p>
-        </div>
-      );
-    }
-    
-    if (typeof techStackData !== 'object') {
-      return (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-          <p className="text-sm">Tech stack data is not an object: {typeof techStackData}</p>
-        </div>
-      );
-    }
-    
-    return null;
-  };
-
-  const renderTechSection = (title, techs, category) => {
-    if (!techs || techs.length === 0) return null;
-
-    return (
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4">{title}</h3>
-        <div className="space-y-4">
-          {techs.map((tech, index) => (
-            <TechnologyCard
-              key={`${category}-${index}`}
-              name={tech.name}
-              
-              description={tech.description}
-              docLink={tech.documentationUrl || tech.docLink}
-              category={category}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-
-
-  return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div ref={modalRef} className="bg-white rounded-2xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Your Personalized Resources</h2>
-            <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-              <p>
-                Curated resources for an {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
-              </p>
-            </div>
-          </div>
-          <button 
-            onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100 transition-colors"
-            aria-label="Close modal"
-          >
-            <FaTimes />
-          </button>
-        </div>
-        
-        <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
-          {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-            </div>
-          ) : (
-            <>
-              {/* Debug information */}
-              {debugOutput()}
-              
-              {techStackData && typeof techStackData === 'object' ? (
-                <div className="space-y-8">
-                  {renderTechSection('Planning', techStackData.planning, 'planning')}
-                  {renderTechSection('Setup', techStackData.setup, 'setup')}
-                  {renderTechSection('Frontend', techStackData.frontend, 'frontend')}
-                  {renderTechSection('Backend', techStackData.backend, 'backend')}
-                  {renderTechSection('Testing', techStackData.testing, 'testing')}
-                  {renderTechSection('Deployment', techStackData.deploy, 'deploy')}
-                  {renderTechSection('Maintenance', techStackData.maintain, 'maintain')}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-500">
-                  <p>No resources available</p>
-                  <p className="text-xs mt-2">Please create a new project to get resources</p>
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-
-
-function Tasks() {
+const Tasks = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [isComposing, setIsComposing] = useState(false);
-  const [newTask, setNewTask] = useState('');
-  const [currentCategory, setCurrentCategory] = useState('planning');
-  const [newTaskCategory, setNewTaskCategory] = useState('planning');
+  // const [newTask, setNewTask] = useState('');
+  // const [newTaskCategory, setNewTaskCategory] = useState('planning');
+  const [currentCategory, setCurrentCategory] = useState('setup');
+  
   const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   const [showTechStack, setShowTechStack] = useState(false);
   const [showFullDescription, setShowFullDescription] = useState(false);
   
   const { currentTasks, loading: reduxLoading, error: reduxError } = useSelector((state) => state.tasks);
   const { currentProject } = useSelector((state) => state.projects);
-  const dispatch = useDispatch();
+
+  //console.log("Current Tasks:", currentTasks);
+  //console.log("Current Project:", currentProject);
+
+  // const dispatch = useDispatch();
   
-  // Add detailed logging for currentProject
-  useEffect(() => {
-    console.log("Full Current Project:", currentProject);
-    console.log("Project Tech Stack:", currentProject?.techStack);
-    console.log("Project Priority:", currentProject?.priority);
-    console.log("Project Description:", currentProject?.description);
-  }, [currentProject]);
+  // useEffect(() => {
+  //   console.log("Full Current Project:", currentProject);
+  //   console.log("Project Tech Stack:", currentProject?.techStack);
+  //   console.log("Project Priority:", currentProject?.priority);
+  //   console.log("Project Description:", currentProject?.description);
+  // }, [currentProject]);
 
-  // Add logging for modal state
-  useEffect(() => {
-    if (showTechStack) {
-      console.log("Modal State - Show Tech Stack:", showTechStack);
-      console.log("Modal State - Current Project:", currentProject);
-      console.log("Modal State - Tech Stack Data:", currentProject?.techStack);
-    }
-  }, [showTechStack, currentProject]);
+  // useEffect(() => {
+  //   if (showTechStack) {
+  //     console.log("Modal State - Show Tech Stack:", showTechStack);
+  //     console.log("Modal State - Current Project:", currentProject);
+  //     console.log("Modal State - Tech Stack Data:", currentProject?.techStack);
+  //   }
+  // }, [showTechStack, currentProject]);
 
-  // Setup initial tasks
   useEffect(() => {
     if (currentTasks) {
-      // Initialize category for new tasks if needed
       const tasksWithCategories = currentTasks.map(task => ({
         ...task,
-        category: task.category || 'planning' // Default to planning category if not specified
+        category: task.category || 'setup'
       }));
       setTasks(tasksWithCategories);
       setLoading(false);
@@ -603,93 +394,91 @@ function Tasks() {
     }
   }, [tasks]);
 
-  const toggleTaskCompletion = (taskId) => {
+  const dispatch = useDispatch();
+
+  const toggleTaskCompletion = async (taskId) => {
     if (!taskId) {
       console.error("No task ID provided");
       return;
     }
 
-    setTasks(prevTasks => {
-      return prevTasks.map(task => {
-        const taskIdentifier = task._id;
-        
-        if (taskIdentifier === taskId) {
-          const updatedTask = {
-            ...task,
-            completed: !task.completed,
-            subtasks: task.subtasks?.map(subtask => ({
-              ...subtask,
-              completed: !task.completed
-            }))
-          };
-          return updatedTask;
-        }
-        return task;
+    try {
+      const currentTask = tasks.find(task => 
+        task.taskId === taskId || 
+        task.id === taskId || 
+        task._id === taskId
+      );
+      
+      if (!currentTask) {
+        console.error("Task not found:", taskId);
+        return;
+      }
+
+      if (!currentProject?._id) {
+        console.error("No project ID available");
+        return;
+      }
+
+      // Use taskId consistently
+      const effectiveTaskId = currentTask.taskId || currentTask.id || currentTask._id;
+      const newStatus = !currentTask.completed;
+      
+      console.log('Updating task status:', {
+        projectId: currentProject._id,
+        taskId: effectiveTaskId,
+        currentCompleted: currentTask.completed,
+        newStatus
       });
-    });
-  };
-  
-  const toggleSubtaskCompletion = (parentId, subtaskId) => {
-    setTasks(prevTasks => {
-      return prevTasks.map(task => {
-        if (task.id === parentId) {
-          //update the subtask
-          const updatedSubtasks = task.subtasks.map(subtask => 
-            subtask.id === subtaskId 
-              ? { ...subtask, completed: !subtask.completed }
-              : subtask
-          );
-          
-          //check if all subtasks are now completed
-          const allSubtasksCompleted = updatedSubtasks.every(st => st.completed);
-          
-          //check if the current subtask is being unchecked
-          const currentSubtask = task.subtasks.find(st => st.id === subtaskId);
-          const isUnchecking = currentSubtask && currentSubtask.completed;
-          
-          //return updated task - mark as incomplete if a subtask is being unchecked
-          return { 
-            ...task, 
-            subtasks: updatedSubtasks,
-            //if any subtask is unchecked, the task should be marked incomplete
-            //if all subtasks are completed, the task should be marked complete
-            completed: isUnchecking ? false : allSubtasksCompleted
-          };
-        }
-        return task;
-      });
-    });
+
+      // Optimistically update UI
+      dispatch(updateTaskStatusRedux({ taskId: effectiveTaskId, completed: newStatus }));
+
+      // Make API call
+      const response = await updateTaskStatus(
+        currentProject._id, 
+        effectiveTaskId, 
+        newStatus
+      );
+
+      if (!response.success) {
+        // Revert the optimistic update if the API call failed
+        dispatch(updateTaskStatusRedux({ taskId: effectiveTaskId, completed: currentTask.completed }));
+        console.error('Task update failed:', response);
+        // Optionally show error to user
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      // Optionally show error to user
+    }
   };
   
   const deleteTask = (taskId) => {
     setTasks(prevTasks => prevTasks.filter(task => task.id !== taskId));
   };
   
-  const addNewTask = (e) => {
-    e.preventDefault();
-    if (!newTask.trim()) return;
+  // const addNewTask = (e) => {
+  //   e.preventDefault();
+  //   if (!newTask.trim()) return;
     
-    setTasks(prevTasks => [
-      ...prevTasks,
-      { 
-        id: Date.now().toString(), 
-        text: newTask, 
-        completed: false,
-        category: newTaskCategory,
-        subtasks: []
-      }
-    ]);
+  //   setTasks(prevTasks => [
+  //     ...prevTasks,
+  //     { 
+  //       id: Date.now().toString(), 
+  //       text: newTask, 
+  //       completed: false,
+  //       category: newTaskCategory,
+  //       subtasks: []
+  //     }
+  //   ]);
     
-    setNewTask('');
-    setIsComposing(false);
-  };
+  //   setNewTask('');
+  //   setIsComposing(false);
+  // };
 
-  // Filter tasks by current category
   const currentCategoryTasks = currentCategory === 'all' 
     ? tasks 
     : tasks.filter(task => task.category === currentCategory);
   
-  // Count completed tasks in current category
   const completedTasksCount = currentCategoryTasks.filter(task => task.completed).length;
 
   if (loading) {
@@ -726,14 +515,8 @@ function Tasks() {
     );
   }
 
-  // Check if there are tasks in the component state OR in Redux state
-  const hasTasks = (tasks && tasks.length > 0) || (currentTasks && currentTasks.length > 0);
-  
-  // We'll render the UI even if there are no tasks, as we want to show category navigation
-
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Wrapper for both header and nav to handle sticky behavior together */}
       <div className="sticky top-0 z-30">
         <div className="bg-white/70 backdrop-blur-xl border-b border-gray-100">
           <div className="max-w-5xl mx-auto px-8 py-4">
@@ -779,7 +562,6 @@ function Tasks() {
           </div>
         </div>
 
-        {/* Category Navigation - now part of the sticky header wrapper */}
         {!loading && !error && (
           <div className="bg-white/50 backdrop-blur-lg border-b border-gray-100/50">
             <CategoryNavigation
@@ -829,7 +611,6 @@ function Tasks() {
               {currentCategoryTasks.length > 0 ? (
                 <div className="space-y-6">
                   {currentCategory === 'all' ? (
-                    // Group tasks by category when "All" is selected
                     PROJECT_CATEGORIES.filter(category => category.id !== 'all').map(category => {
                       const categoryTasks = tasks.filter(task => task.category === category.id);
                       if (categoryTasks.length === 0) return null;
@@ -851,17 +632,16 @@ function Tasks() {
                               />
                             </div>
                             <div className="text-sm text-gray-500">
-                              {completedCount}/{categoryTasks.length} completed
+                              {completedCount}/{categoryTasks.length}
                             </div>
                           </div>
                           <div className="space-y-1 pl-1">
-                            {categoryTasks.map((task) => (
+                            {categoryTasks.map((task, idx) => (
                               <Task
-                                key={task.id}
+                                key={`${task.id}-${idx}`}
                                 task={task}
                                 index={tasks.findIndex(t => t.id === task.id)}
                                 toggleTaskCompletion={toggleTaskCompletion}
-                                toggleSubtaskCompletion={toggleSubtaskCompletion}
                                 deleteTask={deleteTask}
                               />
                             ))}
@@ -870,7 +650,6 @@ function Tasks() {
                       );
                     })
                   ) : (
-                    // Single category view with header
                     <div className="space-y-1">
                       <div className="flex items-center justify-between mb-2 group">
                         <div className="flex items-center gap-3">
@@ -885,17 +664,16 @@ function Tasks() {
                           />
                         </div>
                         <div className="text-sm text-gray-500">
-                          {completedTasksCount}/{currentCategoryTasks.length} completed
+                          {completedTasksCount}/{currentCategoryTasks.length}
                         </div>
                       </div>
                       <div className="space-y-1 pl-1">
-                        {currentCategoryTasks.map((task) => (
+                        {currentCategoryTasks.map((task, idx) => (
                           <Task
-                            key={task.id}
+                            key={`${task.id}-${idx}`}
                             task={task}
                             index={tasks.findIndex(t => t.id === task.id)}
                             toggleTaskCompletion={toggleTaskCompletion}
-                            toggleSubtaskCompletion={toggleSubtaskCompletion}
                             deleteTask={deleteTask}
                           />
                         ))}
@@ -904,7 +682,7 @@ function Tasks() {
                   )}
                 </div>
               ) : (
-                <CategoryEmptyState category={currentCategory} setIsComposing={setIsComposing} />
+                <CategoryEmptyState category={currentCategory} />
               )}
             </div>
           </>

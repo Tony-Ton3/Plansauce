@@ -7,8 +7,6 @@ import SignUp from "./pages/SignUp";
 import Profile from "./pages/Profile";
 import QuizIntro from "./pages/QuizIntro";
 import Quiz from "./pages/Quiz";
-import CreatedStacks from "./pages/CreatedStacks";
-
 import ProjectInput from "./components/ProjectInput";
 import Layout from "./components/Layout";
 import PrivateRoute from "./components/PrivateRoute";
@@ -36,7 +34,6 @@ export default function App() {
             {/* <Route path="home" element={<Home />} /> */}
             <Route path="settings" element={<Settings />} />
             <Route path="projectinput" element={<ProjectInput />} />
-            <Route path="createdstacks" element={<CreatedStacks />} />
             <Route path="profile" element={<Profile />} />
             <Route path="tasks" element={<Tasks />} />
           </Route>

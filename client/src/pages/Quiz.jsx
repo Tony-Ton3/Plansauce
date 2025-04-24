@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   FaSearch,
   FaArrowRight,
@@ -36,10 +36,11 @@ document.head.appendChild(styleEl);
 export default function Quiz() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { currentUser } = useSelector((state) => state.user);
   const [answers, setAnswers] = useState({
-    known_tech: [],
-    disliked_tech: [],
-    starred_tech: [],
+    known_tech: currentUser?.background?.known_tech || [],
+    disliked_tech: currentUser?.background?.disliked_tech || [],
+    starred_tech: currentUser?.background?.starred_tech || [],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -273,6 +274,17 @@ export default function Quiz() {
     setSearchText("");
     setShowSuggestions(false);
   };
+
+  // Initialize search state with existing data
+  useEffect(() => {
+    if (currentUser?.background) {
+      setAnswers({
+        known_tech: currentUser.background.known_tech || [],
+        disliked_tech: currentUser.background.disliked_tech || [],
+        starred_tech: currentUser.background.starred_tech || [],
+      });
+    }
+  }, [currentUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">

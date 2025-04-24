@@ -25,8 +25,6 @@ const projectSlice = createSlice({
       state.error = action.payload;
     },
     setCurrentProject: (state, action) => {
-      console.log("Setting current project with data:", action.payload);
-      console.log("Tech stack data:", action.payload.techStack);
       state.currentProject = action.payload;
     },
     clearProjects: (state) => {

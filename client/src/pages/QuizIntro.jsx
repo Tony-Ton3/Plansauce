@@ -7,6 +7,7 @@ import {
   FaCode,
   FaLightbulb,
 } from "react-icons/fa";
+import { TbBottleFilled } from "react-icons/tb";
 
 export default function QuizIntro() {
   const navigate = useNavigate();
@@ -22,32 +23,32 @@ export default function QuizIntro() {
 
   const steps = [
     {
-      title: "LearnStack can help you...",
+      title: "Plansauce can help you...",
       headline: "transform your ideas into actionable tasks.",
       icon: <FaLightbulb className="text-lg" />,
       description:
         "Share your project idea, and we'll break it down into manageable steps to bring your vision to life.",
     },
     {
-      title: "LearnStack can help you...",
+      title: "Plansauce can help you...",
       headline: "get AI-powered task recommendations.",
       icon: <FaRobot className="text-lg" />,
       description:
         "Our AI agents will analyze your project and create a custom roadmap of tasks tailored to your experience level.",
     },
     {
-      title: "LearnStack can help you...",
+      title: "Plansauce can help you...",
       headline: "learn exactly how to implement each task.",
       icon: <FaCode className="text-lg" />,
       description:
-        "Detailed implementation guides, custom prompts for your local LLM, and curated resources for each task.",
+        "Curated prompts for your LLM so you can focus on implementing tasks.",
     },
     {
       title: "First, let's get to know you",
       headline: "Tell us about your skills",
       icon: <FaTasks className="text-lg" />,
       description:
-        "Fill out a quick profile so we can tailor task recommendations and resources to your skill level and learning goals.",
+        "Fill out a quick profile so we can tailor task recommendations and resources to your skill level.",
     },
   ];
 
@@ -56,24 +57,16 @@ export default function QuizIntro() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-2xl px-5 py-6 opacity-100 transform translate-y-0 transition-all duration-500 ease-in-out">
-        {/* Profile Image and Welcome - Compact */}
         <div className="flex items-center mb-6">
-          <div className="w-12 h-12 rounded-full bg-brand-yellow flex items-center justify-center overflow-hidden mr-3 shadow-sm">
-            <img
-              src="https://ui-avatars.com/api/?name=User&background=fcc700&color=000"
-              alt="Profile"
-              className="w-full h-full object-cover"
-            />
-          </div>
+            <TbBottleFilled className="text-2xl text-brand-yellow size-10 mr-3" /> 
           <div>
             <p className="text-brand-gray text-xs font-medium">Welcome to</p>
             <h2 className="text-lg font-semibold text-brand-black">
-              LearnStack!
+              Plansauce!
             </h2>
           </div>
         </div>
 
-        {/* Progress Indicator - Even Smaller */}
         <div className="flex justify-center mb-6">
           {steps.map((_, index) => (
             <div key={index} className="mx-0.5">
@@ -90,7 +83,6 @@ export default function QuizIntro() {
           ))}
         </div>
 
-        {/* Main Content - Tightened */}
         <div
           key={currentStep}
           className="mb-6 opacity-100 transform translate-x-0 transition-all duration-300 ease-in-out"
@@ -114,7 +106,6 @@ export default function QuizIntro() {
           </div>
         </div>
 
-        {/* Continue Button - Compact */}
         <div className="flex justify-start pl-1">
           <button
             onClick={handleContinue}

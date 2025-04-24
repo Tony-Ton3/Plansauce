@@ -10,14 +10,25 @@ const taskSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
+    setTasksStart: (state) => {
+      state.loading = true;
+      state.error = null;
+    },
     setTasksSuccess: (state, action) => {
       state.currentTasks = action.payload;
       state.loading = false;
       state.error = null;
     },
-    setTasksStart: (state) => {
-      state.loading = false;
-      state.error = null;
+    updateTaskStatus: (state, action) => {
+      const { taskId, completed } = action.payload;
+      if (state.currentTasks) {
+        state.currentTasks = state.currentTasks.map(task => {
+          if (task.taskId === taskId || task.id === taskId || task._id === taskId) {
+            return { ...task, completed };
+          }
+          return task;
+        });
+      }
     },
     setTasksFailure: (state, action) => {
       state.loading = false;
@@ -36,6 +47,7 @@ export const {
   setTasksSuccess,
   setTasksFailure,
   clearTasks,
+  updateTaskStatus,
 } = taskSlice.actions;
 
 export default taskSlice.reducer;

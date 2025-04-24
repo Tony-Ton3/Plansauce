@@ -36,8 +36,8 @@ export default function Settings() {
     setFormData({ ...formData, [e.target.id]: e.target.value });
   };
 
-  const toggleShowPassword = () => setShowPassword(!showPassword);
-  const toggleShowNewPassword = () => setShowNewPassword(!showNewPassword);
+  // const toggleShowPassword = () => setShowPassword(!showPassword);
+  // const toggleShowNewPassword = () => setShowNewPassword(!showNewPassword);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -52,15 +52,15 @@ export default function Settings() {
         name: formData.name,
       };
 
-      if (formData.password) {
-        updateData.password = formData.password;
-      }
+      // if (formData.password) {
+      //   updateData.password = formData.password;
+      // }
 
-      if (formData.newPassword) {
-        updateData.newPassword = formData.newPassword;
-      }
+      // if (formData.newPassword) {
+      //   updateData.newPassword = formData.newPassword;
+      // }
 
-      const res = await fetch(`http://localhost:3000/api/user/update`, {
+      const res = await fetch(`http://localhost:3000/api/user/update-name`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
@@ -134,7 +134,7 @@ export default function Settings() {
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <label className="block text-gray-400 text-sm mb-2">
-                    Full name
+                    Name
                   </label>
                   <div className="relative">
                     <input
@@ -162,7 +162,7 @@ export default function Settings() {
               </div>
             </div>
 
-            <div>
+            {/* <div>
               <h2 className="text-xl font-light mb-6">Security</h2>
               <div className="grid grid-cols-2 gap-6">
                 <div>
@@ -210,13 +210,17 @@ export default function Settings() {
                   </div>
                 </div>
               </div>
-            </div>
+            </div> */}
 
             <div className="pt-6">
               <button
                 type="submit"
-                disabled={loading}
-                className="px-6 py-2 bg-brand-yellow text-black font-medium rounded-lg hover:bg-brand-yellow/90 transition-colors"
+                disabled={loading || currentUser.name === formData.name}
+                className={`px-6 py-2 font-medium rounded-lg transition-colors ${
+                  loading || currentUser.name === formData.name
+                    ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                    : 'bg-brand-yellow text-black hover:bg-brand-yellow/90'
+                }`}
               >
                 {loading ? "Saving..." : "Save changes"}
               </button>
@@ -244,7 +248,7 @@ export default function Settings() {
               <div className="space-y-6">
                 {currentUser?.background?.known_tech && (
                 <div>
-                  <h3 className="text-white text-sm mb-3">Skills known</h3>
+                  <h3 className="text-white text-sm mb-3">Tools you know</h3>
                   <div className="flex flex-wrap gap-2">
                     {currentUser?.background?.known_tech?.map((tech) => (
                       <span
@@ -259,7 +263,7 @@ export default function Settings() {
                 )}
                 {currentUser?.background?.starred_tech && (
                 <div>
-                  <h3 className="text-white text-sm mb-3">Skills you enjoy</h3>
+                  <h3 className="text-white text-sm mb-3">Tools you like - will be recommended more</h3>
                   <div className="flex flex-wrap gap-2">
                     {currentUser?.background?.starred_tech?.map((tech) => (
                       <span
@@ -274,7 +278,7 @@ export default function Settings() {
                 )}
                 {currentUser?.background?.disliked_tech && (
                 <div>
-                  <h3 className="text-white text-sm mb-3">Skills to avoid</h3>
+                  <h3 className="text-white text-sm mb-3">Tools you dislike</h3>
                   <div className="flex flex-wrap gap-2">
                     {currentUser?.background?.disliked_tech?.map((tech) => (
                       <span
@@ -291,7 +295,7 @@ export default function Settings() {
                   onClick={() => navigate("/quiz")}
                   className="rounded-md bg-brand-yellow px-4 py-2 text-brand-black hover:text-white transition-colors text-sm font-medium"
                 >
-                  Update preferences
+                  Update background
                 </button>
               </div>
             )}

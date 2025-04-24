@@ -11,9 +11,7 @@ import {
 import { FaCheck, FaTimes, FaInfoCircle } from "react-icons/fa";
 import { BsLightningChargeFill } from "react-icons/bs";
 import { RiRobot2Fill, RiScalesFill } from "react-icons/ri";
-import { PiBookFill } from "react-icons/pi";
 import { HiOutlineGlobeAlt } from "react-icons/hi2";
-import { RotateSpinner } from "react-spinners-kit";
 import { BarLoader } from "react-spinners";
 
 const ProjectInput = () => {
@@ -165,7 +163,7 @@ const ProjectInput = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submission started");
+    // console.log("Form submission started");
     const errors = validateForm();
 
     if (Object.keys(errors).length > 0) {
@@ -209,17 +207,17 @@ const ProjectInput = () => {
         };
       }
 
-      const formattedTasks = tasks.map((task) => ({
-        id: task.id || String(Date.now() + Math.random()),
+      const formattedTasks = tasks.map((task, index) => ({
+        id: task.id || `task-${index + 1}`,
+        taskId: task.id || `task-${index + 1}`,
         text: task.text || "",
         completed: false,
         category: task.category || "plan",
-        subtasks:
-          task.subtasks?.map((subtask) => ({
-            id: subtask.id || String(Math.random()),
-            text: subtask.text || "",
-            completed: false,
-          })) || [],
+        subtasks: task.subtasks?.map((subtask, subIndex) => ({
+          id: subtask.id || `subtask-${index + 1}-${subIndex + 1}`,
+          text: subtask.text || "",
+          completed: false,
+        })) || [],
       }));
 
       console.log("Dispatching setTasksSuccess");
@@ -233,7 +231,7 @@ const ProjectInput = () => {
           name: form.name || response.projectName,
           description: form.description,
           priority: form.priority,
-          type: response.project_type || "Web Application",
+          projectType: response.projectType,
           createdAt: new Date().toISOString(),
           techStack: formattedTechStack
         };
@@ -498,9 +496,9 @@ const ProjectInput = () => {
                     {form.priority?.startsWith("Scalability") && (
                       <HiOutlineGlobeAlt className="h-4 w-4 text-brand-yellow" />
                     )}
-                    {form.priority?.startsWith("Learning") && (
+                    {/* {form.priority?.startsWith("Learning") && (
                       <PiBookFill className="h-4 w-4 text-brand-yellow" />
-                    )}
+                    )} */}
                   </div>
                   <input
                     id="priority"
@@ -568,7 +566,7 @@ const ProjectInput = () => {
                             <FaCheck className="text-brand-yellow" size={12} />
                           )}
                         </li>
-                        <li
+                        {/* <li
                           className="px-4 py-2.5 hover:bg-gray-100 cursor-pointer text-sm text-brand-gray flex items-center justify-between border-t border-gray-200"
                           onClick={() =>
                             handlePriorityChange(
@@ -589,7 +587,7 @@ const ProjectInput = () => {
                             "Learning (Optimize for skill development)" && (
                             <FaCheck className="text-brand-yellow" size={12} />
                           )}
-                        </li>
+                        </li> */}
                       </ul>
                     </div>
                   )}

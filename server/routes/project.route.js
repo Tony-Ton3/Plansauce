@@ -4,8 +4,9 @@ import {
   getUserProjects,
   getProjectWithTasks,
   updateTaskStatus,
-  updateSubtaskStatus,
   setCurrentProject,
+  pinProject,
+  deleteProject,
 } from "../controllers/project.controllers.js";
 
 const router = express.Router();
@@ -13,7 +14,8 @@ const router = express.Router();
 router.get("/", verifyToken, getUserProjects);
 router.get("/:projectId", verifyToken, getProjectWithTasks);
 router.post("/current", verifyToken, setCurrentProject);
-router.patch("/tasks/:taskId", verifyToken, updateTaskStatus);
-router.patch("/tasks/:taskId/subtasks/:subtaskId", verifyToken, updateSubtaskStatus);
+router.patch("/:projectId/tasks/:taskId", verifyToken, updateTaskStatus);
+router.put ("/:projectId/pin", verifyToken, pinProject);
+router.delete ("/:projectId/delete", verifyToken, deleteProject);
 
 export default router; 

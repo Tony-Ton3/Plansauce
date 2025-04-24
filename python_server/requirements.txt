@@ -1,8 +1,8 @@
 fastapi
 uvicorn
 python-dotenv
-crewai
 anthropic
 google-generativeai
+crewai
 
 

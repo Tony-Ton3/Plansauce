@@ -79,7 +79,7 @@ async def generate_tasks(request: Request):
         print(f"Received data: {data}")
         
         description = data.get('description') #project idea
-        priority = data.get('priority', '') #speed, scalability, learning
+        priority = data.get('priority', '') #speed, scalability 
 
         background = data.get('background', {}) 
         known_tech = background.get('known_tech', [])
@@ -108,7 +108,7 @@ async def generate_tasks(request: Request):
         
         #extract tech stack by category so we can pass this to the task generation
         if isinstance(tech_stack_recommendation, dict) and "error" not in tech_stack_recommendation:
-            for category in ["planning", "setup", "frontend", "backend", "testing", "deploy", "maintain"]:
+            for category in ["setup", "frontend", "backend", "testing", "deploy", "maintain"]:
                 if category in tech_stack_recommendation:
                     tech_stack_by_category[category] = tech_stack_recommendation[category]
         

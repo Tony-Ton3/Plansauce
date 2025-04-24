@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiBaseUrl = "http://localhost:8000/api";
+const apiBaseUrl = process.env.PYTHON_API_URL || "http://localhost:8000/api";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
@@ -30,6 +30,7 @@ export const generateTasks = async (req, res, next) => {
       }
     }
 
+    console.log('Fetching tasks from Python server...');
     const response = await fetch(`${apiBaseUrl}/generate-tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -55,6 +56,7 @@ export const generateTasks = async (req, res, next) => {
       throw new Error("Invalid tasks data received from server");
     }
     const tasks = result.data;
+    console.log(`Received ${tasks.length} tasks from Python server`);
 
     // Validate and extract tech stack
     let tech_stack = {};
@@ -66,7 +68,6 @@ export const generateTasks = async (req, res, next) => {
     } catch (error) {
       console.error("Error parsing tech stack:", error);
       tech_stack = {
-        type: "Web Application",
         planning: [],
         setup: [],
         frontend: [],
@@ -85,13 +86,13 @@ export const generateTasks = async (req, res, next) => {
       if (priority?.startsWith("Speed")) normalizedPriority = "Speed";
       if (priority?.startsWith("Scalability"))
         normalizedPriority = "Scalability";
-      if (priority?.startsWith("Learning")) normalizedPriority = "Learning";
 
+      console.log('Creating project...');
       const project = new Project({
         userId: req.user.id,
         name: projectName,
         description,
-        projectType: tech_stack?.type || "Web Application",
+        projectType: result.project_type,
         priority: normalizedPriority,
         techStack: {
           planning: tech_stack?.planning || [],
@@ -105,26 +106,82 @@ export const generateTasks = async (req, res, next) => {
       });
 
       const savedProject = await project.save();
+      console.log('Project saved successfully:', savedProject._id);
 
-      for (let i = 0; i < tasks.length; i++) {
-        const task = tasks[i];
-        const newTask = new Task({
-          userId: req.user.id,
-          projectId: savedProject._id,
-          taskId: task.id || `task-${i + 1}`,
-          text: task.text,
-          completed: false,
-          category: task.category || "plan",
-          order: i,
-          subtasks:
-            task.subtasks?.map((subtask, j) => ({
-              id: subtask.id || `subtask-${i + 1}-${j + 1}`,
-              text: subtask.text,
-              completed: false,
-            })) || [],
+      // Prepare all task documents
+      console.log('Preparing task documents...');
+      const taskDocuments = tasks.map((task, i) => {
+        const taskId = task.id || `task-${i + 1}`;
+        console.log(`Processing task ${i + 1}/${tasks.length}:`, {
+          originalId: task.id,
+          assignedId: taskId,
+          category: task.category || "setup",
+          text: task.text.substring(0, 50) + "..."
         });
 
-        await newTask.save();
+        return {
+          userId: req.user.id,
+          projectId: savedProject._id,
+          taskId: taskId,
+          id: taskId, // Ensure both id and taskId are the same
+          text: task.text,
+          completed: false,
+          category: task.category || "setup",
+          order: i,
+          subtasks: task.subtasks?.map((subtask, j) => {
+            const subtaskId = subtask.id || `subtask-${taskId}-${j + 1}`;
+            return {
+              id: subtaskId,
+              text: subtask.text,
+            };
+          }) || [],
+        };
+      });
+
+      // Save all tasks in parallel
+      console.log(`Saving ${taskDocuments.length} tasks...`);
+      try {
+        const savedTasks = await Promise.all(
+          taskDocuments.map(async taskDoc => {
+            const task = new Task(taskDoc);
+            const savedTask = await task.save();
+            console.log(`Saved task:`, {
+              taskId: savedTask.taskId,
+              id: savedTask._id,
+              category: savedTask.category
+            });
+            return savedTask;
+          })
+        );
+        console.log(`Successfully saved ${savedTasks.length} tasks`);
+        
+        // Verify all tasks were saved
+        const savedTaskCount = await Task.countDocuments({ projectId: savedProject._id });
+        console.log(`Verified ${savedTaskCount} tasks in database for project ${savedProject._id}`);
+        
+        if (savedTaskCount !== tasks.length) {
+          console.error(`Task count mismatch! Expected: ${tasks.length}, Saved: ${savedTaskCount}`);
+          // Log details of all tasks for debugging
+          const allSavedTasks = await Task.find({ projectId: savedProject._id }).select('taskId id category').lean();
+          console.log('All saved tasks:', allSavedTasks);
+        }
+
+        // Add saved tasks to the result
+        result.tasks = savedTasks.map(task => ({
+          id: task.taskId, // Use taskId as the primary identifier
+          _id: task._id,   // Include MongoDB _id for reference
+          text: task.text,
+          category: task.category,
+          completed: task.completed,
+          order: task.order,
+          subtasks: task.subtasks
+        }));
+
+      } catch (error) {
+        console.error('Error saving tasks:', error);
+        // If task saving fails, delete the project to maintain consistency
+        await Project.findByIdAndDelete(savedProject._id);
+        throw new Error(`Failed to save tasks: ${error.message}`);
       }
 
       result.projectId = savedProject._id;

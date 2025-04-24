@@ -47,6 +47,10 @@ const ProjectSchema = new mongoose.Schema({
     testing: [TechnologySchema],
     deploy: [TechnologySchema],
     maintain: [TechnologySchema]
+  },
+  pinned: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

@@ -84,7 +84,7 @@ export const fetchTutorialsForStack = async (stackName, stackId) => {
 
 export const updateUserBackground = async (background) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/user/update`, {
+        const response = await fetch(`http://localhost:3000/api/user/update-background`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ background }),
@@ -219,3 +219,25 @@ export const enhanceProjectIdea = async (description) => {
         throw error;
     }
 }
+
+export const updateTaskStatus = async (projectId, taskId, completed) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ completed })
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.message || 'Failed to update task status');
+        }
+
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error updating task status:', error);
+        throw error;
+    }
+};

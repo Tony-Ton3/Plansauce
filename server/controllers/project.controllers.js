@@ -144,24 +144,45 @@ export const setCurrentProject = async (req, res) => {
 // update task completion status
 export const updateTaskStatus = async (req, res) => {
   try {
-    const { taskId } = req.params;
+    const { projectId, taskId } = req.params;
     const { completed } = req.body;
     
-    const task = await Task.findOne({ 
-      _id: taskId,
+    // console.log('Updating task status:', { projectId, taskId, completed });
+
+    let task = await Task.findOne({ 
+      taskId: taskId,
+      projectId: projectId,
       userId: req.user.id
     });
-    
+
     if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found"
+      task = await Task.findOne({
+        _id: taskId,
+        projectId: projectId,
+        userId: req.user.id
       });
     }
     
+    // if (!task) {
+    //   console.error('Task not found:', { taskId, projectId });
+    //   return res.status(404).json({
+    //     success: false,
+    //     message: "Task not found"
+    //   });
+    // }
+    
+    // console.log('Found task:', {
+    //   taskId: task.taskId,
+    //   _id: task._id,
+    //   oldStatus: task.completed,
+    //   newStatus: completed
+    // });
+
     task.completed = completed;
     await task.save();
     
+    console.log('Task updated successfully');
+
     return res.status(200).json({
       success: true,
       task
@@ -176,45 +197,36 @@ export const updateTaskStatus = async (req, res) => {
   }
 };
 
-// update subtask completion status
-export const updateSubtaskStatus = async (req, res) => {
+export const pinProject = async (req, res) => {
   try {
-    const { taskId, subtaskId } = req.params;
-    const { completed } = req.body;
-    
-    const task = await Task.findOne({ 
-      _id: taskId,
-      userId: req.user.id
-    });
-    
-    if (!task) {
-      return res.status(404).json({
-        success: false,
-        message: "Task not found"
-      });
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
     }
     
-    const subtask = task.subtasks.id(subtaskId);
-    if (!subtask) {
-      return res.status(404).json({
-        success: false,
-        message: "Subtask not found"
-      });
-    }
+    project.pinned = !project.pinned;
+    await project.save();
     
-    subtask.completed = completed;
-    await task.save();
-    
-    return res.status(200).json({
-      success: true,
-      task
-    });
+    res.json(project);
   } catch (error) {
-    console.error("Error updating subtask status:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Error updating subtask",
-      error: error.message
-    });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
-}; 
+}
+
+export const deleteProject = async (req, res) => {
+  try {
+    const project = await Project.findById(req.params.projectId);
+    if (!project) {
+      return res.status(404).json({ message: "Project not found" });
+    }
+    
+    if (project.userId.toString() !== req.user.id.toString()) {
+      return res.status(403).json({ message: "Not authorized to delete this project" });
+    }
+    
+    await project.deleteOne();
+    res.json({ message: "Project deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+}

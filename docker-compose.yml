@@ -1,0 +1,34 @@
+version: '3.8'
+
+services:
+  client:
+    build: ./client
+    ports:
+      - "5173:5173"
+    environment:
+      - REACT_APP_API_URL=http://localhost:3000
+    depends_on:
+      - server
+    volumes:
+      - ./client:/app
+      - /app/node_modules
+
+  server:
+    build: ./server
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PYTHON_API_URL=http://python_server:8000/api
+    volumes:
+      - ./server:/app
+      - /app/node_modules
+    depends_on:
+      - python_server
+
+  python_server:
+    build: ./python_server
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./python_server:/app 

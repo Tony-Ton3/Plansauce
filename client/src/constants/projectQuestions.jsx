@@ -1,4 +1,5 @@
 //questions for the user for prompting purposes
+//this will be used in the future
 export const projectQuestions = [
     {
       id: "projectOverview",

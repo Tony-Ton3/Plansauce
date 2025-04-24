@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useState } from "react";
-import Header from "../components/Header";
+// import Header from "../components/Header";
 import { motion } from "framer-motion";
 import { FaRocket, FaLightbulb, FaBook } from "react-icons/fa";
 
