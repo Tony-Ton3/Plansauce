@@ -1,10 +1,10 @@
-# LearnStack CrewAI API
+# Plansauce CrewAI API
 
-A FastAPI backend for CrewAI integration with the LearnStack application.
+A FastAPI backend for CrewAI integration with the Plansauce application.
 
 ## Overview
 
-This API server focuses solely on providing CrewAI functionality to the main LearnStack application. It doesn't store data directly in a database - instead, it:
+This API server focuses solely on providing CrewAI functionality to the main Plansauce application. It doesn't store data directly in a database - instead, it:
 
 1. Receives requests from the Node.js server
 2. Processes these requests using CrewAI

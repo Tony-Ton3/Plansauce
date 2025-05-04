@@ -1,9 +1,9 @@
-const API_BASE_URL = "http://localhost:3000/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 export const getClaudeRecommendation = async (userId, form) => {
     try {
         const response = await fetch(
-            `${API_BASE_URL}/claude-recommendation/${userId}`,
+            `${API_URL}/claude-recommendation/${userId}`,
             {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -24,7 +24,7 @@ export const getClaudeRecommendation = async (userId, form) => {
 export const fetchTutorialsForTechnology = async (technology) => {
     try {
         const response = await fetch(
-            `http://localhost:3000/api/youtube/techtutorials/${encodeURIComponent(
+            `${API_URL}/api/youtube/techtutorials/${encodeURIComponent(
                 technology
             )}`,
             {
@@ -53,7 +53,7 @@ export const fetchTutorialsForTechnology = async (technology) => {
 export const fetchTutorialsForStack = async (stackName, stackId) => {
     try {
         const response = await fetch(
-            `http://localhost:3000/api/youtube/stacktutorials/${encodeURIComponent(
+            `${API_URL}/api/youtube/stacktutorials/${encodeURIComponent(
                 stackName
             )}/${encodeURIComponent(stackId)}`,
             {
@@ -84,7 +84,7 @@ export const fetchTutorialsForStack = async (stackName, stackId) => {
 
 export const updateUserBackground = async (background) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/user/update-background`, {
+        const response = await fetch(`${API_URL}/api/user/update-background`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ background }),
@@ -106,7 +106,7 @@ export const updateUserBackground = async (background) => {
 
 export const getTasks = async(form) => {
     try{
-        const response = await fetch(`${API_BASE_URL}/agent/generate-tasks`, {
+        const response = await fetch(`${API_URL}/api/agent/generate-tasks`, {
             method: "POST",
             headers: { 'Content-Type': 'application/json'},
             credentials: 'include',
@@ -129,7 +129,7 @@ export const getTasks = async(form) => {
 // Get all projects for the current user
 export const getUserProjects = async () => {
     try {
-        const response = await fetch(`${API_BASE_URL}/projects`, {
+        const response = await fetch(`${API_URL}/api/project`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
@@ -156,7 +156,7 @@ export const getUserProjects = async () => {
 // Get project details with tasks
 export const getProjectWithTasks = async (projectId) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/projects/${projectId}`, {
+        const response = await fetch(`${API_URL}/api/project/${projectId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include'
@@ -178,7 +178,7 @@ export const getProjectWithTasks = async (projectId) => {
 // Set current project
 export const setCurrentProject = async (projectId) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/projects/current`, {
+        const response = await fetch(`${API_URL}/api/project/current`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
@@ -200,7 +200,7 @@ export const setCurrentProject = async (projectId) => {
 
 export const enhanceProjectIdea = async (description) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/agent/enhance-idea`, {
+        const response = await fetch(`${API_URL}/api/agent/enhance-idea`, {
             method: "POST",
             headers: { 'Content-Type': 'application/json'},
             credentials: 'include',
@@ -222,7 +222,7 @@ export const enhanceProjectIdea = async (description) => {
 
 export const updateTaskStatus = async (projectId, taskId, completed) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/projects/${projectId}/tasks/${taskId}`, {
+        const response = await fetch(`${API_URL}/api/project/${projectId}/tasks/${taskId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',

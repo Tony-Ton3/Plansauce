@@ -11,16 +11,8 @@ import cookieParser from "cookie-parser";
 
 dotenv.config();
 
-mongoose
-  .connect(process.env.MONGO)
-  .then(() => {
-    console.log("MongoDb is connected");
-  })
-  .catch((err) => {
-    console.log(err);
-  });
-
 const app = express();
+app.use(express.json());
 app.use(cookieParser());
 
 const corsOptions = {
@@ -30,27 +22,45 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-app.use(express.json());
+
+// Add root route handler with error handling
+app.get('/', (req, res) => {
+  try {
+    console.log('Root route accessed');
+    res.json({ message: 'Welcome to the Plansauce API' });
+  } catch (error) {
+    console.error('Error in root route:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
 
 app.use("/api", utilRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/agent", agentRoutes);
-app.use("/api/projects", projectRoutes);
+app.use("/api/project", projectRoutes);
 
-//error middleware
+// Error handling middleware
 app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  res.status(statusCode).json({
-    success: false,
-    statusCode,
-    message,
+  console.error('Global error handler:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
+
+// 404 handler
+app.use((req, res) => {
+  console.log('404 Not Found:', req.method, req.url);
+  res.status(404).json({ error: 'Not Found' });
+});
+
+const PORT = process.env.PORT || 3000;
+
+mongoose
+  .connect(process.env.MONGO)
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}!`);
+    });
+  })
+  .catch((err) => {
+    console.error('MongoDB connection error:', err);
   });
-});
-
-const PORT = process.env.PORT || 80;
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});

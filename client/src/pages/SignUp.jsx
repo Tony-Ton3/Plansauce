@@ -5,6 +5,8 @@ import { signInStart, signInSuccess, signInFailure } from "../redux/userSlice";
 import { FaEye, FaEyeSlash, FaArrowRight, FaCheck } from "react-icons/fa";
 import { motion } from "framer-motion";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function SignUp() {
   const [formData, setFormData] = useState({
     name: "",
@@ -59,7 +61,7 @@ export default function SignUp() {
     try {
       dispatch(signInStart());
       const responseSignup = await fetch(
-        "http://localhost:3000/api/auth/signup",
+        `${API_URL}/api/auth/signup`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -74,7 +76,7 @@ export default function SignUp() {
       }
 
       const responseSignin = await fetch(
-        "http://localhost:3000/api/auth/signin",
+        `${API_URL}/api/auth/signin`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -153,9 +155,9 @@ export default function SignUp() {
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-black/70 to-black/80 backdrop-blur-sm"></div>
           <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
             <h3 className="text-3xl font-bold mb-4 text-white text-center">Already have an account?</h3>
-            <p className="text-white/90 text-center mb-8 max-w-xs text-lg">
-              Sign in to continue your learning journey
-            </p>
+            {/* <p className="text-white/90 text-center mb-8 max-w-xs text-lg">
+              Sign in to continue your project planning journey
+            </p> */}
             <div className="space-y-4 w-full max-w-xs">
               <button
                 onClick={navigateToSignIn}
@@ -163,8 +165,8 @@ export default function SignUp() {
               >
                 Sign In
               </button>
-              <p className="text-white/70 text-center text-sm">
-                Join thousands of learners already on LearnStack
+              <p className="text-white/70 text-center text-xs">
+                Plansauce is your AI-powered project planning platform
               </p>
             </div>
           </div>
@@ -176,7 +178,7 @@ export default function SignUp() {
             <h2 className="text-3xl font-bold text-brand-black mb-2">
               Create Your Account
             </h2>
-            <p className="text-brand-gray">Start your personalized learning journey today</p>
+            <p className="text-brand-gray">Start your personalized project planning journey today</p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">

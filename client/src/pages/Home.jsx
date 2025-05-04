@@ -9,11 +9,11 @@ export default function Home() {
     <div className="px-8 py-4">
       <div className="max-w-4xl mx-auto">
         <h1 className="text-4xl md:text-5xl font-bold text-white mb-6">
-          Welcome to <span className="text-[#8e5fe7]">LearnStack</span>
+          Welcome to <span className="text-[#8e5fe7]">Plansauce</span>
         </h1>
 
         <p className="text-gray-300 text-xl mb-8">
-          Your AI-powered tech stack recommendation platform
+          Your AI-powered project planning platform
         </p>
 
         <div className="bg-[#1a1f29] rounded-lg shadow-lg p-8 mb-10">

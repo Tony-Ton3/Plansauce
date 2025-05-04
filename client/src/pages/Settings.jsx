@@ -15,6 +15,8 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function Settings() {
   const { currentUser, loading, error } = useSelector((state) => state.user);
   const [formData, setFormData] = useState({
@@ -60,7 +62,7 @@ export default function Settings() {
       //   updateData.newPassword = formData.newPassword;
       // }
 
-      const res = await fetch(`http://localhost:3000/api/user/update-name`, {
+      const res = await fetch(`${API_URL}/api/user/update-name`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(updateData),
@@ -90,7 +92,7 @@ export default function Settings() {
       dispatch(deleteUserStart());
 
       const res = await fetch(
-        `http://localhost:3000/api/user/delete/${currentUser._id}`,
+        `${API_URL}/api/user/delete/${currentUser._id}`,
         {
           method: "DELETE",
           credentials: "include",

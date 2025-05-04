@@ -200,7 +200,7 @@ ${selectedContexts}`;
     <div className="fixed inset-0 z-50 overflow-hidden">
       {/* semi-transparent backdrop */}
       <div
-        className={`absolute inset-0 bg-black/30 backdrop-blur-sm transition-opacity duration-300 ${
+        className={`absolute inset-0 bg-black/20 backdrop-blur-sm transition-opacity duration-300 ${
           isVisible ? "opacity-100" : "opacity-0"
         }`}
         onClick={onClose}
@@ -220,7 +220,7 @@ ${selectedContexts}`;
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Create Prompt</h2>
-              <p className="text-sm text-gray-500">Generate a detailed prompt and use it with your favorite AI</p>
+              <p className="text-sm text-gray-500">Generate a detailed prompt and use it with your favorite LLM</p>
             </div>
           </div>
           <button 

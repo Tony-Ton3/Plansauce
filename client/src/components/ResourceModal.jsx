@@ -121,15 +121,15 @@ const ResourcesModal = ({ isOpen, onClose, techStackData, isLoading, currentProj
   
   
     return (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div ref={modalRef} className="bg-white rounded-2xl shadow-xl w-full max-w-4xl animate-fadeIn overflow-hidden">
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <div>
               <h2 className="text-xl font-semibold text-gray-900">Your Personalized Resources</h2>
               <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                <p>
+                {/* <p>
                   Curated resources for an {currentProject?.type || 'Task Management App'} with focus on {currentProject?.priority || 'Developer Productivity'}
-                </p>
+                </p> */}
               </div>
             </div>
             <button 

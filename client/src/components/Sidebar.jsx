@@ -9,6 +9,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { getUserProjects, getProjectWithTasks } from "../utils/api";
 import { setProjectsStart, setProjectsFailure } from "../redux/projectSlice";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 function Sidebar() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -83,7 +85,7 @@ function Sidebar() {
 
   const handleSignOut = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/api/user/signout`, {
+      const res = await fetch(`${API_URL}/api/user/signout`, {
         method: "GET",
         credentials: "include",
       });
@@ -113,7 +115,7 @@ function Sidebar() {
   const handlePinProject = async (e, projectId) => {
     e.stopPropagation();
     try {
-      const response = await fetch(`http://localhost:3000/api/projects/${projectId}/pin`, {
+      const response = await fetch(`${API_URL}/api/project/${projectId}/pin`, {
         method: 'PUT',
         credentials: 'include'
       });
@@ -139,7 +141,7 @@ function Sidebar() {
     if (!projectToDelete) return;
 
     try {
-      const response = await fetch(`http://localhost:3000/api/projects/${projectToDelete._id}/delete`, {
+      const response = await fetch(`${API_URL}/api/project/${projectToDelete._id}/delete`, {
         method: 'DELETE',
         credentials: 'include'
       });

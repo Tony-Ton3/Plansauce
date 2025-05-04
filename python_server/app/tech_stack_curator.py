@@ -182,7 +182,7 @@ class TechStackCuratorCrew:
                         - Technologies to avoid: {', '.join(disliked_tech) if disliked_tech else 'None'}
                         - Priority technologies: {', '.join(starred_tech) if starred_tech else 'None'}
                         
-                        Create a practical, well-reasoned recommendation that considers the team's experience level.
+                        Create a practical, well-reasoned recommendation that considers the user's experience level.
                         
                         IMPORTANT: Each technology recommendation MUST include:
                         1. name: The technology's name

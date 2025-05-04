@@ -34,7 +34,7 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           className="text-center"
         >
-          <h1 className="text-7xl font-bold mb-6">LearnStack</h1>
+          <h1 className="text-7xl font-bold mb-6">Plansauce</h1>
           <p className="text-xl mb-12">
             Tailored recommendations for your project, powered by AI
           </p>

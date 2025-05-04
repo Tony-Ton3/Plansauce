@@ -6,7 +6,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const apiBaseUrl = process.env.PYTHON_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.PYTHON_API_URL || "http://localhost:8000";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";
 
@@ -31,7 +31,7 @@ export const generateTasks = async (req, res, next) => {
     }
 
     console.log('Fetching tasks from Python server...');
-    const response = await fetch(`${apiBaseUrl}/generate-tasks`, {
+    const response = await fetch(`${API_URL}/api/generate-tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

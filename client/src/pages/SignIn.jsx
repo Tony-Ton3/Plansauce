@@ -5,6 +5,8 @@ import { signInStart, signInSuccess, signInFailure } from "../redux/userSlice";
 import { FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+
 export default function SignIn() {
   const [formData, setFormData] = useState({
     email: "",
@@ -45,7 +47,7 @@ export default function SignIn() {
     try {
       dispatch(signInStart());
       const responseSignin = await fetch(
-        "http://localhost:3000/api/auth/signin",
+        `${API_URL}/api/auth/signin`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -88,9 +90,9 @@ export default function SignIn() {
         <div className="w-1/2 bg-white p-10 flex flex-col justify-center">
           <div className="mb-8 text-center">
             <h2 className="text-3xl font-bold text-brand-black mb-2">
-              Welcome Back
+              Welcome
             </h2>
-            <p className="text-brand-gray">Sign in to continue your learning journey</p>
+            {/* <p className="text-brand-gray">Sign in to continue your learning journey</p> */}
           </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
@@ -192,9 +194,9 @@ export default function SignIn() {
           style={{ backgroundImage: "url('https://t3.ftcdn.net/jpg/05/89/17/46/360_F_589174607_FhKaLYCvij9WOjlECojcmypeIfwRU3OZ.jpg')" }}>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-900/60 via-black/70 to-black/80 backdrop-blur-sm"></div>
           <div className="relative z-10 flex flex-col items-center justify-center h-full w-full">
-            <h3 className="text-3xl font-bold mb-4 text-white text-center">New to LearnStack?</h3>
-            <p className="text-white/90 text-center mb-8 max-w-xs text-lg">
-              Create an account and start your personalized learning journey today
+            <h3 className="text-3xl font-bold mb-4 text-white text-center">New to Plansauce?</h3>
+            <p className="text-white/90 text-center mb-8 max-w-xs text-md">
+              Create an account and start your personalized project planning journey today
             </p>
             <div className="space-y-4 w-full max-w-xs">
               <button
@@ -203,8 +205,8 @@ export default function SignIn() {
               >
                 Create Account
               </button>
-              <p className="text-white/70 text-center text-sm">
-                Join thousands of learners already on LearnStack
+              <p className="text-white/70 text-center text-xs">
+                Plansauce is your AI-powered project planning platform
               </p>
             </div>
           </div>

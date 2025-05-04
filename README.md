@@ -1,3 +1,3 @@
-# learnstack
+# Plansauce
 
 ## capstone project
