@@ -13,7 +13,7 @@ Project planning presents significant challenges for developers at all skill lev
 
 ## Project Overview
 
-![Plansauce Project Overview](client/src/utils/assets/plansauce-overview.pdf)
+![Plansauce Project Overview](client/src/utils/assets/plansauce-overview.png)
 
 ## Tech Stack
 
