@@ -4,9 +4,6 @@ from typing import List, Dict, Any, Optional
 import json
 import os
 import time
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class BraveSearchTool(BaseTool):
     name: str = "brave_search"
@@ -188,6 +185,8 @@ class TechStackCuratorCrew:
                         1. name: The technology's name
                         2. description: A brief explanation (50-75 words) of what it does and why it fits
                         3. docLink: URL to official documentation or relevant resource
+                        
+                        IMPORTANT: Only recommend one deployment platform in the deploy array. Choose the most suitable one for the project and do not include more than one. Examples of deployment platforms include Netlify, Vercel, Heroku, AWS Amplify, etc.
                         
                         The response MUST be a valid JSON object with this exact structure:
                         {{

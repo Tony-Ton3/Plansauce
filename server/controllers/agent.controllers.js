@@ -3,8 +3,13 @@ import Task from "../models/task.model.js";
 import Project from "../models/project.model.js";
 import User from "../models/user.model.js";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '..', '..', '.env') });
 
 const API_URL = process.env.PYTHON_API_URL || "http://localhost:8000";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;

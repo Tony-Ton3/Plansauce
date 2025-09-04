@@ -330,7 +330,7 @@ const Tasks = () => {
   const [error, setError] = useState(null);
   // const [newTask, setNewTask] = useState('');
   // const [newTaskCategory, setNewTaskCategory] = useState('planning');
-  const [currentCategory, setCurrentCategory] = useState('setup');
+  const [currentCategory, setCurrentCategory] = useState('all');
   
   const [categoryTaskCounts, setCategoryTaskCounts] = useState({});
   const [showTechStack, setShowTechStack] = useState(false);

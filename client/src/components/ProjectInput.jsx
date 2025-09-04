@@ -274,7 +274,7 @@ const ProjectInput = () => {
             Creating your project...
           </h2>
           <p className="text-brand-gray text-sm mt-2">
-            We're breaking down your project into actionable tasks. This might take up to a minute.
+            We're breaking down your idea into actionable tasks. This might take up to a minute.
           </p>
           {/* <div className="mt-4 text-xs text-brand-gray">
             <p>Analyzing requirements...</p>

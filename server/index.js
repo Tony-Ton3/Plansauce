@@ -8,8 +8,13 @@ import projectRoutes from "./routes/project.route.js";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.join(__dirname, '..', '.env') }); 
 
 const app = express();
 app.use(express.json());
@@ -40,13 +45,11 @@ app.use("/api/user", userRoutes);
 app.use("/api/agent", agentRoutes);
 app.use("/api/project", projectRoutes);
 
-// Error handling middleware
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
 
-// 404 handler
 app.use((req, res) => {
   console.log('404 Not Found:', req.method, req.url);
   res.status(404).json({ error: 'Not Found' });

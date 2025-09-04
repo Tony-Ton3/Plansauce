@@ -1,11 +1,8 @@
-from crewai import Agent, Task, Crew, LLM, Process
+from crewai import Agent, Task, Crew, Process, LLM
 from textwrap import dedent
 import os
 import json
-from typing import List, Dict, Any
-from dotenv import load_dotenv
-
-load_dotenv()
+from typing import List, Dict, Any, Optional
 
 class TaskGenerationCrew:
     def __init__(self):
