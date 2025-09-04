@@ -1,6 +1,11 @@
 import Stack from "../models/stack.model.js";
 import UserTutorials from "../models/tutorial.model.js";
+import User from "../models/user.model.js";
 import { errorHandler } from "../utils/error.js";
+
+export const test = (req, res, next) => {
+  return res.status(200).json({ message: "Test successful" });
+};
 
 export const signout = (req, res, next) => {
   try {
@@ -81,5 +86,59 @@ export const deletesavedstack = async (req, res, next) => {
   } catch (error) {
     console.error("Error deleting stack:", error);
     next(errorHandler(500, "Error deleting stack"));
+  }
+};
+
+export const updateUserBackground = async (req, res, next) => {
+  const userId = req.user.id;
+
+  const { background } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.background = background;
+    const updatedUser = await user.save();
+
+    const { password, ...userData } = updatedUser._doc;
+    return res.status(200).json(userData);
+  } catch (error) {
+    next(errorHandler(500, "Error updating quiz answers"));
+  }
+};
+
+export const deleteUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    await User.findByIdAndDelete(req.user.id);
+    return res.status(200).json({ message: "User deleted successfully" });
+  } catch (error) {
+    next(errorHandler(500, "Error deleting user"));
+  }
+};
+
+export const updateUserName = async (req, res, next) => {
+  const userId = req.user.id;
+  const { name } = req.body;
+
+  try {
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.name = name;
+    const updatedUser = await user.save();
+
+    const { password, ...userData } = updatedUser._doc;
+    return res.status(200).json(userData);
+  } catch (error) {
+    next(errorHandler(500, "Error updating user"));
   }
 };
